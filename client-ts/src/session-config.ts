@@ -1,0 +1,40 @@
+export type SessionConfig = {
+  readonly idpHost: string,
+  readonly clientCredentials: {
+    readonly clientSecret: string
+    readonly clientId: string,
+  },
+  readonly federationConfig: {
+    readonly IdentityPoolId: string,
+    readonly region: string,
+  }
+  readonly serviceFqdn: string,
+  readonly cmk: string,
+  readonly clusterId: string
+}
+
+export function loadConfigFromEnv(): SessionConfig {
+  return {
+    idpHost: getVar('CS_IDP_HOST'),
+    clientCredentials: {
+      clientId: getVar('CS_CLIENT_ID'),
+      clientSecret: getVar('CS_SECRET'),
+    },
+    federationConfig: {
+      IdentityPoolId: getVar('CS_FEDERATED_IDENTITY_ID'),
+      region: 'ap-southeast-2'
+    },
+    serviceFqdn: getVar('CS_SERVICE_FQDN'),
+    cmk: getVar('CS_DEV_CMK'),
+    clusterId: getVar('CS_SERVICE_FQDN').split('.')[0]!,
+  }
+}
+
+function getVar(envVar: string): string {
+  const value = process.env[envVar]
+  if (typeof value == 'undefined') {
+    throw Error(`"missing configuration: ${envVar}`)
+  } else {
+    return value
+  }
+}
