@@ -1,0 +1,5 @@
+export CS_IDP_HOST=cipherstash-dev.au.auth0.com
+export CS_CLIENT_ID=
+export CS_SECRET=
+export CS_FEDERATED_IDENTITY_ID=
+export AWS_DEFAULT_REGION=ap-southeast-2
