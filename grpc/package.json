@@ -1,0 +1,32 @@
+{
+  "name": "@cipherstash/grpc",
+  "version": "0.1.0",
+  "description": "Generated Typescript GRPC bindings for CipherStash API",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "pnpx rimraf ./dist && proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js --includeDirs grpc/v1 && pnpx tsc && cp -RL grpc dist",
+    "test": "pnpx jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipherstash/client-grpc.git"
+  },
+  "contributors": [
+    "Dan Draper <dan@cipherstash.com>",
+    "James Sadler <james@cipherstash.com>",
+    "Lindsay Holmwood <lindsay@cipherstash.com>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cipherstash/client-grpc/issues"
+  },
+  "homepage": "https://github.com/cipherstash/client-grpc#readme",
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.3.2",
+    "@grpc/proto-loader": "^0.6.2"
+  }
+}
