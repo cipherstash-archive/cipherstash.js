@@ -1,0 +1,29 @@
+{
+  "name": "@cipherstash/client-ts-examples",
+  "version": "0.1.0",
+  "description": "Example client code for the CipherStash Typescript client",
+  "main": "index.js",
+  "scripts": {
+    "build": "pnpx tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipherstash/client-ts.git"
+  },
+  "contributors": [
+    "Dan Draper <dan@cipherstash.com>",
+    "James Sadler <james@cipherstash.com>",
+    "Lindsay Holmwood <lindsay@cipherstash.com>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cipherstash/client-ts/issues"
+  },
+  "homepage": "https://github.com/cipherstash/client-ts#readme",
+  "dependencies": {
+    "@cipherstash/client-ts": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^4.3.4"
+  }
+}
