@@ -33,7 +33,7 @@ let collection = Collection.define<PatientRecord>("patients")(mapping => ({
   expired: mapping.Exact("expired"),
   city: mapping.Exact("address.city"),
   notesAndDescription: mapping.Match(["notes", "description"], {
-    tokenFilters: [downcase, ngram({ minSize: 2, maxSize: 3 })],
+    tokenFilters: [downcase, ngram({ maxTokenLength: 3 })],
     tokenizer: standardTokenizer({ maxTokenLength: 20 })
   })
 })).toCollection()
@@ -58,7 +58,7 @@ describe('Collection', () => {
           fields: ["notes", "description"],
           tokenFilters: [
             { tokenFilter: "downcase" },
-            { tokenizer: "ngram", minSize: 2, maxSize: 3 }
+            { tokenizer: "ngram", "maxTokenLength": 3 }
           ],
           tokenizer: { tokenizer: "standard", maxTokenLength: 20 }
         },

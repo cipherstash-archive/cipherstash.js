@@ -13,7 +13,7 @@ export const employeeSchema = Collection.define<Employee>("employees")(mapping =
   email: mapping.Exact("email"),
   dateOfBirth: mapping.Range("dateOfBirth"),
   jobTitle: mapping.Match(["jobTitle"], {
-    tokenFilters: [downcase, ngram({ minSize: 2, maxSize: 3 })],
+    tokenFilters: [downcase, ngram({ maxTokenLength: 5 })],
     tokenizer: standardTokenizer({ maxTokenLength: 20 })
   })
 }))

@@ -13,8 +13,8 @@ export type TokenFilterKind =
   | UpcaseFilterKind
   | TokenizerKind
 
-export type NgramConfig = { minSize: number, maxSize: number }
-export type NgramTokenizer = { tokenizer: NgramTokenizerKind } & NgramConfig
+export type NgramTokenizerConfig = { maxTokenLength: number }
+export type NgramTokenizer = { tokenizer: NgramTokenizerKind } & NgramTokenizerConfig
 
 export type StandardTokenizerConfig = { maxTokenLength: number }
 export type StandardTokenizer = { tokenizer: StandardTokenizerKind } & StandardTokenizerConfig
@@ -34,7 +34,7 @@ export type Tokenizer =
 export const downcase: DowncaseFilter = { tokenFilter: "downcase" }
 export const upcase: UpcaseFilter = { tokenFilter: "upcase" }
 
-export const ngram: (config: NgramConfig) => NgramTokenizer =
+export const ngram: (config: NgramTokenizerConfig) => NgramTokenizer =
   (config) => ({ tokenizer: "ngram", ...config })
 
 export const standardTokenizer: (config: StandardTokenizerConfig) => StandardTokenizer =
