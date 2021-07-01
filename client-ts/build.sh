@@ -15,6 +15,7 @@ subproject_setup() {
 
 subproject_build() {
   pnpm install
+  pnpm build
 }
 
 subproject_test() {
@@ -23,7 +24,7 @@ subproject_test() {
 }
 
 subproject_clean() {
-  true
+  pnpm run clean
 }
 
 subproject_rebuild() {

@@ -25,5 +25,8 @@
   },
   "devDependencies": {
     "typescript": "^4.3.4"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "ts", "d.ts", "json", "node"]
   }
 }

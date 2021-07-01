@@ -1,4 +1,4 @@
-import { Session  } from "@cipherstash/client-ts"
+import { Session } from "@cipherstash/client-ts"
 import { employeeSchema } from "./example-schema"
 
 async function createCollection() {

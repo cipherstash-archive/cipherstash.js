@@ -1,5 +1,4 @@
 import { V1 } from "@cipherstash/grpc";
-import { QueryReply__Output } from "../../../grpc/dist/generated/stash/GRPC/V1/Queries/QueryReply";
 import { CipherSuite } from "../crypto/cipher";
 import { oreEncryptTermToBuffer } from "../crypto/ore";
 import { StashRecord, Mappings, MappingsMeta } from "../dsl/mappings-dsl"
@@ -130,6 +129,6 @@ function encodeRange<R extends StashRecord, M extends Mappings<R>, N extends Ext
   }
 }
 
-export async function convertQueryReplyToUserRecords<R extends StashRecord>(output: QueryReply__Output, cipherSuite: CipherSuite): Promise<Array<R>> {
+export async function convertQueryReplyToUserRecords<R extends StashRecord>(output: V1.QueryReplyOutput, cipherSuite: CipherSuite): Promise<Array<R>> {
   return await Promise.all(output.result!.map(async encryptedSource => await cipherSuite.decrypt(encryptedSource))) as unknown as Array<R>
 }
