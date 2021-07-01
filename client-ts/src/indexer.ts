@@ -3,7 +3,11 @@ import { StashRecord, Mappings, isSingleFieldMapping, isMultiFieldMapping, Exact
 import { encodeEquatable, encodeOrderable } from "./encoders/term-encoder";
 import { FieldOfType, FieldType, isFieldDotField, unreachable } from "./type-utils";
 
-export type AnalyzedRecord<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>> = {
+export type AnalyzedRecord<
+  R extends StashRecord,
+  M extends Mappings<R>,
+  MM extends MappingsMeta<M>
+> = {
   recordId: R['id'],
   indexEntries: {
     [F in keyof MM]: Array<bigint>
@@ -28,7 +32,8 @@ export async function analyzeRecord<
         case "range": return { indexId: meta.$indexId, encodedTerms: indexRange(term) }
       }
     } else if (isMultiFieldMapping<R, FieldOfType<R, string>, MatchMappingKind>(mapping)) {
-      const terms = mapping.fields.map(extractField(record));
+      const terms = mapping.fields.map(extractField(record))
+      
       return { indexId: meta.$indexId, encodedTerms: indexMatch(terms) }
     } else {
       return unreachable("Internal error: unreachable code reached")
