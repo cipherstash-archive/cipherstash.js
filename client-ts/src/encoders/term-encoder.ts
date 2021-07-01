@@ -1,7 +1,8 @@
 import { makeHashFn, DefaultKey } from '../crypto/sip-hash'
 import { encodeNumber, decodeBigint } from '../crypto/ore'
-import { MappableFieldType, TypeName, unreachable } from "../type-utils"
+import { TypeName, unreachable } from "../type-utils"
 import { DateResolution, utcDateWithResolution } from './date-encoding-helpers'
+import { MappableFieldType } from '../dsl/mappings-dsl'
 export { DateResolution } from './date-encoding-helpers'
 
 export const UINT64_MIN: bigint = 0n
