@@ -1,7 +1,7 @@
 import { Collection } from "./collection";
-import { StashRecord, Mappings, isSingleFieldMapping, isMultiFieldMapping, ExactMappingKind, RangeMappingKind, MatchMappingKind, MappingsMeta } from "./dsl/mappings-dsl";
+import { StashRecord, Mappings, isSingleFieldMapping, isMultiFieldMapping, ExactMappingKind, RangeMappingKind, MatchMappingKind, MappingsMeta, MappableFieldType } from "./dsl/mappings-dsl";
 import { encodeEquatable, encodeOrderable } from "./encoders/term-encoder";
-import { FieldOfType, FieldType, isFieldDotField, MappableFieldType, unreachable } from "./type-utils";
+import { FieldOfType, FieldType, isFieldDotField, unreachable } from "./type-utils";
 
 export type AnalyzedRecord<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>> = {
   recordId: R['id'],

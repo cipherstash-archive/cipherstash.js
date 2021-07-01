@@ -1,23 +1,22 @@
-/**
- * Fields of this type can be indexed and queried.
- */
-export type MappableFieldType =
-  | number
-  | string
-  | bigint
-  | boolean
-  | Date
 
 /**
  * Utility for conatenating two field names together in order to support typing
  * of accessors for nested fields.
  */
-export type FieldDotField<A extends string, B extends string> = `${A}.${B}`
+export type FieldDotField<
+  A extends string,
+  B extends string
+> = `${A}.${B}`
 
 /**
  * Type guard to check whether a field is of type FieldDotField.
  */
-export function isFieldDotField<A extends string, B extends string>(field: string): field is FieldDotField<A, B> {
+export function isFieldDotField<
+  A extends string,
+  B extends string
+>(
+  field: string
+): field is FieldDotField<A, B> {
   return field.indexOf(".") > -1
 }
 
@@ -27,11 +26,8 @@ export function isFieldDotField<A extends string, B extends string>(field: strin
 export type Field<R> = {
   [K in keyof R]:
     K extends string ? 
-      R[K] extends {[key: string]: MappableFieldType} ?
-        FieldDotField<K, Field<R[K]>>
-      : R[K] extends MappableFieldType ?
-        K
-      : never
+      R[K] extends {[key: string]: unknown } ?
+        FieldDotField<K, Field<R[K]>> : K
     : never
 }[keyof R]
 
@@ -52,20 +48,23 @@ export type FieldType<R, S extends Field<R>> =
 /**
  * Find all Fields on R of a particular type.
  */
-type FindFieldsOfType<R, S extends Field<R>, T> =
-  { [F in S]: T extends FieldType<R, F> ? F : never }[S]
+type FindFieldsOfType<
+  R,
+  S extends Field<R>,
+  T
+> = { [F in S]: T extends FieldType<R, F> ? F : never }[S]
 
 /**
  * Represents all Fields on R of type T.
  */
-export type FieldOfType<R, T extends MappableFieldType> = FindFieldsOfType<R, Field<R>, T>
+export type FieldOfType<R, T> = FindFieldsOfType<R, Field<R>, T>
 
 /**
  * Get the type name of a type.
  * 
  * JS sucks at this, e.g. typeof new Date() returns "[object Object]"
  */
-export type TypeName<T extends MappableFieldType> =
+export type TypeName<T> =
   T extends string ? "string" :
   T extends number ? "number" :
   T extends boolean ? "boolean" :
