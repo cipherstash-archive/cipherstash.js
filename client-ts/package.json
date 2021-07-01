@@ -5,6 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "pnpx rimraf ./dist && node-gyp configure && node-gyp build && cp src/crypto/ore/napi_ore.d.ts build/Release/ && pnpx tsc",
+    "postinstall": "pnpx rimraf ./dist && node-gyp configure && node-gyp build && cp src/crypto/ore/napi_ore.d.ts build/Release/ && pnpx tsc",
+    "clean": "pnpx rimraf ./dist && pnpx rimraf ./build",
     "test": "pnpx jest"
   },
   "repository": {
@@ -58,5 +60,8 @@
     "bson": "^4.4.0",
     "siphash": "^1.1.0",
     "uuid": "^8.3.2"
+  },
+  "jest": {
+    "moduleFileExtensions": ["js", "ts", "node", "d.ts", "json"]
   }
 }

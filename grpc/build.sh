@@ -11,10 +11,10 @@ set -x # trace what gets executed (useful for debugging)
 subproject_setup() {
   asdf install
   asdf reshim
-  pnpm install
 }
 
 subproject_build() {
+  pnpm install
   pnpm build
 }
 
