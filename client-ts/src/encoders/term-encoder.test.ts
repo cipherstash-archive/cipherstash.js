@@ -1,5 +1,3 @@
-// import { decodeOrderable, encodeOrderable, OrderPreservingUInt64 } from './term-encoder'
-
 import { encodeNumber, decodeBigint } from "../crypto/ore"
 
 describe('term encoding', () => {
