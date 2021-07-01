@@ -1,5 +1,5 @@
 import { TokenFilter, Tokenizer } from "./filters-and-tokenizers-dsl"
-import { FieldOfType, FieldType, MappableFieldType, Optional } from "../type-utils"
+import { FieldOfType, FieldType, Optional } from "../type-utils"
 
 /**
  * All user-defined type that is stored in a Collection must extend this type.
@@ -11,6 +11,16 @@ export type StashRecord = { id: string }
  * create an ID when one is not already set).
  */
 export type NewStashRecord<R extends StashRecord> = Optional<R, 'id'>
+
+/**
+ * Fields of this type can be indexed and queried.
+ */
+export type MappableFieldType =
+  | number
+  | string
+  | bigint
+  | boolean
+  | Date
 
 /**
  * A field mapping that permits an equality operation (`eq`) to be performed at
