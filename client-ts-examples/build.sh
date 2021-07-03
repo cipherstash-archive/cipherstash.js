@@ -23,7 +23,7 @@ subproject_test() {
 }
 
 subproject_clean() {
-  true
+  rm -fr ./dist/*
 }
 
 subproject_rebuild() {

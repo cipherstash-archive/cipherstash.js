@@ -6,7 +6,7 @@ async function deleteRecord() {
     const session = await Session.connect(Session.loadConfigFromEnv())
     const employees = await session.loadCollection(employeeSchema)
 
-    let results = await employees.all(where => where.email.eq("ada@security4u.com"), 1)
+    let results = await employees.all(where => where.email.eq("ada@security4u.example"), 1)
 
     if (results.length == 1) {
       await employees.delete(results[0]!.id)
