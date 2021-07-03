@@ -1,5 +1,5 @@
 import { FieldOfType } from "../type-utils"
-import { Mappings, StashRecord, FieldTypeOfMapping, ExactMapping, MatchMapping, RangeMapping, MappableFieldType, RangeType } from "./mappings-dsl"
+import { Mappings, StashRecord, FieldTypeOfMapping, ExactMapping, MatchMapping, RangeMapping, RangeMappingFieldType, ExactMappingFieldType, MatchMappingFieldType } from "./mappings-dsl"
 
 /*
   A note on types
@@ -187,9 +187,9 @@ export type OperatorsForIndex<
   M extends Mappings<R>,
   N extends Extract<keyof M, string>,
 > =
-  M[N] extends ExactMapping<R, FieldOfType<R, MappableFieldType>> ? ExactOperators<R, M, N>
-  : M[N] extends RangeMapping<R, FieldOfType<R, RangeType>> ? RangeOperators<R, M, N>
-  : M[N] extends MatchMapping<R, FieldOfType<R, string>> ? MatchOperators<R, M, N>
+  M[N] extends ExactMapping<R, FieldOfType<R, ExactMappingFieldType>> ? ExactOperators<R, M, N>
+  : M[N] extends RangeMapping<R, FieldOfType<R, RangeMappingFieldType>> ? RangeOperators<R, M, N>
+  : M[N] extends MatchMapping<R, FieldOfType<R, MatchMappingFieldType>> ? MatchOperators<R, M, N>
   : never
 
 /**
