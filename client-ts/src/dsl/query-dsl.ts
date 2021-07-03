@@ -65,16 +65,16 @@ export type ConjunctiveCondition<
   R extends StashRecord,
   M extends Mappings<R>
 > =
-  AndCondition<R, M>
+  AllCondition<R, M>
 
 /**
  * A Condition representing a logical AND between two other Conditions.
  */
-export type AndCondition<
+export type AllCondition<
   R extends StashRecord,
   M extends Mappings<R>
 > =
-  { kind: "and", cond1: Condition<R, M>, cond2: Condition<R, M> }
+  { kind: "all", conditions: Array<Condition<R, M>> }
 
 /**
  * Represents a condition defined in terms of an index.
@@ -245,25 +245,30 @@ export function isConjunctiveCondition<
 >(
   condition: any
 ): condition is ConjunctiveCondition<R, M> {
-  return condition.kind == "and"
+  return condition.kind == "all"
 }
 
 /**
- * Creates an AndCondition from two conditions.
+ * Creates an AllCondition from at least two conditions.
  * 
- * @param cond1
- * @param cond2 
- * @returns an AndCondition representing the logical AND of the two provided
- *          conditions.
+ * The first and second argument are mandatory and there can be zero or more
+ * additional arguments.
+ * 
+ * @param condition1 the first condition
+ * @param condition2 the second condition
+ * @param remainingConditions additional conditions
+ * @returns an AllCondition representing the logical AND of all of the provided
+ * conditions.
  */
-export function and<
+export function all<
   R extends StashRecord,
   M extends Mappings<R>
 >(
-  cond1: Condition<R, M>,
-  cond2: Condition<R, M>
-): AndCondition<R, M> {
-  return { kind: "and", cond1, cond2 }
+  condition1: Condition<R, M>,
+  condition2: Condition<R, M>,
+  ...remainingConditions: Array<Condition<R, M>>
+): AllCondition<R, M> {
+  return { kind: "all", conditions: [condition1, condition2, ...remainingConditions] }
 }
 
 /**
