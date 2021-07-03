@@ -6,7 +6,7 @@ async function queryCollection() {
     const session = await Session.connect(Session.loadConfigFromEnv())
     const employees = await session.loadCollection(employeeSchema)
 
-    let results = await employees.all($ => $.email.eq("ada@security4u.com"), 1)
+    let results = await employees.all($ => $.email.eq("ada@security4u.example"), 1)
 
     if (results.length == 1 && results[0]!.name == "Ada Lovelace") {
       console.log("☑️  Successfully queried via exact mapping")

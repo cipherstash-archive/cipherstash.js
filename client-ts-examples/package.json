@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cipherstash/client-ts.git"
+    "url": "git+https://github.com/cipherstash/stash.js.examples.git"
   },
   "contributors": [
     "Dan Draper <dan@cipherstash.com>",

@@ -3,14 +3,14 @@ import { downcaseFilter, ngramsTokenizer, standardTokenizer, textPipeline, upcas
 describe("tokenizers & filters", () => {
   describe("ngrams tokenizer", () => {
     it("produces ngrams", () => {
-      let tokenizer = ngramsTokenizer({ maxTokenLength: 3 })
+      let tokenizer = ngramsTokenizer({ tokenLength: 3 })
       expect(tokenizer(["lovelace"])).toStrictEqual(['lov', 'ove', 'vel', 'ela', 'lac', 'ace'])
     })
   })
 
   describe("standard tokenizer", () => {
     it("produces tokens", () => {
-      let tokenizer = standardTokenizer({ maxTokenLength: 10 })
+      let tokenizer = standardTokenizer({ tokenLength: 10 })
       expect(tokenizer(["Hello from Ada Lovelace"])).toStrictEqual(['Hello', 'from', 'Ada', 'Lovelace'])
     })
   })
@@ -28,7 +28,7 @@ describe("tokenizers & filters", () => {
   })
 
   describe("chaining filters and tokenizers", () => {
-    let pipeline = textPipeline([upcaseFilter, ngramsTokenizer({ maxTokenLength: 3 })])
+    let pipeline = textPipeline([upcaseFilter, ngramsTokenizer({ tokenLength: 3 })])
     expect(pipeline(["HeLlOwOrLd"])).toEqual(['HEL', 'ELL', 'LLO', 'LOW', 'OWO', 'WOR', 'ORL', 'RLD'])
   })
 })
