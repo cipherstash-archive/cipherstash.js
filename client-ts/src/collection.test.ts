@@ -1,6 +1,6 @@
 import { Collection } from './collection'
 import { downcase, ngram, standardTokenizer } from './dsl/filters-and-tokenizers-dsl'
-import { and } from './dsl/query-dsl'
+import { all } from './dsl/query-dsl'
 
 type PatientRecord = {
   id: string,
@@ -110,13 +110,15 @@ describe('Collection', () => {
     })
 
     describe('conjunctive queries', () => {
-      test('and', () => {
-        let query = collection.buildQuery($ => and($.expired.eq(true), $.notesAndDescription.match('diabetes')))
+      test('all (logical and)', () => {
+        let query = collection.buildQuery($ => all($.expired.eq(true), $.notesAndDescription.match('diabetes')))
         expect(query).toStrictEqual({ 
-          kind: "and",
-            cond1: { indexName: "expired", kind: "exact", op: "eq", value: true },
-            cond2: { indexName: "notesAndDescription", kind: "match", op: "match", value: "diabetes"  }
-          })
+          kind: "all",
+          conditions: [
+            { indexName: "expired", kind: "exact", op: "eq", value: true },
+            { indexName: "notesAndDescription", kind: "match", op: "match", value: "diabetes"  }
+          ]
+        })
       })
     })
   })
