@@ -11,7 +11,7 @@ async function insertRecords() {
       name: "Ada Lovelace",
       jobTitle: "Chief Executive Officer (CEO)",
       dateOfBirth: new Date(1852, 11, 27),
-      email: "ada@security4u.com",
+      email: "ada@security4u.example",
       grossSalary: 250000n
     })
 
@@ -19,7 +19,7 @@ async function insertRecords() {
       name: "Grace Hopper",
       jobTitle: "Chief Science Officer (CSO)",
       dateOfBirth: new Date(1906, 12, 9),
-      email: "grace@security4u.com",
+      email: "grace@security4u.example",
       grossSalary: 250000n
     })
 
@@ -27,7 +27,7 @@ async function insertRecords() {
       name: "Joan Clark",
       jobTitle: "Chief Information Security Officer (CISO)",
       dateOfBirth: new Date(1917, 6, 24),
-      email: "joan@security4u.com",
+      email: "joan@security4u.example",
       grossSalary: 250000n
     })
 

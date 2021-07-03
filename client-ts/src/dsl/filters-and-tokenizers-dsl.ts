@@ -13,10 +13,10 @@ export type TokenFilterKind =
   | UpcaseFilterKind
   | TokenizerKind
 
-export type NgramTokenizerConfig = { maxTokenLength: number }
+export type NgramTokenizerConfig = { tokenLength: number }
 export type NgramTokenizer = { tokenizer: NgramTokenizerKind } & NgramTokenizerConfig
 
-export type StandardTokenizerConfig = { maxTokenLength: number }
+export type StandardTokenizerConfig = { tokenLength: number }
 export type StandardTokenizer = { tokenizer: StandardTokenizerKind } & StandardTokenizerConfig
 
 export type DowncaseFilter = { tokenFilter: DowncaseFilterKind }

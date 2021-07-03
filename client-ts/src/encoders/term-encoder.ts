@@ -70,46 +70,49 @@ export function encodeEquatable<T extends number | boolean | bigint | string | D
   throw unreachable(`Unexpected term type for term <${JSON.stringify(term)}>`)
 }
 
-const encodeOrderableNumber: OrderPreservingEncoder<number> = (term) => {
-  return { sourceType: "number", orderable: encodeNumber(term) }
-}
+const encodeOrderableNumber: OrderPreservingEncoder<number> =
+  term =>
+    ({ sourceType: "number", orderable: encodeNumber(term) })
 
-const encodeOrderableBigInt: OrderPreservingEncoder<bigint> = (term) => {
-  return { sourceType: "bigint", orderable: term }
-}
+const encodeOrderableBigInt: OrderPreservingEncoder<bigint> =
+  term =>
+    ({ sourceType: "bigint", orderable: term })
   
-const encodeOrderableBoolean: OrderPreservingEncoder<boolean> = (term) => {
-  return { sourceType: "boolean", orderable: term ? 1n : 0n }
-}
+const encodeOrderableBoolean: OrderPreservingEncoder<boolean> =
+  term =>
+    ({ sourceType: "boolean", orderable: term ? 1n : 0n })
 
-const encodeOrderableDateWithResolution: (resolution: DateResolution) => OrderPreservingEncoder<Date> = (resolution: DateResolution) => {
-  return (term: Date) => {
-    return { sourceType: "Date", orderable: encodeNumber(utcDateWithResolution(term, resolution)) }
-  }
-}
+const encodeOrderableDateWithResolution: (resolution: DateResolution) => OrderPreservingEncoder<Date> =
+  resolution =>
+    term =>
+      ({ sourceType: "Date", orderable: encodeNumber(utcDateWithResolution(term, resolution)) })
 
-const encodeEquatableBigInt: EqualityPreservingEncoder<bigint> = (term) => {
-  return { sourceType: "bigint", equatable: sipHash(term.toString()).sipHash.readBigUInt64BE() }
-}
+// TODO: decide how to handle bigints that are out of range (do we clamp to a
+// min and max size, or do we throw an error?)
+const encodeEquatableBigInt: EqualityPreservingEncoder<bigint> =
+  term =>
+    ({ sourceType: "bigint", equatable: term })
 
-const encodeEquatableNumber: EqualityPreservingEncoder<number> = (term) => {
-  return { sourceType: "number", equatable: sipHash(term.toString()).sipHash.readBigUInt64BE() }
-}
+const encodeEquatableNumber: EqualityPreservingEncoder<number> =
+  term =>
+    ({ sourceType: "number", equatable: encodeNumber(term) })
 
-const encodeEquatableBoolean: EqualityPreservingEncoder<boolean> = (term) => {
-  return { sourceType: "boolean", equatable: sipHash(term.toString()).sipHash.readBigUInt64BE() }
-}
+const encodeEquatableBoolean: EqualityPreservingEncoder<boolean> =
+  term =>
+    ({ sourceType: "boolean", equatable: encodeNumber(term ? 1 : 0) })
 
-const encodeEquatableString: EqualityPreservingEncoder<string> = (term) => {
-  return { sourceType: "string", equatable: sipHash(term.toString()).sipHash.readBigUInt64BE() }
-}
+// TODO: for strings 8 bytes or smaller we can encode directly into 64 bits.
+// We should only siphash strings with an encoding of > 8 bytes.
+const encodeEquatableString: EqualityPreservingEncoder<string> =
+  term =>
+    ({ sourceType: "string", equatable: sipHash(term).sipHash.readBigUInt64BE() })
 
-const encodeEquatableDateWithResolution: (resolution: DateResolution) => EqualityPreservingEncoder<Date> = (resolution) => (term) => {
-  // TODO use a well known date format before converting to a string (IS0-8604)
-  return { sourceType: "Date", equatable: sipHash(utcDateWithResolution(term, resolution).toString()).sipHash.readBigUInt64BE() }
-}
+const encodeEquatableDateWithResolution: (resolution: DateResolution) => EqualityPreservingEncoder<Date> =
+  resolution =>
+    term =>
+      ({ sourceType: "Date", equatable: encodeNumber(utcDateWithResolution(term, resolution)) })
 
 // This is used for testing purposes only.
-export const decodeOrderable: <OutputT extends MappableFieldType>(value: OrderPreservingUInt64<OutputT>) => number = (value) => {
-  return decodeBigint(value.orderable)
-}
+export const decodeOrderable: <OutputT extends MappableFieldType>(value: OrderPreservingUInt64<OutputT>) => number
+  = value =>
+    decodeBigint(value.orderable)

@@ -33,8 +33,8 @@ let collection = Collection.define<PatientRecord>("patients")(mapping => ({
   expired: mapping.Exact("expired"),
   city: mapping.Exact("address.city"),
   notesAndDescription: mapping.Match(["notes", "description"], {
-    tokenFilters: [downcase, ngram({ maxTokenLength: 3 })],
-    tokenizer: standardTokenizer({ maxTokenLength: 20 })
+    tokenFilters: [downcase, ngram({ tokenLength: 3 })],
+    tokenizer: standardTokenizer({ tokenLength: 20 })
   })
 })).toCollection()
 
@@ -58,9 +58,9 @@ describe('Collection', () => {
           fields: ["notes", "description"],
           tokenFilters: [
             { tokenFilter: "downcase" },
-            { tokenizer: "ngram", "maxTokenLength": 3 }
+            { tokenizer: "ngram", "tokenLength": 3 }
           ],
-          tokenizer: { tokenizer: "standard", maxTokenLength: 20 }
+          tokenizer: { tokenizer: "standard", tokenLength: 20 }
         },
       })
     })
@@ -69,8 +69,8 @@ describe('Collection', () => {
   describe('buildQuery', () => {
     describe('single condition queries', () => {
       test('exact mapping on string field', () => {
-        let query = collection.buildQuery($ => $.email.eq("james@cipherstash.com"))
-        expect(query).toStrictEqual({ kind: "exact", indexName: "email", op: "eq", value: "james@cipherstash.com" })
+        let query = collection.buildQuery($ => $.email.eq("person@email.example"))
+        expect(query).toStrictEqual({ kind: "exact", indexName: "email", op: "eq", value: "person@email.example" })
       })
 
       test('exact mapping on boolean field', () => {

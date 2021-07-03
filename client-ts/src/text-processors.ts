@@ -13,8 +13,8 @@ export const ngramsTokenizer =
   (config: NgramTokenizerConfig): TextProcessor =>
     input => 
       input.flatMap(t =>
-        range(0, Math.max(t.length - config.maxTokenLength, 0)).map(
-          (_, index) => t.slice(index, index + config.maxTokenLength)
+        range(0, Math.max(t.length - config.tokenLength, 0)).map(
+          (_, index) => t.slice(index, index + config.tokenLength)
         ).flat()
       )
 
