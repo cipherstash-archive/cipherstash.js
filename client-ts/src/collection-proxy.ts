@@ -1,5 +1,5 @@
 import { Collection } from "./collection"
-import { StashRecord, Mappings, NewStashRecord } from "./dsl/mappings-dsl"
+import { StashRecord, Mappings, NewStashRecord, MappingsMeta } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { analyzeRecord } from "./indexer"
 import { Session } from "./session"
@@ -87,7 +87,7 @@ export class CollectionProxy<R extends StashRecord, M extends Mappings<R>> {
         collectionId: idStringToBuffer(this.collection.id),
         query: {
           limit,
-          constraints: await convertQueryToContraints(
+          constraints: convertQueryToContraints<R, M, Query<R, M>, MappingsMeta<M>>(
             callback(this.collection.makeQueryBuilder()),
             this.collection.mappingsMeta
           ),

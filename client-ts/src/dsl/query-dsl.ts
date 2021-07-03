@@ -1,4 +1,5 @@
-import { ExactMappingKind, RangeMappingKind, MatchMappingKind, Mappings, MappingOnRecordFieldType, StashRecord, FieldTypeOfMapping } from "./mappings-dsl"
+import { FieldOfType } from "../type-utils"
+import { Mappings, StashRecord, FieldTypeOfMapping, ExactMapping, MatchMapping, RangeMapping, MappableFieldType, RangeType } from "./mappings-dsl"
 
 /*
   A note on types
@@ -85,12 +86,10 @@ export type IndexValueCondition<
   R extends StashRecord,
   M extends Mappings<R>
 > = {
-  [N in Extract<keyof M, string>]: 
-    M[N] extends MappingOnRecordFieldType<R, infer _FOT, infer MK> ?
-      MK extends ExactMappingKind ? ExactCondition<R, M, N>
-      : MK extends RangeMappingKind ? RangeCondition<R, M, N>
-      : MK extends MatchMappingKind ? MatchCondition<R, M, N>
-      : never
+  [N in Extract<keyof M, string>]:
+    M[N] extends ExactMapping<R, infer _FOT> ? ExactCondition<R, M, N>
+    : M[N] extends RangeMapping<R, infer _FOT> ? RangeCondition<R, M, N>
+    : M[N] extends MatchMapping<R, infer _FOT> ? MatchCondition<R, M, N>
     : never
   }[Extract<keyof M, string>]
 
@@ -115,11 +114,7 @@ export type RangeCondition<
   N extends Extract<keyof M, string>,
   T extends FieldTypeOfMapping<R, M[N]> = FieldTypeOfMapping<R, M[N]>
 > =
-  | { kind: "range", indexName: N, op: "lt", value: T }
-  | { kind: "range", indexName: N, op: "lte", value: T }
-  | { kind: "range", indexName: N, op: "eq", value: T }
-  | { kind: "range", indexName: N, op: "gt", value: T }
-  | { kind: "range", indexName: N, op: "gte", value: T }
+  | { kind: "range", indexName: N, op: "lt" | "lte" | "eq" | "gt" | "gte", value: T }
   | { kind: "range", indexName: N, op: "between", min: T, max: T }
 
 /**
@@ -171,14 +166,6 @@ export type RangeOperators<
   between(min: T, max: T): RangeCondition<R, M, N>
 }
 
-/**
- * The Javascript types that we support range operations upon.
- */
-export type RangeType =
-  | number
-  | bigint
-  | Date
-  | boolean
 
 /**
  * The names of all of the range operators.
@@ -200,12 +187,10 @@ export type OperatorsForIndex<
   M extends Mappings<R>,
   N extends Extract<keyof M, string>,
 > =
-  M[N] extends MappingOnRecordFieldType<R, infer _FOT, infer MK> ?
-    MK extends ExactMappingKind ? ExactOperators<R, M, N>
-    : MK extends RangeMappingKind ? RangeOperators<R, M, N>
-    : MK extends MatchMappingKind ? MatchOperators<R, M, N>
-    : never
-  :never
+  M[N] extends ExactMapping<R, FieldOfType<R, MappableFieldType>> ? ExactOperators<R, M, N>
+  : M[N] extends RangeMapping<R, FieldOfType<R, RangeType>> ? RangeOperators<R, M, N>
+  : M[N] extends MatchMapping<R, FieldOfType<R, string>> ? MatchOperators<R, M, N>
+  : never
 
 /**
  * This type represents the sole argument provided to the callback when building
