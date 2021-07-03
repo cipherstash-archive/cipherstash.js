@@ -1,5 +1,5 @@
 import { Collection } from "./collection";
-import { StashRecord, Mappings, MappingsMeta, MappableFieldType, isExactMapping, isRangeMapping, RangeType, isMatchMapping } from "./dsl/mappings-dsl";
+import { StashRecord, Mappings, MappingsMeta, MappableFieldType, isExactMapping, isRangeMapping, RangeMappingFieldType, isMatchMapping, ExactMappingFieldType, MatchMappingFieldType } from "./dsl/mappings-dsl";
 import { encodeEquatable, encodeOrderable } from "./encoders/term-encoder";
 import { FieldOfType, FieldType, isFieldDotField, unreachable } from "./type-utils";
 
@@ -25,17 +25,17 @@ export async function analyzeRecord<
   const indices = Object.entries(collection.mappings).map(([indexName, mapping]) => {
     const meta = collection.mappingsMeta[indexName]!
 
-    if (isExactMapping<R, FieldOfType<R, MappableFieldType>>(mapping)) {
+    if (isExactMapping<R, FieldOfType<R, ExactMappingFieldType>>(mapping)) {
       const term = extractField(record)(mapping.field)
       return { indexId: meta.$indexId, encodedTerms: indexExact(term) }
     }
 
-    if (isRangeMapping<R, FieldOfType<R, RangeType>>(mapping)) {
+    if (isRangeMapping<R, FieldOfType<R, RangeMappingFieldType>>(mapping)) {
       const term = extractField(record)(mapping.field)
       return { indexId: meta.$indexId, encodedTerms: indexRange(term) }
     }
 
-    if (isMatchMapping<R, FieldOfType<R, string>>(mapping)) {
+    if (isMatchMapping<R, FieldOfType<R, MatchMappingFieldType>>(mapping)) {
       const terms = mapping.fields.map(extractField(record))
       return { indexId: meta.$indexId, encodedTerms: indexMatch(terms) }
     }
