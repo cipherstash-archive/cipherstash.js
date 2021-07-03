@@ -16,42 +16,31 @@ export type NewStashRecord<R extends StashRecord> = Optional<R, 'id'>
  * Fields of this type can be indexed and queried.
  */
 export type MappableFieldType =
-  | number
+  | ExactMappingFieldType
+  | RangeMappingFieldType
+  | MatchMappingFieldType
+
+export type ExactMappingFieldType =
   | string
+  | number
   | bigint
-  | boolean
   | Date
+  | boolean
 
 /**
  * The Javascript types that we support range operations upon.
  */
-export type RangeType =
+export type RangeMappingFieldType =
   | number
   | bigint
   | Date
   | boolean
 
-/**
- * A field mapping that permits an equality operation (`eq`) to be performed at
- * query time.
- */
-export type ExactMappingKind = "exact"
-
-/**
- * A field mapping that permits range operations (`lt`, `lte`, 'eq`, `gt`,
- * `gte`, `between`) to be performed on its index.
- */
-export type RangeMappingKind = "range"
-
-/**
- * A field mapping that permits textual match operations to be performed on its
- * index.
- */
-export type MatchMappingKind = "match"
+export type MatchMappingFieldType = string
 
 export type ExactMapping<
   R extends StashRecord,
-  F extends FieldOfType<R, MappableFieldType>
+  F extends FieldOfType<R, ExactMappingFieldType>
 >  = {
   matcher: "exact",
   field: F
@@ -59,7 +48,7 @@ export type ExactMapping<
 
 export type RangeMapping<
   R extends StashRecord,
-  F extends FieldOfType<R, RangeType>
+  F extends FieldOfType<R, RangeMappingFieldType>
 >  = {
   matcher: "range",
   field: F
@@ -67,7 +56,7 @@ export type RangeMapping<
 
 export type MatchMapping<
   R extends StashRecord,
-  F extends FieldOfType<R, string>
+  F extends FieldOfType<R, MatchMappingFieldType>
 >  = {
   matcher: "match",
   fields: Array<F>
@@ -75,7 +64,7 @@ export type MatchMapping<
 
 export function isExactMapping<
   R extends StashRecord,
-  F extends FieldOfType<R, MappableFieldType>,
+  F extends FieldOfType<R, ExactMappingFieldType>,
   >(
     mapping: any
   ): mapping is ExactMapping<R, F> {
@@ -84,7 +73,7 @@ export function isExactMapping<
 
 export function isRangeMapping<
   R extends StashRecord,
-  F extends FieldOfType<R, RangeType>,
+  F extends FieldOfType<R, RangeMappingFieldType>,
   >(
     mapping: any
   ): mapping is RangeMapping<R, F> {
@@ -104,9 +93,9 @@ export function isMatchMapping<
  * This type represents all of the kinds of permitted mapping types allowed on a record.
  */
 export type MappingOn<R extends StashRecord> =
-  | ExactMapping<R, FieldOfType<R, MappableFieldType>>
-  | RangeMapping<R, FieldOfType<R, RangeType>>
-  | MatchMapping<R, FieldOfType<R, string>>
+  | ExactMapping<R, FieldOfType<R, ExactMappingFieldType>>
+  | RangeMapping<R, FieldOfType<R, RangeMappingFieldType>>
+  | MatchMapping<R, FieldOfType<R, MatchMappingFieldType>>
 
 /**
  * This type represents an object whose keys are the name of the index being
@@ -153,7 +142,7 @@ export type MappingsMeta<M> =
 // TODO: support options for date (resolution etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
 type ExactFn<R extends StashRecord> =
-  <F extends FieldOfType<R, MappableFieldType>>(field: F) => ExactMapping<R, F> 
+  <F extends FieldOfType<R, ExactMappingFieldType>>(field: F) => ExactMapping<R, F> 
 
 // TODO: support options for string (token filters etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
@@ -165,7 +154,7 @@ export function makeExactFn<R extends StashRecord>(): ExactFn<R> {
 // TODO: support options for date (resolution etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
 export type RangeFn<R extends StashRecord> =
-  <F extends FieldOfType<R, RangeType>>(field: F) => RangeMapping<R, F> 
+  <F extends FieldOfType<R, RangeMappingFieldType>>(field: F) => RangeMapping<R, F> 
 
 export function makeRangeFn<R extends StashRecord>(): RangeFn<R> {
   return (field) => ({ matcher: "range", field }) 
@@ -177,7 +166,7 @@ export type MatchOptions = {
 }
 
 export type MatchFn<R extends StashRecord> =
-  <F extends FieldOfType<R, string>>(field: Array<F>, options: MatchOptions) =>
+  <F extends FieldOfType<R, MatchMappingFieldType>>(field: Array<F>, options: MatchOptions) =>
     MatchMapping<R, F> 
 
 export function makeMatchFn<R extends StashRecord>(): MatchFn<R> {
