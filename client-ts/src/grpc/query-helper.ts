@@ -2,7 +2,7 @@ import { V1 } from "@cipherstash/grpc";
 import { CipherSuite } from "../crypto/cipher";
 import { oreEncryptTermToBuffer } from "../crypto/ore";
 import { StashRecord, Mappings, MappingsMeta } from "../dsl/mappings-dsl"
-import { Query, RangeOperator, RangeCondition, ExactCondition, MatchCondition, isConjunctiveCondition, isIndexValueCondition, AndCondition, IndexValueCondition } from "../dsl/query-dsl"
+import { Query, RangeOperator, RangeCondition, ExactCondition, MatchCondition, isConjunctiveCondition, isIndexValueCondition, Condition } from "../dsl/query-dsl"
 import { encodeEquatable, encodeOrderable, UINT64_MIN, UINT64_MAX } from "../encoders/term-encoder"
 import { unreachable } from "../type-utils"
 import { biggest, smallest } from "../utils"
@@ -16,7 +16,7 @@ export function convertQueryToContraints<
   query: Q,
   meta: MM
 ): V1.ConstraintInput[] {
-  return flattenCondition(query, meta)
+  return flattenCondition<R, M, MM>(query, meta)
 }
 
 function flattenCondition<
@@ -24,12 +24,12 @@ function flattenCondition<
   M extends Mappings<R>,
   MM extends MappingsMeta<M>
   >(
-    condition: AndCondition<R, M> | IndexValueCondition<R, M>,
+    condition: Condition<R, M>,
     meta: MM
   ): Array<V1.ConstraintInput> {
 
   if (isConjunctiveCondition<R, M>(condition)) {
-    return flattenCondition<R, M, MM>(condition.cond1, meta).concat(flattenCondition<R, M, MM>(condition.cond2, meta))
+    return condition.conditions.flatMap(c => flattenCondition<R, M, MM>(c, meta))
   } else if (isIndexValueCondition<R, M>(condition)) {
     const indexMeta = meta[condition.indexName]!
     return [{

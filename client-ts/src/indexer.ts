@@ -1,5 +1,5 @@
 import { Collection } from "./collection";
-import { StashRecord, Mappings, isSingleFieldMapping, isMultiFieldMapping, ExactMappingKind, RangeMappingKind, MatchMappingKind, MappingsMeta, MappableFieldType } from "./dsl/mappings-dsl";
+import { StashRecord, Mappings, MappingsMeta, MappableFieldType, isExactMapping, isRangeMapping, RangeType, isMatchMapping } from "./dsl/mappings-dsl";
 import { encodeEquatable, encodeOrderable } from "./encoders/term-encoder";
 import { FieldOfType, FieldType, isFieldDotField, unreachable } from "./type-utils";
 
@@ -25,19 +25,22 @@ export async function analyzeRecord<
   const indices = Object.entries(collection.mappings).map(([indexName, mapping]) => {
     const meta = collection.mappingsMeta[indexName]!
 
-    if (isSingleFieldMapping<R, FieldOfType<R, MappableFieldType>, ExactMappingKind | RangeMappingKind>(mapping)) {
+    if (isExactMapping<R, FieldOfType<R, MappableFieldType>>(mapping)) {
       const term = extractField(record)(mapping.field)
-      switch (mapping.matcher) {
-        case "exact": return { indexId: meta.$indexId, encodedTerms: indexExact(term) }
-        case "range": return { indexId: meta.$indexId, encodedTerms: indexRange(term) }
-      }
-    } else if (isMultiFieldMapping<R, FieldOfType<R, string>, MatchMappingKind>(mapping)) {
-      const terms = mapping.fields.map(extractField(record))
-      
-      return { indexId: meta.$indexId, encodedTerms: indexMatch(terms) }
-    } else {
-      return unreachable("Internal error: unreachable code reached")
+      return { indexId: meta.$indexId, encodedTerms: indexExact(term) }
     }
+
+    if (isRangeMapping<R, FieldOfType<R, RangeType>>(mapping)) {
+      const term = extractField(record)(mapping.field)
+      return { indexId: meta.$indexId, encodedTerms: indexRange(term) }
+    }
+
+    if (isMatchMapping<R, FieldOfType<R, string>>(mapping)) {
+      const terms = mapping.fields.map(extractField(record))
+      return { indexId: meta.$indexId, encodedTerms: indexMatch(terms) }
+    }
+
+    return unreachable("Internal error: unreachable code reached")
   })
 
   return Promise.resolve({
