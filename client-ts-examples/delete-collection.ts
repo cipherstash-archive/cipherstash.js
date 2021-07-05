@@ -1,9 +1,9 @@
-import { Session  } from "@cipherstash/client-ts"
+import { Stash  } from "@cipherstash/client-ts"
 
 async function deleteCollection() {
   try {
-    const session = await Session.connect(Session.loadConfigFromEnv())
-    await session.deleteCollection("employees")
+    const stash = await Stash.connect(Stash.loadConfigFromEnv())
+    await stash.deleteCollection("employees")
     console.log(`Collection "employees" deleted`)
   } catch (err) {
     console.error(`Could not delete collection! Reason: ${JSON.stringify(err)}`)

@@ -8,7 +8,7 @@ import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
 
 import { CollectionProxy } from './collection-proxy'
 import { idBufferToString, makeRef, refBufferToString } from './utils'
-import { loadConfigFromEnv, SessionConfig } from './session-config'
+import { loadConfigFromEnv, StashConfig } from './session-config'
 
 /**
  * Represents an authenticated session to a CipherStash instance.
@@ -18,7 +18,7 @@ import { loadConfigFromEnv, SessionConfig } from './session-config'
  * TODO: extract the GRPC-message-munging code into helpers in the `src/grpc`
  * directory.
  */
-export class Session {
+export class Stash {
   readonly cipherSuite: CipherSuite
   readonly stub: V1.APIClient 
   readonly clusterId: string
@@ -36,15 +36,15 @@ export class Session {
     this.#authToken = authToken
   }
 
-  public static loadConfigFromEnv(): SessionConfig {
+  public static loadConfigFromEnv(): StashConfig {
     return loadConfigFromEnv()
   }
 
-  public static async connect(config: SessionConfig): Promise<Session> {
+  public static async connect(config: StashConfig): Promise<Stash> {
     const authToken = new AuthToken(config.idpHost, config.clientCredentials, config.federationConfig)
     try {
       await authToken.getToken(config.clusterId)
-      return new Session(V1.connect(config.serviceFqdn), config.clusterId, authToken, config.cmk)
+      return new Stash(V1.connect(config.serviceFqdn), config.clusterId, authToken, config.cmk)
     } catch (err) {
       return Promise.reject(err)
     }

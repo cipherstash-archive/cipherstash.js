@@ -1,4 +1,4 @@
-export type SessionConfig = {
+export type StashConfig = {
   readonly idpHost: string,
   readonly clientCredentials: {
     readonly clientSecret: string
@@ -13,7 +13,7 @@ export type SessionConfig = {
   readonly clusterId: string
 }
 
-export function loadConfigFromEnv(): SessionConfig {
+export function loadConfigFromEnv(): StashConfig {
   return {
     idpHost: getVar('CS_IDP_HOST'),
     clientCredentials: {
