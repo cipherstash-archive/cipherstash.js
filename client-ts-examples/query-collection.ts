@@ -43,6 +43,22 @@ async function queryCollection() {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
 
+    queryResult = await employees.all($ =>
+      $.dateOfBirth.between(
+        new Date(Date.parse("1852-11-27")),
+        new Date(Date.parse("1917-12-09"))
+      ),
+      { aggregation: [{ ofIndex: "dateOfBirth", aggregate: "count" }]}
+    )
+
+    if (queryResult.aggregates.length == 1 &&
+        queryResult.aggregates[0]!.name == "count" &&
+        queryResult.aggregates[0]!.value == 3n) {
+      console.log("☑️  Successfully queried using an `aggregate` query option!")
+    } else {
+      console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
+    }
+
   } catch (err) {
     console.error(`Could not query collection! Reason: ${JSON.stringify(err)}`)
   }
