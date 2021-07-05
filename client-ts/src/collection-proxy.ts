@@ -2,7 +2,7 @@ import { Collection } from "./collection"
 import { StashRecord, Mappings, NewStashRecord, MappingsMeta } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { analyzeRecord } from "./indexer"
-import { Session } from "./session"
+import { Stash } from "./stash"
 import { idStringToBuffer, makeId } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToUserRecords, convertQueryToContraints } from "./grpc/query-helper"
@@ -15,12 +15,12 @@ import { convertQueryReplyToUserRecords, convertQueryToContraints } from "./grpc
 export class CollectionProxy<R extends StashRecord, M extends Mappings<R>> {
 
   private constructor(
-    private readonly session: Session,
+    private readonly session: Stash,
     private readonly collection: Collection<R, M>,
   ) { }
 
   static async proxy<R extends StashRecord, M extends Mappings<R>>(
-    session: Session,
+    session: Stash,
     collection: Collection<R, M>
   ): Promise<CollectionProxy<R, M>> {
     return new CollectionProxy<R, M>(
