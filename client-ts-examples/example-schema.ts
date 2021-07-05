@@ -1,4 +1,4 @@
-import { Collection, downcase, ngram, standardTokenizer } from "../client-ts/dist"
+import { Collection, downcase, ngram, standard } from "@cipherstash/client-ts"
 
 export type Employee = {
   id: string,
@@ -14,6 +14,6 @@ export const employeeSchema = Collection.define<Employee>("employees")(mapping =
   dateOfBirth: mapping.Range("dateOfBirth"),
   jobTitle: mapping.Match(["jobTitle"], {
     tokenFilters: [downcase, ngram({ tokenLength: 5 })],
-    tokenizer: standardTokenizer({ tokenLength: 20 })
+    tokenizer: standard
   })
 }))
