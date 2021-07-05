@@ -80,24 +80,38 @@ export class CollectionProxy<R extends StashRecord, M extends Mappings<R>> {
     })
   }
 
-  public all(callback: (where: QueryBuilder<R, M>) => Query<R, M>, limit: number): Promise<Array<R>> {
+  public all(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R>> {
+    const options = queryOptions ? queryOptions : {}
     return new Promise(async (resolve, reject) => {
       this.session.stub.query({
         context: { authToken: await this.session.refreshToken() },
         collectionId: idStringToBuffer(this.collection.id),
         query: {
-          limit,
+          limit: options.limit,
           constraints: convertQueryToContraints<R, M, Query<R, M>, MappingsMeta<M>>(
             callback(this.collection.makeQueryBuilder()),
             this.collection.mappingsMeta
           ),
-          // TODO: aggregates: aggregates,
-          // TODO: skipResults: skipResultsFlag
-          // TODO: pagination
+          aggregates: options.aggregation ? options.aggregation.map(a => ({
+            indexId: this.collection.mappingsMeta[a.ofIndex]!.$indexId,
+            type: a.aggregate
+          })) : undefined,
+          skipResults: typeof options.skipResults == "boolean" ? options.skipResults : false,
+          offset: options.offset,
+          ordering: options.order ? options.order.map(o => ({
+            indexId: this.collection.mappingsMeta[o.byIndex]!.$indexId,
+            direction: o.direction
+          })) : undefined
         }
       }, async (err, res) => {
         if (err) { reject(err) }
-        resolve(await convertQueryReplyToUserRecords<R>(res!, this.session.cipherSuite))
+        resolve({
+          documents: await convertQueryReplyToUserRecords<R>(res!, this.session.cipherSuite),
+          aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
+            name: agg.name! as Aggregate,
+            value: BigInt(agg.value!.toString())
+          })) : []
+        })
       })
     })
   }
@@ -105,4 +119,46 @@ export class CollectionProxy<R extends StashRecord, M extends Mappings<R>> {
   public delete(_id: string): Promise<string> {
     return Promise.reject("Not implemented: delete record by ID")
   }
+}
+
+export type QueryResult<R> = {
+  documents: Array<R>,
+  aggregates: Array<AggregateResult>
+}
+
+export type AggregateResult = {
+  name: Aggregate,
+  value: bigint
+}
+
+export type AggregationOptions<
+  R extends StashRecord,
+  M extends Mappings<R>
+> = {
+  ofIndex: Extract<keyof M, string> 
+  aggregate: Aggregate
+}
+
+// Count is the only aggregate operation we support right now.
+export type Aggregate = "count"
+
+export type OrderingOptions<
+  R extends StashRecord,
+  M extends Mappings<R>
+> = {
+  byIndex: Extract<keyof M, string>
+  direction: Ordering
+}
+
+export type Ordering = "ASC" | "DESC"
+
+export type QueryOptions<
+  R extends StashRecord,
+  M extends Mappings<R>
+> = {
+  aggregation?: Array<AggregationOptions<R, M>>
+  order?: Array<OrderingOptions<R, M>>
+  offset?: number,
+  limit?: number
+  skipResults?: boolean
 }

@@ -1,5 +1,5 @@
 import { Collection } from './collection'
-import { downcaseFilterDefinition, ngramTokenizerDefinition, standardTokenizerDefinition } from './dsl/filters-and-tokenizers-dsl'
+import { downcase, ngram, standard } from './dsl/filters-and-tokenizers-dsl'
 import { all } from './dsl/query-dsl'
 
 type PatientRecord = {
@@ -33,8 +33,8 @@ let collection = Collection.define<PatientRecord>("patients")(mapping => ({
   expired: mapping.Exact("expired"),
   city: mapping.Exact("address.city"),
   notesAndDescription: mapping.Match(["notes", "description"], {
-    tokenFilters: [downcaseFilterDefinition, ngramTokenizerDefinition({ tokenLength: 3 })],
-    tokenizer: standardTokenizerDefinition
+    tokenFilters: [downcase, ngram({ tokenLength: 3 })],
+    tokenizer: standard
   })
 })).toCollection()
 
