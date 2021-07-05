@@ -1,10 +1,10 @@
-import { Session  } from "@cipherstash/client-ts"
+import { Stash } from "@cipherstash/client-ts"
 import { employeeSchema } from "./example-schema"
 
 async function insertRecords() {
   try {
-    const session = await Session.connect(Session.loadConfigFromEnv())
-    const employees = await session.loadCollection(employeeSchema)
+    const stash = await Stash.connect(Stash.loadConfigFromEnv())
+    const employees = await stash.loadCollection(employeeSchema)
     console.log(`Collection "${employees.name}" loaded`)
 
     await employees.put({

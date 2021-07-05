@@ -1,10 +1,10 @@
-import { Session } from "@cipherstash/client-ts"
+import { Stash } from "@cipherstash/client-ts"
 import { employeeSchema } from "./example-schema";
 
 async function queryCollection() {
   try {
-    const session = await Session.connect(Session.loadConfigFromEnv())
-    const employees = await session.loadCollection(employeeSchema)
+    const stash = await Stash.connect(Stash.loadConfigFromEnv())
+    const employees = await stash.loadCollection(employeeSchema)
 
     let queryResult = await employees.all($ => $.email.eq("ada@security4u.example"))
 
