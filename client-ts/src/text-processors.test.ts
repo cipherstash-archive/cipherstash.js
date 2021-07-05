@@ -10,7 +10,7 @@ describe("tokenizers & filters", () => {
 
   describe("standard tokenizer", () => {
     it("produces tokens", () => {
-      let tokenizer = standardTokenizer({ tokenLength: 10 })
+      let tokenizer = standardTokenizer
       expect(tokenizer(["Hello from Ada Lovelace"])).toStrictEqual(['Hello', 'from', 'Ada', 'Lovelace'])
     })
   })
