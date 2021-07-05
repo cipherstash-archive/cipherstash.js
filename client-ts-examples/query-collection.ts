@@ -28,6 +28,21 @@ async function queryCollection() {
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
+    
+    queryResult = await employees.all($ =>
+      $.dateOfBirth.between(
+        new Date(Date.parse("1852-11-27")),
+        new Date(Date.parse("1917-12-09"))
+      ),
+      { limit: 1 }
+    )
+
+    if (queryResult.documents.length == 1) {
+      console.log("☑️  Successfully queried using a `limit` query option!")
+    } else {
+      console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
+    }
+
   } catch (err) {
     console.error(`Could not query collection! Reason: ${JSON.stringify(err)}`)
   }
