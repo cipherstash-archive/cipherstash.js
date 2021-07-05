@@ -1,13 +1,13 @@
-import  { NgramTokenizerConfig, StandardTokenizerConfig } from './dsl/filters-and-tokenizers-dsl'
+import  { NgramTokenizerConfig } from './dsl/filters-and-tokenizers-dsl'
 
 /**
  * All filters and tokenizers implement the following type.
  */
 export type TextProcessor = (input: Array<string>) => Array<string>
 
-export const standardTokenizer =
-  (_config: StandardTokenizerConfig): TextProcessor =>
-    input => input.flatMap(t => t.split(/[ ,;:!]/))
+
+export const standardTokenizer: TextProcessor =
+  input => input.flatMap(t => t.split(/[ ,;:!]/))
 
 export const ngramsTokenizer =
   (config: NgramTokenizerConfig): TextProcessor =>

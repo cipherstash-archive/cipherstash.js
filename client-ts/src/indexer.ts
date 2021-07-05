@@ -1,6 +1,8 @@
 import { Collection } from "./collection";
-import { StashRecord, Mappings, MappingsMeta, MappableFieldType, isExactMapping, isRangeMapping, RangeMappingFieldType, isMatchMapping, ExactMappingFieldType, MatchMappingFieldType } from "./dsl/mappings-dsl";
+import { TokenFilter, Tokenizer } from "./dsl/filters-and-tokenizers-dsl";
+import { StashRecord, Mappings, MappingsMeta, MappableFieldType, isExactMapping, isRangeMapping, RangeMappingFieldType, isMatchMapping, ExactMappingFieldType, MatchMappingFieldType, MatchOptions } from "./dsl/mappings-dsl";
 import { encodeEquatable, encodeOrderable } from "./encoders/term-encoder";
+import { downcaseFilter, ngramsTokenizer, standardTokenizer, textPipeline, TextProcessor, upcaseFilter } from "./text-processors";
 import { FieldOfType, FieldType, isFieldDotField, unreachable } from "./type-utils";
 
 export type AnalyzedRecord<
@@ -14,6 +16,17 @@ export type AnalyzedRecord<
   }
 }
 
+/**
+ * Generates the index entries for a record in order to make it searchable.
+ * 
+ * TODO: this function performs a lot of work per-record that should be only
+ * performed once per collection. Consider generating an analyzeRecord function
+ * once.
+ * 
+ * @param collection the collection that the record belongs to
+ * @param record the record to analyze
+ * @returns an AnalyzedRecord (wrapped in a Promise)
+ */
 export async function analyzeRecord<
   R extends StashRecord,
   M extends Mappings<R>,
@@ -37,10 +50,11 @@ export async function analyzeRecord<
 
     if (isMatchMapping<R, FieldOfType<R, MatchMappingFieldType>>(mapping)) {
       const terms = mapping.fields.map(extractField(record))
-      return { indexId: meta.$indexId, encodedTerms: indexMatch(terms) }
+      const pipeline = buildTextProcessingPipeline(mapping.options)
+      return { indexId: meta.$indexId, encodedTerms: indexMatch(pipeline(terms)) }
     }
 
-    return unreachable("Internal error: unreachable code reached")
+    return unreachable(`Internal error: unreachable code reached. Unknown mapping: ${JSON.stringify(mapping)}`)
   })
 
   return Promise.resolve({
@@ -68,11 +82,28 @@ const extractFieldRecursive: <
   }
 }
 
-const indexExact: <T extends MappableFieldType>(term: T) => Array<bigint>
-  = (term) => [encodeEquatable(term).equatable]
+const indexExact: <T extends ExactMappingFieldType>(term: T) => Array<bigint>
+  = term =>
+    [ encodeEquatable(term).equatable ]
 
-const indexRange: <T extends number | bigint | boolean | Date>(term: T) => Array<bigint>
-  = (term) => [encodeOrderable(term).orderable]
+const indexRange: <T extends RangeMappingFieldType>(term: T) => Array<bigint>
+  = term =>
+    [ encodeOrderable(term).orderable ]
 
-const indexMatch: (terms: Array<string>) => Array<bigint>
-  = (terms) => terms.map(t => encodeEquatable(t).equatable)
+const indexMatch: (terms: Array<MatchMappingFieldType>) => Array<bigint> = terms => { 
+  return terms.map(t => encodeEquatable(t).equatable)
+}
+
+const buildTextProcessingPipeline: (options: MatchOptions) => TextProcessor = options => {
+  let pipeline: Array<TextProcessor> = options.tokenFilters.map(loadTextProcessor).concat([loadTextProcessor(options.tokenizer)])
+  return textPipeline(pipeline)
+}
+
+const loadTextProcessor = (filter: TokenFilter | Tokenizer): TextProcessor => {
+  switch (filter.processor) {
+    case "standard": return standardTokenizer
+    case "ngram": return ngramsTokenizer({ tokenLength: filter.tokenLength })
+    case "downcase": return downcaseFilter
+    case "upcase": return upcaseFilter
+  }
+}

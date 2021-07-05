@@ -74,7 +74,8 @@ export type MatchMapping<
   F extends FieldOfType<R, MatchMappingFieldType>
 >  = {
   matcher: "match",
-  fields: Array<F>
+  fields: Array<F>,
+  options: MatchOptions
 }
 
 /**
@@ -185,7 +186,7 @@ export function makeRangeFn<R extends StashRecord>(): RangeFn<R> {
 }
 
 export type MatchOptions = {
-  tokenFilters?: Array<TokenFilter>
+  tokenFilters: Array<TokenFilter | Tokenizer>
   tokenizer: Tokenizer
 }
 
@@ -193,7 +194,7 @@ export type MatchFn<R extends StashRecord> =
   <F extends FieldOfType<R, MatchMappingFieldType>>(field: Array<F>, options: MatchOptions) => MatchMapping<R, F> 
 
 export function makeMatchFn<R extends StashRecord>(): MatchFn<R> {
-  return (fields, options) => ({ matcher: "match", fields, ...options }) 
+  return (fields, options) => ({ matcher: "match", fields, options }) 
 }
 
 export type MappingsDSL<R extends StashRecord> = {
