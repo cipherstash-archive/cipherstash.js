@@ -59,7 +59,7 @@ export class AuthToken {
           expiresAt: Math.trunc((new Date()).getTime() / 1000) + expires_in - EXPIRY_BUFFER
         }
         /* Federate the token if configured */
-        this.federateToken(access_token)
+        await this.federateToken(access_token)
       } catch (err) {
         return Promise.reject(err)
       }
@@ -73,23 +73,25 @@ export class AuthToken {
    *
    * See https://docs.aws.amazon.com/cognito/latest/developerguide/open-id.html
    */
-  federateToken(accessToken: string) {
+  federateToken(accessToken: string): Promise<void> {
     if (this.federation) {
-      const { IdentityPoolId, region } = this.federation
+      return new Promise((resolve, reject) => {
+        const { IdentityPoolId, region } = this.federation
 
-      AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-        IdentityPoolId,
-        Logins: {
-          [this.idpHost]: accessToken
-        }
-      }, {region})
+        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+          IdentityPoolId,
+          Logins: {
+            [this.idpHost]: accessToken
+          }
+        }, {region})
 
-      AWS.config.getCredentials((err) => {
-        // TODO: Use a custom exception to make it easier to identify
-        if (err) {
-          throw err
-        }
+        AWS.config.getCredentials((err) => {
+          if (err) reject(err)
+          resolve(undefined)
+        })
       })
+    } else {
+      return Promise.resolve(undefined)
     }
   }
 
