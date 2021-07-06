@@ -1,4 +1,4 @@
-import { Collection, downcase, ngram, standard } from "@cipherstash/client-ts"
+import { CollectionSchema, downcase, ngram, standard } from "@cipherstash/client-ts"
 
 export type Employee = {
   id: string,
@@ -9,7 +9,7 @@ export type Employee = {
   grossSalary: bigint 
 }
 
-export const employeeSchema = Collection.define<Employee>("employees")(mapping => ({
+export const employeeSchema = CollectionSchema.define<Employee>("employees")(mapping => ({
   email: mapping.Exact("email"),
   dateOfBirth: mapping.Range("dateOfBirth"),
   jobTitle: mapping.Match(["jobTitle"], {
