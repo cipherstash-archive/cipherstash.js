@@ -1,94 +1,160 @@
-import { CollectionDefinition } from "./collection-definition"
-import { makeMappingsDSL, Mappings, MappingsDSL, MappingsMeta, StashRecord, MappingOn } from "./dsl/mappings-dsl"
-import { operators,  OperatorsForIndex,  Query, QueryBuilder } from "./dsl/query-dsl"
+import { StashRecord, Mappings, NewStashRecord, MappingsMeta } from "./dsl/mappings-dsl"
+import { Query, QueryBuilder } from "./dsl/query-dsl"
+import { analyzeRecord } from "./indexer"
+import { Stash } from "./stash"
+import { idStringToBuffer, makeId } from "./utils"
+import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
+import { convertQueryReplyToUserRecords, convertQueryToContraints } from "./grpc/query-helper"
+import { CollectionSchema } from "./collection-schema"
 
 /**
- * Represents a persisted collection of records that can be queried & updated.
+ * A CollectionProxy represents a connection to an underlying Collection.
  * 
- * A Collection is parameterised by the user-defined type R and Mappings on that
- * type.
+ * All methods of manipulating and interacting with a Collection can be found here.
  */
-export class Collection<R extends StashRecord, M extends Mappings<R>> {
-  /**
-   * Constructs a new Collection
-   * 
-   * Do not call this directly, use `Collection.define(<name>)(<callback>) instead.
-   * 
-   * @access private
-   */
-  constructor(
+export class Collection<
+  R extends StashRecord,
+  M extends Mappings<R>,
+  MM extends MappingsMeta<M>
+> {
+
+  public constructor(
+    private readonly stash: Stash,
     public readonly id: string,
     public readonly ref: string,
-    public readonly name: string,
-    public readonly mappings: M,
-    public readonly mappingsMeta: MappingsMeta<M>
-  ) {}
+    public readonly schema: CollectionSchema<R, M, MM>,
+  ) { }
 
-  /**
-   * Defines a named Collection.
-   * 
-   * @param name the name of the collection
-   * @returns a function that when invoked will be passed a MappingsDSL tailored
-   *          to the specific StashRecord user type and return a CollectionDefinition
-   *          instance.
-   */
-  public static define<R extends StashRecord>(name: string) {
-    return <
-      M extends Mappings<R>,
-      MM extends MappingsMeta<M>
-    >(
-      callback: (define: MappingsDSL<R>) => M
-    ) => {
-      return new CollectionDefinition<R, M, MM>(
-        name,
-        callback(makeMappingsDSL<R>())
-      )
-    }
+  public get name() {
+    return this.schema.name
   }
 
-  /**
-   * Builds a Query that can be later executed.
-   * 
-   * @param callback a user-supplied callback that can build a Query using the query DSL.
-   * @returns a Query object
-   */
-  public buildQuery(callback: QueryBuilderCallback<R, M>): Query<R, M>  {
-    return callback(this.makeQueryBuilder())
+  public get query() {
+    return this.schema.buildQuery
   }
 
-  /**
-   * Returns a QueryBuilder tailored to the Mappings defined on this Collection.
-   */
-  public makeQueryBuilder(): QueryBuilder<R, M> {
-    const entries = Object.entries(this.mappings) as [Extract<keyof M, string>, MappingOn<R>][]
-    return Object.fromEntries(
-      entries.map(
-        ([key, mapping]) => [key, this.operatorsFor(key, mapping)]
-      )
-    ) as any // FIXME: this is a type hack
+  public async get(id: string): Promise<R | null> { 
+    return new Promise((resolve, reject) => {
+      this.stash.stub.get({
+        collectionId: this.ref,
+        id: idStringToBuffer(id)
+      }, (err, res) => {
+        if (err) { reject(err) }
+        if (res!.source) {
+          resolve(this.stash.cipherSuite.decrypt(res!.source!.source!))
+        } else {
+          resolve(null)
+        }
+      })
+    })
   }
 
-  /**
-   * Returns an Operators object containing operator functions for the specified
-   * index name and Mapping.
-   */
-  private operatorsFor<
-    MO extends MappingOn<R>,
-    N extends Extract<keyof M, string>
-  >(
-    indexName: N,
-    mapping: MO
-  ): OperatorsForIndex<R, M, N> {
-    switch (mapping.matcher) {
-      case "exact": return operators.exact(indexName) as OperatorsForIndex<R, M, N>
-      case "range": return operators.range(indexName) as OperatorsForIndex<R, M, N>
-      case "match": return operators.match(indexName) as OperatorsForIndex<R, M, N>
-    }
+  public async put(doc: NewStashRecord<R>): Promise<string> {
+    return new Promise(async (resolve, reject) => {
+      const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
+      const docWithId: R = {
+        ...doc,
+        id: docId,
+      } as R // TODO: figure out why I need to do this
+      this.stash.stub.put({
+        context: { authToken: await this.stash.refreshToken() },
+        collectionId: idStringToBuffer(this.id),
+        vectors: convertAnalyzedRecordToVectors(
+          await analyzeRecord(this, docWithId),
+          this.schema.meta
+        ),
+        source: {
+          id: docId,
+          source: (await this.stash.cipherSuite.encrypt(docWithId)).result
+        },
+      }, (err, _res) => {
+        if (err) { reject(err) }
+        // TODO we should return the doc ID from the response but `put` does not
+        // yet return an ID at the GRPC level.
+        resolve(docId.toString('hex'))
+      })
+    })
+  }
+
+  public all(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R>> {
+    const options = queryOptions ? queryOptions : {}
+    return new Promise(async (resolve, reject) => {
+      this.stash.stub.query({
+        context: { authToken: await this.stash.refreshToken() },
+        collectionId: idStringToBuffer(this.id),
+        query: {
+          limit: options.limit,
+          constraints: convertQueryToContraints<R, M, Query<R, M>, MappingsMeta<M>>(
+            callback(this.schema.makeQueryBuilder()),
+            this.schema.meta
+          ),
+          aggregates: options.aggregation ? options.aggregation.map(a => ({
+            indexId: this.schema.meta[a.ofIndex]!.$indexId,
+            type: a.aggregate
+          })) : undefined,
+          skipResults: typeof options.skipResults == "boolean" ? options.skipResults : false,
+          offset: options.offset,
+          ordering: options.order ? options.order.map(o => ({
+            indexId: this.schema.meta[o.byIndex]!.$indexId,
+            direction: o.direction
+          })) : undefined
+        }
+      }, async (err, res) => {
+        if (err) { reject(err) }
+        resolve({
+          documents: await convertQueryReplyToUserRecords<R>(res!, this.stash.cipherSuite),
+          aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
+            name: agg.name! as Aggregate,
+            value: BigInt(agg.value!.toString())
+          })) : []
+        })
+      })
+    })
+  }
+
+  public delete(_id: string): Promise<string> {
+    return Promise.reject("Not implemented: delete record by ID")
   }
 }
 
-export type QueryBuilderCallback<
+export type QueryResult<R> = {
+  documents: Array<R>,
+  aggregates: Array<AggregateResult>
+}
+
+export type AggregateResult = {
+  name: Aggregate,
+  value: bigint
+}
+
+export type AggregationOptions<
   R extends StashRecord,
   M extends Mappings<R>
-> =
-  ($: QueryBuilder<R, M>) => Query<R, M>
+> = {
+  ofIndex: Extract<keyof M, string> 
+  aggregate: Aggregate
+}
+
+// Count is the only aggregate operation we support right now.
+export type Aggregate = "count"
+
+export type OrderingOptions<
+  R extends StashRecord,
+  M extends Mappings<R>
+> = {
+  byIndex: Extract<keyof M, string>
+  direction: Ordering
+}
+
+export type Ordering = "ASC" | "DESC"
+
+export type QueryOptions<
+  R extends StashRecord,
+  M extends Mappings<R>
+> = {
+  aggregation?: Array<AggregationOptions<R, M>>
+  order?: Array<OrderingOptions<R, M>>
+  offset?: number,
+  limit?: number
+  skipResults?: boolean
+}
