@@ -25,7 +25,7 @@ export class CollectionSchema<
 
   /**
    * Defines a named Collection.
-   * 
+   *
    * @param name the name of the collection
    * @returns a function that when invoked will be passed a MappingsDSL tailored
    *          to the specific StashRecord user type and return a CollectionDefinition
@@ -48,7 +48,7 @@ export class CollectionSchema<
               $indexName: indexName,
               $indexId: makeId().toString('hex'),
               $prf: crypto.randomBytes(16),
-              $prp: crypto.randomBytes(16) 
+              $prp: crypto.randomBytes(16)
             }
           ]
         })) as MM
@@ -58,7 +58,7 @@ export class CollectionSchema<
 
   /**
    * Builds a Query that can be later executed.
-   * 
+   *
    * @param callback a user-supplied callback that can build a Query using the query DSL.
    * @returns a Query object
    */
@@ -93,6 +93,8 @@ export class CollectionSchema<
       case "exact": return operators.exact(indexName) as OperatorsForIndex<R, M, N>
       case "range": return operators.range(indexName) as OperatorsForIndex<R, M, N>
       case "match": return operators.match(indexName) as OperatorsForIndex<R, M, N>
+      case "dynamic-match": return operators.dynamicMatch(indexName) as OperatorsForIndex<R, M, N>
+      case "dynamic-match-scoped": return operators.scopedDynamicMatch(indexName) as OperatorsForIndex<R, M, N>
     }
   }
 }

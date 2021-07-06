@@ -35,6 +35,14 @@ let schema = CollectionSchema.define<PatientRecord>("patients")(mapping => ({
   notesAndDescription: mapping.Match(["notes", "description"], {
     tokenFilters: [downcase, ngram({ tokenLength: 3 })],
     tokenizer: standard
+  }),
+  allStringFields1: mapping.DynamicMatch({
+    tokenFilters: [downcase, ngram({ tokenLength: 3 })],
+    tokenizer: standard
+  }),
+  allStringFields2: mapping.ScopedDynamicMatch({
+    tokenFilters: [downcase, ngram({ tokenLength: 3 })],
+    tokenizer: standard
   })
 }))
 
@@ -109,12 +117,22 @@ describe('CollectionSchema', () => {
         let query = schema.buildQuery($ => $.notesAndDescription.match("diabetes"))
         expect(query).toStrictEqual({ kind: "match", op: "match", indexName: "notesAndDescription", value: "diabetes" })
       })
+
+      test('dynamic match mapping without search by field', () => {
+        let query = schema.buildQuery($ => $.allStringFields1.match("London"))
+        expect(query).toStrictEqual({ kind: "dynamic-match", op: "match", indexName: "allStringFields1", value: "London" })
+      })
+
+      test('dynamic match mapping with search by field', () => {
+        let query = schema.buildQuery($ => $.allStringFields2.match("address.city", "London"))
+        expect(query).toStrictEqual({ kind: "dynamic-match", op: "match-on-field", indexName: "allStringFields2", fieldName: "address.city", value: "London" })
+      })
     })
 
     describe('conjunctive queries', () => {
       test('all (logical and)', () => {
         let query = schema.buildQuery($ => all($.expired.eq(true), $.notesAndDescription.match('diabetes')))
-        expect(query).toStrictEqual({ 
+        expect(query).toStrictEqual({
           kind: "all",
           conditions: [
             { indexName: "expired", kind: "exact", op: "eq", value: true },
