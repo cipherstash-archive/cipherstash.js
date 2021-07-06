@@ -1,14 +1,13 @@
 import { V1 } from '@cipherstash/grpc'
 
 import { CipherSuite, makeCipherSuite } from './crypto/cipher'
-import { Collection } from './collection'
-import { CollectionDefinition } from './collection-definition'
+import { CollectionSchema } from './collection-schema'
 import { AuthToken } from './auth-token'
 import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
 
-import { CollectionProxy } from './collection-proxy'
+import { Collection } from './collection'
 import { idBufferToString, makeRef, refBufferToString } from './utils'
-import { loadConfigFromEnv, StashConfig } from './session-config'
+import { loadConfigFromEnv, StashConfig } from './stash-config'
 
 /**
  * Represents an authenticated session to a CipherStash instance.
@@ -54,9 +53,13 @@ export class Stash {
     this.stub.close()
   }
 
-  public async createCollection<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>>(
-    definition: CollectionDefinition<R, M, MM>
-  ): Promise<CollectionProxy<R, M>> {
+  public async createCollection<
+    R extends StashRecord,
+    M extends Mappings<R>,
+    MM extends MappingsMeta<M>
+  >(
+    definition: CollectionSchema<R, M, MM>
+  ): Promise<Collection<R, M, MM>> {
 
     return new Promise(async (resolve, reject) => {
       const request: V1.CreateRequestInput = {
@@ -67,12 +70,7 @@ export class Stash {
 
       this.stub.createCollection(request, async (err, res) => {
         if (err) { reject(err) }
-        resolve(
-          CollectionProxy.proxy(
-            this,
-            await this.unpackCollection<R, M, MM>(definition.name, res!)
-          )
-        )
+        resolve(await this.unpackCollection<R, M, MM>(definition.name, res!))
       })
     })
   }
@@ -82,8 +80,8 @@ export class Stash {
     M extends Mappings<R>,
     MM extends MappingsMeta<M>
   >(
-    definition: CollectionDefinition<R, M, MM>
-  ): Promise<CollectionProxy<R, M>> {
+    definition: CollectionSchema<R, M, MM>
+  ): Promise<Collection<R, M, MM>> {
     return new Promise(async (resolve, reject) => {
       const ref = await makeRef(definition.name, this.clusterId)
       this.stub.collectionInfo({
@@ -91,12 +89,7 @@ export class Stash {
         ref
       }, async (err, res) => {
         if (err) { reject(err) }
-        resolve(
-          CollectionProxy.proxy(
-            this,
-            await this.unpackCollection<R, M, MM>(definition.name, res!)
-          )
-        )
+        resolve(await this.unpackCollection<R, M, MM>(definition.name, res!))
       })
     })
   }
@@ -123,7 +116,7 @@ export class Stash {
   >(
     collectionName: string,
     infoReply: V1.InfoReplyOutput
-  ): Promise<Collection<R, M>> {
+  ): Promise<Collection<R, M, MM>> {
     const { id, indexes: encryptedMappings } = infoReply
     const storedMappings = await this.decryptMappings(encryptedMappings!)
 
@@ -139,12 +132,11 @@ export class Stash {
     }))
 
     return Promise.resolve(
-      new Collection<R, M>(
+      new Collection<R, M, MM>(
+        this,
         idBufferToString(id!),
         refBufferToString(infoReply.ref!),
-        collectionName,
-        mappings,
-        meta
+        new CollectionSchema(collectionName, mappings, meta)
       )
     )
   }
@@ -173,7 +165,7 @@ export class Stash {
     M extends Mappings<R>,
     MM extends MappingsMeta<M>
   >(
-    definition: CollectionDefinition<R, M, MM>
+    definition: CollectionSchema<R, M, MM>
   ): Promise<Array<V1.IndexInput>> {
 
     const encryptedIndexes = await Promise.all(Object.entries(definition.mappings).map(async ([indexName, mapping]) => {

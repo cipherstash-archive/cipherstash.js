@@ -32,11 +32,11 @@ export async function analyzeRecord<
   M extends Mappings<R>,
   MM extends MappingsMeta<M>
 >(
-  collection: Collection<R, M>,
+  collection: Collection<R, M, MM>,
   record: R
 ): Promise<AnalyzedRecord<R, M, MM>> {
-  const indices = Object.entries(collection.mappings).map(([indexName, mapping]) => {
-    const meta = collection.mappingsMeta[indexName]!
+  const indices = Object.entries(collection.schema.mappings).map(([indexName, mapping]) => {
+    const meta = collection.schema.meta[indexName]!
 
     if (isExactMapping<R, FieldOfType<R, ExactMappingFieldType>>(mapping)) {
       const term = extractField(record)(mapping.field)
