@@ -1,4 +1,4 @@
-import { V1 } from "@cipherstash/grpc";
+import { V1 } from "@cipherstash/stashjs-grpc";
 import { CipherSuite } from "../crypto/cipher";
 import { oreEncryptTermToBuffer } from "../crypto/ore";
 import { StashRecord, Mappings, MappingsMeta } from "../dsl/mappings-dsl"

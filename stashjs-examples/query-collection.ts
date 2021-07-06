@@ -1,4 +1,4 @@
-import { Stash } from "@cipherstash/client-ts"
+import { Stash } from "@cipherstash/stashjs"
 import { employeeSchema } from "./example-schema";
 
 async function queryCollection() {
