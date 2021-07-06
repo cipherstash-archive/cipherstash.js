@@ -79,7 +79,33 @@ export type MatchMapping<
 }
 
 /**
- * Guard function to check for exact mappings 
+ * A dynamic version of match mapping. This mapping matches all string fields in
+ * a document, regardless of depth. All of the terms will be run through the
+ * same text preprocessing pipeline and all terms will be stored in the same
+ * index.
+ *
+ * Every term is first siphashed and then ORE encrypted.
+ */
+export type DynamicMatchMapping = {
+  matcher: "dynamic-match",
+  options: MatchOptions
+}
+
+/**
+ * A dynamic version of match mapping. This mapping matches all string fields in
+ * a document, regardless of depth. All of the terms will be run through the
+ * same text preprocessing pipeline and all terms will be stored in the same
+ * index.
+ *
+ * Every term is first siphashed and then ORE encrypted.
+ */
+export type ScopedDynamicMatchMapping = {
+  matcher: "dynamic-match-scoped",
+  options: MatchOptions
+}
+
+/**
+ * Guard function to check for exact mappings
  */
 export function isExactMapping<
   R extends StashRecord,
@@ -91,7 +117,7 @@ export function isExactMapping<
 }
 
 /**
- * Guard function to check for range mappings 
+ * Guard function to check for range mappings
  */
 export function isRangeMapping<
   R extends StashRecord,
@@ -103,7 +129,7 @@ export function isRangeMapping<
 }
 
 /**
- * Guard function to check for match mappings 
+ * Guard function to check for match mappings
  */
 export function isMatchMapping<
   R extends StashRecord,
@@ -115,12 +141,32 @@ export function isMatchMapping<
 }
 
 /**
+ * Guard function to check for dynamic match mappings
+ */
+export function isDynamicMatchMapping(
+    mapping: any
+  ): mapping is DynamicMatchMapping {
+  return mapping.matcher == "dynamic-match"
+}
+
+/**
+ * Guard function to check for dynamic match mappings
+ */
+export function isScopedDynamicMatchMapping(
+    mapping: any
+  ): mapping is ScopedDynamicMatchMapping {
+  return mapping.matcher == "dynamic-match-scoped"
+}
+
+/**
  * This type represents all of the kinds of permitted mapping types allowed on a record.
  */
 export type MappingOn<R extends StashRecord> =
   | ExactMapping<R, FieldOfType<R, ExactMappingFieldType>>
   | RangeMapping<R, FieldOfType<R, RangeMappingFieldType>>
   | MatchMapping<R, FieldOfType<R, MatchMappingFieldType>>
+  | DynamicMatchMapping
+  | ScopedDynamicMatchMapping
 
 /**
  * This type represents an object whose keys are the name of the index being
@@ -140,6 +186,8 @@ export type FieldTypeOfMapping<R extends StashRecord, M extends MappingOn<R>> =
   M extends ExactMapping<R, infer FOT> ? FieldType<R, FOT>
   : M extends RangeMapping<R, infer FOT> ? FieldType<R, FOT>
   : M extends MatchMapping<R, infer FOT> ? FieldType<R, FOT>
+  : M extends DynamicMatchMapping ? MatchMappingFieldType
+  : M extends ScopedDynamicMatchMapping ? MatchMappingFieldType
   : never
 
 /**
@@ -159,30 +207,30 @@ export type MappingsMeta<M> =
       $indexName: string,
       $indexId: EncryptedIndexId,
       $prf: Buffer,
-      $prp: Buffer 
-    } 
+      $prp: Buffer
+    }
   } : never
 
 // TODO: support options for string (token filters etc)
 // TODO: support options for date (resolution etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
 type ExactFn<R extends StashRecord> =
-  <F extends FieldOfType<R, ExactMappingFieldType>>(field: F) => ExactMapping<R, F> 
+  <F extends FieldOfType<R, ExactMappingFieldType>>(field: F) => ExactMapping<R, F>
 
 // TODO: support options for string (token filters etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
 // TODO: support options for date (resolution etc)
 export function makeExactFn<R extends StashRecord>(): ExactFn<R> {
-  return (field) => ({ matcher: "exact", field }) 
+  return (field) => ({ matcher: "exact", field })
 }
 
 // TODO: support options for date (resolution etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
 export type RangeFn<R extends StashRecord> =
-  <F extends FieldOfType<R, RangeMappingFieldType>>(field: F) => RangeMapping<R, F> 
+  <F extends FieldOfType<R, RangeMappingFieldType>>(field: F) => RangeMapping<R, F>
 
 export function makeRangeFn<R extends StashRecord>(): RangeFn<R> {
-  return (field) => ({ matcher: "range", field }) 
+  return (field) => ({ matcher: "range", field })
 }
 
 export type MatchOptions = {
@@ -190,23 +238,41 @@ export type MatchOptions = {
   tokenizer: Tokenizer
 }
 
-export type MatchFn<R extends StashRecord> =
-  <F extends FieldOfType<R, MatchMappingFieldType>>(field: Array<F>, options: MatchOptions) => MatchMapping<R, F> 
+export type MatchFn<R extends StashRecord> = <F extends FieldOfType<R, MatchMappingFieldType>>(
+  field: Array<F>,
+  options: MatchOptions
+) => MatchMapping<R, F>
 
 export function makeMatchFn<R extends StashRecord>(): MatchFn<R> {
-  return (fields, options) => ({ matcher: "match", fields, options }) 
+  return (fields, options) => ({ matcher: "match", fields, options })
+}
+
+export type DynamicMatchFn = (options: MatchOptions) => DynamicMatchMapping
+
+export function makeDynamicMatchFn(): DynamicMatchFn {
+  return (options) => ({ matcher: "dynamic-match", options })
+}
+
+export type ScopedDynamicMatchFn = (options: MatchOptions) => ScopedDynamicMatchMapping
+
+export function makeScopedDynamicMatchFn(): ScopedDynamicMatchFn {
+  return (options) => ({ matcher: "dynamic-match-scoped", options })
 }
 
 export type MappingsDSL<R extends StashRecord> = {
   Exact: ExactFn<R>,
-  Match: MatchFn<R>,
   Range: RangeFn<R>,
+  Match: MatchFn<R>,
+  DynamicMatch: DynamicMatchFn,
+  ScopedDynamicMatch: ScopedDynamicMatchFn,
 }
 
-export function makeMappingsDSL<R extends StashRecord>() {
+export function makeMappingsDSL<R extends StashRecord>(): MappingsDSL<R> {
   return {
     Exact: makeExactFn<R>(),
     Range: makeRangeFn<R>(),
     Match: makeMatchFn<R>(),
+    DynamicMatch: makeDynamicMatchFn(),
+    ScopedDynamicMatch: makeScopedDynamicMatchFn(),
   }
 }

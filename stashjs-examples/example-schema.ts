@@ -6,13 +6,21 @@ export type Employee = {
   jobTitle: string,
   dateOfBirth: Date,
   email: string,
-  grossSalary: bigint 
+  grossSalary: bigint
 }
 
 export const employeeSchema = CollectionSchema.define<Employee>("employees")(mapping => ({
   email: mapping.Exact("email"),
   dateOfBirth: mapping.Range("dateOfBirth"),
   jobTitle: mapping.Match(["jobTitle"], {
+    tokenFilters: [downcase, ngram({ tokenLength: 5 })],
+    tokenizer: standard
+  }),
+  allStringFields1: mapping.DynamicMatch({
+    tokenFilters: [downcase, ngram({ tokenLength: 5 })],
+    tokenizer: standard
+  }),
+  allStringFields2: mapping.ScopedDynamicMatch({
     tokenFilters: [downcase, ngram({ tokenLength: 5 })],
     tokenizer: standard
   })
