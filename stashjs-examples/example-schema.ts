@@ -1,4 +1,4 @@
-import { CollectionSchema, downcase, ngram, standard } from "@cipherstash/client-ts"
+import { CollectionSchema, downcase, ngram, standard } from "@cipherstash/stashjs"
 
 export type Employee = {
   id: string,

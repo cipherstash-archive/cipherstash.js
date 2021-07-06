@@ -1,11 +1,11 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@cipherstash/client-ts': ../
+  '@cipherstash/stashjs': ../
   ts-node: ^10.0.0
 
 dependencies:
-  '@cipherstash/client-ts': link:..
+  '@cipherstash/stashjs': link:..
   ts-node: 10.0.0
 
 packages:

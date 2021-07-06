@@ -1,4 +1,4 @@
-import { V1 } from '@cipherstash/grpc'
+import { V1 } from '@cipherstash/stashjs-grpc'
 
 import { CipherSuite, makeCipherSuite } from './crypto/cipher'
 import { CollectionSchema } from './collection-schema'
