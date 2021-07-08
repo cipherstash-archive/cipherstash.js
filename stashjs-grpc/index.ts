@@ -44,7 +44,7 @@ const grpcDefinition = protoLoader.loadSync(
     longs: Number,
     enums: String,
     defaults: true,
-    oneofs: true
+    oneofs: true,
   }
 )
 
@@ -69,43 +69,43 @@ export namespace V1  {
   export type InfoReplyInput = GrpcInfoReply.InfoReply
   export type InfoRequestOutput = GrpcInfoRequest.InfoRequest__Output
   export type InfoRequestInput = GrpcInfoRequest.InfoRequest
-  export type DocumentOutput = GrpcDocument.Document__Output 
+  export type DocumentOutput = GrpcDocument.Document__Output
   export type DocumentInput = GrpcDocument.Document
-  export type GetReplyOutput = GrpcGetReply.GetReply__Output 
+  export type GetReplyOutput = GrpcGetReply.GetReply__Output
   export type GetReplyInput = GrpcGetReply.GetReply
-  export type GetRequestOutput = GrpcGetRequest.GetRequest__Output 
+  export type GetRequestOutput = GrpcGetRequest.GetRequest__Output
   export type GetRequestInput = GrpcGetRequest.GetRequest
-  export type PutReplyOutput = GrpcPutReply.PutReply__Output 
+  export type PutReplyOutput = GrpcPutReply.PutReply__Output
   export type PutReplyInput = GrpcPutReply.PutReply
   export type PutRequestOutput = GrpcPutRequest.PutRequest__Output
   export type PutRequestInput = GrpcPutRequest.PutRequest
-  export type TermOutput = GrpcTerm.Term__Output 
+  export type TermOutput = GrpcTerm.Term__Output
   export type TermInput = GrpcTerm.Term
-  export type VectorOutput = GrpcVector.Vector__Output 
+  export type VectorOutput = GrpcVector.Vector__Output
   export type VectorInput = GrpcVector.Vector
-  export type AddReplyOutput = GrpcAddReply.AddReply__Output 
+  export type AddReplyOutput = GrpcAddReply.AddReply__Output
   export type AddReplyInput = GrpcAddReply.AddReply
-  export type AddRequestOutput = GrpcAddRequest.AddRequest__Output 
+  export type AddRequestOutput = GrpcAddRequest.AddRequest__Output
   export type AddRequestInput = GrpcAddRequest.AddRequest
-  export type IndexOutput = GrpcIndex.Index__Output 
+  export type IndexOutput = GrpcIndex.Index__Output
   export type IndexInput = GrpcIndex.Index
-  export type AggregateOutput = GrpcAggregate.Aggregate__Output 
+  export type AggregateOutput = GrpcAggregate.Aggregate__Output
   export type AggregateInput = GrpcAggregate.Aggregate
-  export type AggregateResultOutput = GrpcAggregateResult.AggregateResult__Output 
+  export type AggregateResultOutput = GrpcAggregateResult.AggregateResult__Output
   export type AggregateResultInput = GrpcAggregateResult.AggregateResult
-  export type ConstraintOutput = GrpcConstraint.Constraint__Output 
+  export type ConstraintOutput = GrpcConstraint.Constraint__Output
   export type ConstraintInput = GrpcConstraint.Constraint
-  export type CountOutput = GrpcCount.Count__Output 
+  export type CountOutput = GrpcCount.Count__Output
   export type CountInput = GrpcCount.Count
-  export type ExactOutput = GrpcExact.Exact__Output 
+  export type ExactOutput = GrpcExact.Exact__Output
   export type ExactInput = GrpcExact.Exact
-  export type QueryOutput = GrpcQuery.Query__Output 
+  export type QueryOutput = GrpcQuery.Query__Output
   export type QueryInput = GrpcQuery.Query
-  export type QueryReplyOutput = GrpcQueryReply.QueryReply__Output 
+  export type QueryReplyOutput = GrpcQueryReply.QueryReply__Output
   export type QueryReplyInput = GrpcQueryReply.QueryReply
-  export type QueryRequestOutput = GrpcQueryRequest.QueryRequest__Output 
+  export type QueryRequestOutput = GrpcQueryRequest.QueryRequest__Output
   export type QueryRequestInput = GrpcQueryRequest.QueryRequest
-  export type RangeOutput = GrpcRange.Range__Output 
+  export type RangeOutput = GrpcRange.Range__Output
   export type RangeInput = GrpcRange.Range
 }
 
