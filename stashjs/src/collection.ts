@@ -1,15 +1,15 @@
 import { StashRecord, Mappings, NewStashRecord, MappingsMeta } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
-import { analyzeRecord } from "./indexer"
 import { Stash } from "./stash"
 import { idStringToBuffer, makeId } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
-import { convertQueryReplyToUserRecords, convertQueryToContraints } from "./grpc/query-helper"
+import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
 import { CollectionSchema } from "./collection-schema"
+import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer } from "./analyzer"
 
 /**
  * A CollectionProxy represents a connection to an underlying Collection.
- * 
+ *
  * All methods of manipulating and interacting with a Collection can be found here.
  */
 export class Collection<
@@ -18,12 +18,18 @@ export class Collection<
   MM extends MappingsMeta<M>
 > {
 
+  private analyzeRecord: RecordAnalyzer<R, M, MM>
+  private analyzeQuery: QueryAnalyzer<R, M>
+
   public constructor(
     private readonly stash: Stash,
     public readonly id: string,
     public readonly ref: string,
     public readonly schema: CollectionSchema<R, M, MM>,
-  ) { }
+  ) {
+    this.analyzeRecord = buildRecordAnalyzer(schema)
+    this.analyzeQuery = buildQueryAnalyzer(schema)
+  }
 
   public get name() {
     return this.schema.name
@@ -33,7 +39,7 @@ export class Collection<
     return this.schema.buildQuery
   }
 
-  public async get(id: string): Promise<R | null> { 
+  public async get(id: string): Promise<R | null> {
     return new Promise((resolve, reject) => {
       this.stash.stub.get({
         collectionId: this.ref,
@@ -60,7 +66,7 @@ export class Collection<
         context: { authToken: await this.stash.refreshToken() },
         collectionId: idStringToBuffer(this.id),
         vectors: convertAnalyzedRecordToVectors(
-          await analyzeRecord(this, docWithId),
+          this.analyzeRecord(docWithId),
           this.schema.meta
         ),
         source: {
@@ -84,10 +90,7 @@ export class Collection<
         collectionId: idStringToBuffer(this.id),
         query: {
           limit: options.limit,
-          constraints: convertQueryToContraints<R, M, Query<R, M>, MappingsMeta<M>>(
-            callback(this.schema.makeQueryBuilder()),
-            this.schema.meta
-          ),
+          constraints: this.analyzeQuery(callback(this.schema.makeQueryBuilder())).constraints,
           aggregates: options.aggregation ? options.aggregation.map(a => ({
             indexId: this.schema.meta[a.ofIndex]!.$indexId,
             type: a.aggregate
@@ -131,7 +134,7 @@ export type AggregationOptions<
   R extends StashRecord,
   M extends Mappings<R>
 > = {
-  ofIndex: Extract<keyof M, string> 
+  ofIndex: Extract<keyof M, string>
   aggregate: Aggregate
 }
 

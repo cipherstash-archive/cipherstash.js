@@ -72,6 +72,40 @@ describe('CollectionSchema', () => {
             tokenizer: { processor: "standard" }
           }
         },
+        allStringFields1: {
+          matcher: "dynamic-match",
+          options: {
+            tokenFilters: [
+              {
+                processor: "downcase",
+              },
+              {
+                processor: "ngram",
+                tokenLength: 3,
+              },
+            ],
+            "tokenizer": {
+              processor: "standard",
+            },
+          },
+        },
+        "allStringFields2": {
+          matcher: "dynamic-match-scoped",
+          options: {
+            tokenFilters: [
+              {
+                processor: "downcase",
+              },
+              {
+                processor: "ngram",
+                tokenLength: 3,
+              },
+            ],
+            "tokenizer": {
+              processor: "standard",
+            },
+          },
+        },
       })
     })
   })
@@ -125,7 +159,7 @@ describe('CollectionSchema', () => {
 
       test('dynamic match mapping with search by field', () => {
         let query = schema.buildQuery($ => $.allStringFields2.match("address.city", "London"))
-        expect(query).toStrictEqual({ kind: "dynamic-match", op: "match-on-field", indexName: "allStringFields2", fieldName: "address.city", value: "London" })
+        expect(query).toStrictEqual({ kind: "dynamic-match-scoped", op: "match", indexName: "allStringFields2", fieldName: "address.city", value: "London" })
       })
     })
 

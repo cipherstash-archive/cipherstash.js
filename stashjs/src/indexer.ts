@@ -18,11 +18,11 @@ export type AnalyzedRecord<
 
 /**
  * Generates the index entries for a record in order to make it searchable.
- * 
+ *
  * TODO: this function performs a lot of work per-record that should be only
  * performed once per collection. Consider generating an analyzeRecord function
  * once.
- * 
+ *
  * @param collection the collection that the record belongs to
  * @param record the record to analyze
  * @returns an AnalyzedRecord (wrapped in a Promise)
@@ -90,7 +90,7 @@ const indexRange: <T extends RangeMappingFieldType>(term: T) => Array<bigint>
   = term =>
     [ encodeOrderable(term).orderable ]
 
-const indexMatch: (terms: Array<MatchMappingFieldType>) => Array<bigint> = terms => { 
+const indexMatch: (terms: Array<MatchMappingFieldType>) => Array<bigint> = terms => {
   return terms.map(t => encodeEquatable(t).equatable)
 }
 
