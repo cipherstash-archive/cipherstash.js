@@ -9,7 +9,7 @@ async function queryCollection() {
     let queryResult = await employees.all($ => $.email.eq("ada@security4u.example"))
 
     if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Ada Lovelace") {
-      console.log("☑️  Successfully queried via exact mapping")
+      console.log("☑️  Successfully queried using an `Exact` mapping")
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
@@ -21,14 +21,12 @@ async function queryCollection() {
       )
     )
 
-    console.log({ queryResult: JSON.stringify(queryResult) })
-
     if (queryResult.documents.length == 3) {
-      console.log("☑️  Successfully queried via range mapping!")
+      console.log("☑️  Successfully queried using a `Range` mapping!")
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
-    
+
     queryResult = await employees.all($ =>
       $.dateOfBirth.between(
         new Date(Date.parse("1852-11-27")),
@@ -38,7 +36,7 @@ async function queryCollection() {
     )
 
     if (queryResult.documents.length == 1) {
-      console.log("☑️  Successfully queried using a `limit` query option!")
+      console.log("☑️  Successfully queried using a `Range` mapping with a `limit` option!")
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
@@ -54,7 +52,23 @@ async function queryCollection() {
     if (queryResult.aggregates.length == 1 &&
         queryResult.aggregates[0]!.name == "count" &&
         queryResult.aggregates[0]!.value == 3n) {
-      console.log("☑️  Successfully queried using an `aggregate` query option!")
+      console.log("☑️  Successfully queried using a `Range` mapping with an `aggregate` query option!")
+    } else {
+      console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
+    }
+
+    queryResult = await employees.all($ => $.allStringFields1.match("Grace"))
+
+    if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Grace Hopper") {
+      console.log("☑️  Successfully queried using a `DynamicMatch` mapper!")
+    } else {
+      console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
+    }
+
+    queryResult = await employees.all($ => $.allStringFields2.match("name", "hOpPeR"))
+
+    if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Grace Hopper") {
+      console.log("☑️  Successfully queried using a `ScopedDynamicMatch` mapper!")
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }

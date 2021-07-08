@@ -1,4 +1,4 @@
-import { CollectionSchema, downcase, ngram, standard } from "@cipherstash/stashjs"
+import { CollectionSchema, downcase, standard } from "@cipherstash/stashjs"
 
 export type Employee = {
   id: string,
@@ -13,15 +13,15 @@ export const employeeSchema = CollectionSchema.define<Employee>("employees")(map
   email: mapping.Exact("email"),
   dateOfBirth: mapping.Range("dateOfBirth"),
   jobTitle: mapping.Match(["jobTitle"], {
-    tokenFilters: [downcase, ngram({ tokenLength: 5 })],
+    tokenFilters: [downcase],
     tokenizer: standard
   }),
   allStringFields1: mapping.DynamicMatch({
-    tokenFilters: [downcase, ngram({ tokenLength: 5 })],
+    tokenFilters: [downcase],
     tokenizer: standard
   }),
   allStringFields2: mapping.ScopedDynamicMatch({
-    tokenFilters: [downcase, ngram({ tokenLength: 5 })],
+    tokenFilters: [downcase],
     tokenizer: standard
   })
 }))
