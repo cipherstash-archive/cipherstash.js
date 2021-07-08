@@ -157,7 +157,7 @@ function flattenCondition<
     const pipeline = buildTextProcessingPipeline(mapping.options)
     return pipeline([condition.value]).map(term => ({
       indexId: Buffer.from(indexMeta.$indexId, 'hex'),
-      exact: encodeMatch(term, indexMeta.$prf, indexMeta.$prp),
+      exact: encodeMatch(`${condition.fieldName}:${term}`, indexMeta.$prf, indexMeta.$prp),
       condition: "exact"
     }))
   } else {
