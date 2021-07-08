@@ -82,7 +82,7 @@ export class Collection<
     })
   }
 
-  public all(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R>> {
+  public async all(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R>> {
     const options = queryOptions ? queryOptions : {}
     return new Promise(async (resolve, reject) => {
       this.stash.stub.query({
@@ -91,16 +91,16 @@ export class Collection<
         query: {
           limit: options.limit,
           constraints: this.analyzeQuery(callback(this.schema.makeQueryBuilder())).constraints,
-          aggregates: options.aggregation ? options.aggregation.map(a => ({
-            indexId: this.schema.meta[a.ofIndex]!.$indexId,
-            type: a.aggregate
-          })) : undefined,
+          aggregates: options.aggregation ? options.aggregation.map(agg => ({
+            indexId: this.schema.meta[agg.ofIndex]!.$indexId,
+            type: agg.aggregate
+          })) : [],
           skipResults: typeof options.skipResults == "boolean" ? options.skipResults : false,
           offset: options.offset,
           ordering: options.order ? options.order.map(o => ({
             indexId: this.schema.meta[o.byIndex]!.$indexId,
             direction: o.direction
-          })) : undefined
+          })) : []
         }
       }, async (err, res) => {
         if (err) { reject(err) }
