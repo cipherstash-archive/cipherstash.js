@@ -1,7 +1,7 @@
 import { V1 } from "@cipherstash/stashjs-grpc";
+import { AnalyzedRecord } from "../analyzer";
 import { oreEncryptTermToBuffer } from "../crypto/ore";
 import { StashRecord, Mappings, MappingsMeta } from "../dsl/mappings-dsl";
-import { AnalyzedRecord } from "../indexer";
 
 export function convertAnalyzedRecordToVectors<
   R extends StashRecord,
