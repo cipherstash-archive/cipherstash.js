@@ -5,7 +5,6 @@ import { TokenFilter, Tokenizer } from "./dsl/filters-and-tokenizers-dsl";
 import { DynamicMatchMapping, ExactMappingFieldType, isDynamicMatchMapping, isExactMapping, isMatchMapping, isRangeMapping, isScopedDynamicMatchMapping, MappableFieldType, Mappings, MappingsMeta, MatchMapping, MatchMappingFieldType, MatchOptions, RangeMappingFieldType, ScopedDynamicMatchMapping, StashRecord } from "./dsl/mappings-dsl"
 import { ConjunctiveCondition, DynamicMatchCondition, ExactCondition, isConjunctiveCondition, isDynamicMatchCondition, isExactCondition, isMatchCondition, isRangeCondition, isScopedDynamicMatchCondition, MatchCondition, Query, RangeCondition, RangeOperator, ScopedDynamicMatchCondition } from "./dsl/query-dsl";
 import { encodeEquatable, encodeOrderable, UINT64_MAX, UINT64_MIN } from "./encoders/term-encoder";
-import { AnalyzedRecord } from "./indexer";
 import { extractStringFields, extractStringFieldsWithPath } from "./string-field-extractor";
 import { TextProcessor, textPipeline, standardTokenizer, ngramsTokenizer, downcaseFilter, upcaseFilter } from "./text-processors";
 import { FieldOfType, FieldType, unreachable } from "./type-utils";
@@ -274,6 +273,17 @@ type RangeMinMaxHelper = {
   ) => {
     min: bigint,
     max: bigint
+  }
+}
+
+export type AnalyzedRecord<
+  R extends StashRecord,
+  M extends Mappings<R>,
+  MM extends MappingsMeta<M>
+> = {
+  recordId: R['id'],
+  indexEntries: {
+    [F in keyof MM]: Array<bigint>
   }
 }
 
