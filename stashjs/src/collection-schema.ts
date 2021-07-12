@@ -94,7 +94,7 @@ export class CollectionSchema<
       case "range": return operators.range(indexName) as OperatorsForIndex<R, M, N>
       case "match": return operators.match(indexName) as OperatorsForIndex<R, M, N>
       case "dynamic-match": return operators.dynamicMatch(indexName) as OperatorsForIndex<R, M, N>
-      case "dynamic-match-scoped": return operators.scopedDynamicMatch(indexName) as OperatorsForIndex<R, M, N>
+      case "field-dynamic-match": return operators.scopedDynamicMatch(indexName) as OperatorsForIndex<R, M, N>
     }
   }
 }

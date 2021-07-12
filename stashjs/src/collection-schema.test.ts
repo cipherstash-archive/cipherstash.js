@@ -40,7 +40,7 @@ let schema = CollectionSchema.define<PatientRecord>("patients")(mapping => ({
     tokenFilters: [downcase, ngram({ tokenLength: 3 })],
     tokenizer: standard
   }),
-  allStringFields2: mapping.ScopedDynamicMatch({
+  allStringFields2: mapping.FieldDynamicMatch({
     tokenFilters: [downcase, ngram({ tokenLength: 3 })],
     tokenizer: standard
   })
@@ -90,7 +90,7 @@ describe('CollectionSchema', () => {
           },
         },
         "allStringFields2": {
-          matcher: "dynamic-match-scoped",
+          matcher: "field-dynamic-match",
           options: {
             tokenFilters: [
               {
@@ -159,7 +159,7 @@ describe('CollectionSchema', () => {
 
       test('dynamic match mapping with search by field', () => {
         let query = schema.buildQuery($ => $.allStringFields2.match("address.city", "London"))
-        expect(query).toStrictEqual({ kind: "dynamic-match-scoped", op: "match", indexName: "allStringFields2", fieldName: "address.city", value: "London" })
+        expect(query).toStrictEqual({ kind: "field-dynamic-match", op: "match", indexName: "allStringFields2", fieldName: "address.city", value: "London" })
       })
     })
 

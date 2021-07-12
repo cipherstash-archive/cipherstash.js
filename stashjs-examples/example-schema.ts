@@ -20,7 +20,7 @@ export const employeeSchema = CollectionSchema.define<Employee>("employees")(map
     tokenFilters: [downcase],
     tokenizer: standard
   }),
-  allStringFields2: mapping.ScopedDynamicMatch({
+  allStringFields2: mapping.FieldDynamicMatch({
     tokenFilters: [downcase],
     tokenizer: standard
   })
