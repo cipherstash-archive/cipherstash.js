@@ -65,10 +65,10 @@ async function queryCollection() {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
 
-    queryResult = await employees.all($ => $.allStringFields2.match("name", "hOpPeR"))
+    queryResult = await employees.all($ => $.allStringFields2.match("name", "hopper"))
 
     if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Grace Hopper") {
-      console.log("☑️  Successfully queried using a `ScopedDynamicMatch` mapper!")
+      console.log("☑️  Successfully queried using a `FieldDynamicMatch` mapper!")
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
