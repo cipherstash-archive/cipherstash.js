@@ -2,8 +2,8 @@ import { V1 } from "../../stashjs-grpc";
 import { CollectionSchema } from "./collection-schema";
 import { oreEncryptTermToBuffer } from "./crypto/ore";
 import { TokenFilter, Tokenizer } from "./dsl/filters-and-tokenizers-dsl";
-import { DynamicMatchMapping, ExactMappingFieldType, isDynamicMatchMapping, isExactMapping, isMatchMapping, isRangeMapping, isScopedDynamicMatchMapping, MappableFieldType, Mappings, MappingsMeta, MatchMapping, MatchMappingFieldType, MatchOptions, RangeMappingFieldType, ScopedDynamicMatchMapping, StashRecord } from "./dsl/mappings-dsl"
-import { ConjunctiveCondition, DynamicMatchCondition, ExactCondition, isConjunctiveCondition, isDynamicMatchCondition, isExactCondition, isMatchCondition, isRangeCondition, isScopedDynamicMatchCondition, MatchCondition, Query, RangeCondition, RangeOperator, ScopedDynamicMatchCondition } from "./dsl/query-dsl";
+import { DynamicMatchMapping, ExactMappingFieldType, isDynamicMatchMapping, isExactMapping, isMatchMapping, isRangeMapping, isFieldDynamicMatchMapping, MappableFieldType, Mappings, MappingsMeta, MatchMapping, MatchMappingFieldType, MatchOptions, RangeMappingFieldType, FieldDynamicMatchMapping, StashRecord } from "./dsl/mappings-dsl"
+import { ConjunctiveCondition, DynamicMatchCondition, ExactCondition, isConjunctiveCondition, isDynamicMatchCondition, isExactCondition, isMatchCondition, isRangeCondition, isFieldDynamicMatchCondition, MatchCondition, Query, RangeCondition, RangeOperator, FieldDynamicMatchCondition } from "./dsl/query-dsl";
 import { encodeEquatable, encodeOrderable, UINT64_MAX, UINT64_MIN } from "./encoders/term-encoder";
 import { extractStringFields, extractStringFieldsWithPath } from "./string-field-extractor";
 import { TextProcessor, textPipeline, standardTokenizer, ngramsTokenizer, downcaseFilter, upcaseFilter } from "./text-processors";
@@ -64,7 +64,7 @@ export function buildRecordAnalyzer<
       })
     }
 
-    if (isScopedDynamicMatchMapping(mapping)) {
+    if (isFieldDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping.options)
       return (record: R) => ({
         indexId: meta.$indexId,
@@ -111,7 +111,7 @@ function flattenCondition<
       | RangeCondition<R, M, Extract<keyof M, string>>
       | MatchCondition<R, M, Extract<keyof M, string>>
       | DynamicMatchCondition<R, M, Extract<keyof M, string>>
-      | ScopedDynamicMatchCondition<R, M, Extract<keyof M, string>>,
+      | FieldDynamicMatchCondition<R, M, Extract<keyof M, string>>,
     mappings: M,
     meta: MM
   ): Array<V1.ConstraintInput> {
@@ -150,9 +150,9 @@ function flattenCondition<
       exact: encodeMatch(term, indexMeta.$prf, indexMeta.$prp),
       condition: "exact"
     }))
-  } else if (isScopedDynamicMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
+  } else if (isFieldDynamicMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
-    const mapping = mappings[condition.indexName]! as ScopedDynamicMatchMapping
+    const mapping = mappings[condition.indexName]! as FieldDynamicMatchMapping
     const pipeline = buildTextProcessingPipeline(mapping.options)
     return pipeline([condition.value]).map(term => ({
       indexId: Buffer.from(indexMeta.$indexId, 'hex'),

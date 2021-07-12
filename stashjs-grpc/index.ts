@@ -27,7 +27,6 @@ import * as GrpcIndex from './generated/stash/GRPC/V1/Indexes/Index'
 import * as GrpcAggregate from './generated/stash/GRPC/V1/Queries/Aggregate'
 import * as GrpcAggregateResult from './generated/stash/GRPC/V1/Queries/AggregateResult'
 import * as GrpcConstraint from './generated/stash/GRPC/V1/Queries/Constraint'
-import * as GrpcCount from './generated/stash/GRPC/V1/Queries/Count'
 import * as GrpcExact from './generated/stash/GRPC/V1/Queries/Exact'
 import * as GrpcQuery from './generated/stash/GRPC/V1/Queries/Query'
 import * as GrpcQueryReply from './generated/stash/GRPC/V1/Queries/QueryReply'
@@ -95,8 +94,6 @@ export namespace V1  {
   export type AggregateResultInput = GrpcAggregateResult.AggregateResult
   export type ConstraintOutput = GrpcConstraint.Constraint__Output
   export type ConstraintInput = GrpcConstraint.Constraint
-  export type CountOutput = GrpcCount.Count__Output
-  export type CountInput = GrpcCount.Count
   export type ExactOutput = GrpcExact.Exact__Output
   export type ExactInput = GrpcExact.Exact
   export type QueryOutput = GrpcQuery.Query__Output

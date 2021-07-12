@@ -99,8 +99,8 @@ export type DynamicMatchMapping = {
  *
  * Every term is first siphashed and then ORE encrypted.
  */
-export type ScopedDynamicMatchMapping = {
-  matcher: "dynamic-match-scoped",
+export type FieldDynamicMatchMapping = {
+  matcher: "field-dynamic-match",
   options: MatchOptions
 }
 
@@ -152,10 +152,10 @@ export function isDynamicMatchMapping(
 /**
  * Guard function to check for dynamic match mappings
  */
-export function isScopedDynamicMatchMapping(
+export function isFieldDynamicMatchMapping(
     mapping: any
-  ): mapping is ScopedDynamicMatchMapping {
-  return mapping.matcher == "dynamic-match-scoped"
+  ): mapping is FieldDynamicMatchMapping {
+  return mapping.matcher == "field-dynamic-match"
 }
 
 /**
@@ -166,7 +166,7 @@ export type MappingOn<R extends StashRecord> =
   | RangeMapping<R, FieldOfType<R, RangeMappingFieldType>>
   | MatchMapping<R, FieldOfType<R, MatchMappingFieldType>>
   | DynamicMatchMapping
-  | ScopedDynamicMatchMapping
+  | FieldDynamicMatchMapping
 
 /**
  * This type represents an object whose keys are the name of the index being
@@ -185,9 +185,9 @@ export type Mappings<R extends StashRecord> = {
 export type FieldTypeOfMapping<R extends StashRecord, M extends MappingOn<R>> =
   M extends ExactMapping<R, infer FOT> ? FieldType<R, FOT>
   : M extends RangeMapping<R, infer FOT> ? FieldType<R, FOT>
-  : M extends MatchMapping<R, infer FOT> ? FieldType<R, FOT>
+  : M extends MatchMapping<R, infer FOT> ? FieldType<R, FOT> // Should be MatchMappingFieldType
   : M extends DynamicMatchMapping ? MatchMappingFieldType
-  : M extends ScopedDynamicMatchMapping ? MatchMappingFieldType
+  : M extends FieldDynamicMatchMapping ? MatchMappingFieldType
   : never
 
 /**
@@ -253,10 +253,10 @@ export function makeDynamicMatchFn(): DynamicMatchFn {
   return (options) => ({ matcher: "dynamic-match", options })
 }
 
-export type ScopedDynamicMatchFn = (options: MatchOptions) => ScopedDynamicMatchMapping
+export type FieldDynamicMatchFn = (options: MatchOptions) => FieldDynamicMatchMapping
 
-export function makeScopedDynamicMatchFn(): ScopedDynamicMatchFn {
-  return (options) => ({ matcher: "dynamic-match-scoped", options })
+export function makeFieldDynamicMatchFn(): FieldDynamicMatchFn {
+  return (options) => ({ matcher: "field-dynamic-match", options })
 }
 
 export type MappingsDSL<R extends StashRecord> = {
@@ -264,7 +264,7 @@ export type MappingsDSL<R extends StashRecord> = {
   Range: RangeFn<R>,
   Match: MatchFn<R>,
   DynamicMatch: DynamicMatchFn,
-  ScopedDynamicMatch: ScopedDynamicMatchFn,
+  FieldDynamicMatch: FieldDynamicMatchFn,
 }
 
 export function makeMappingsDSL<R extends StashRecord>(): MappingsDSL<R> {
@@ -273,6 +273,6 @@ export function makeMappingsDSL<R extends StashRecord>(): MappingsDSL<R> {
     Range: makeRangeFn<R>(),
     Match: makeMatchFn<R>(),
     DynamicMatch: makeDynamicMatchFn(),
-    ScopedDynamicMatch: makeScopedDynamicMatchFn(),
+    FieldDynamicMatch: makeFieldDynamicMatchFn(),
   }
 }
