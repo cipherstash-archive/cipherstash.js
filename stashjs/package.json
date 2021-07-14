@@ -4,9 +4,9 @@
   "description": "Datastore & Search API for CipherStash",
   "main": "dist/index.js",
   "scripts": {
-    "build": "rm -fr ./dist ./src/crypto/ore/fastore/* && mkdir -p ./src/crypto/ore/fastore && cp -R ../../../fastore/* ./src/crypto/ore/fastore && node-gyp configure && node-gyp build && cp src/crypto/ore/napi_ore.d.ts build/Release/ && pnpx tsc",
+    "build": "./scripts/pkg-build.sh",
     "prepublishOnly": "pnpm build --filter ./",
-    "postinstall": "rm -fr ./dist && node-gyp configure && node-gyp build && cp src/crypto/ore/napi_ore.d.ts build/Release/",
+    "postinstall": "./scripts/pkg-postinstall.sh",
     "clean": "rm -fr ./dist ./build",
     "test": "pnpx jest"
   },
