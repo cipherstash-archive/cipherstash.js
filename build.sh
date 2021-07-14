@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
-# This script builds everything in the platform repo. It is written using the
-# bash script best practices (see: https://kvz.io/bash-best-practices.html)
+# The script builds & tests all of the pnpm-managed @cipherstash projects.
+
+# This script is written using the bash script best practices (see:
+# https://kvz.io/bash-best-practices.html)
 
 set -e # exit when a command fails
 set -u # exit when script tries to use undeclared variables
 set -x # trace what gets executed (useful for debugging)
-
 
 subproject_setup() {
   asdf install
@@ -14,17 +15,17 @@ subproject_setup() {
 }
 
 subproject_build() {
-  pnpm install --filter ./
-  pnpm build
+  pnpm install --filter @cipherstash/*
+  pnpm build --filter @cipherstash/*
 }
 
 subproject_test() {
   shellcheck "${0}"
-  pnpm test
+  pnpm test --filter @cipherstash/*
 }
 
 subproject_clean() {
-  pnpm run clean
+  pnpm run clean --filter @cipherstash/*
 }
 
 subproject_rebuild() {

@@ -5,8 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "prepublishOnly": "pnpm build --filter ./",
-    "build": "./scripts/pkg-build.sh",
-    "test": "pnpx jest"
+    "build": "./scripts/pkg-build.sh"
   },
   "repository": {
     "type": "git",
