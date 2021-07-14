@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "prepublishOnly": "pnpm build --filter ./",
-    "build": "rm -fr ./dist && rm -fr ./grpc && mkdir ./grpc && cp -R ../../../data-service/priv/grpc/* ./grpc && proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js --includeDirs grpc/v1 --keepCase=true --longs=number --enums=string --defaults=true --oneofs==true && pnpx tsc && cp -RL grpc dist",
+    "build": "./scripts/pkg-build.sh",
     "test": "pnpx jest"
   },
   "repository": {
@@ -32,6 +32,7 @@
   "files": [
     "src/**",
     "dist/**",
+    "generated/**",
     "tsconfig.json"
   ]
 }
