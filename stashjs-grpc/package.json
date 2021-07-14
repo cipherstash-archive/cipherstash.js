@@ -1,11 +1,11 @@
 {
   "name": "@cipherstash/stashjs-grpc",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Generated Typescript GRPC bindings for StashJS",
   "main": "dist/index.js",
   "scripts": {
-    "build": "pnpx rimraf ./dist && proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js --includeDirs grpc/v1 --keepCase=true --longs=number --enums=string --defaults=true --oneofs==true && pnpx tsc && cp -RL grpc dist",
-    "postinstall": "pnpx rimraf ./dist && proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js --includeDirs grpc/v1 --keepCase=true --longs=number --enums=string --defaults=true --oneofs==true && pnpx tsc && cp -RL grpc dist",
+    "prepublishOnly": "pnpm build --filter ./",
+    "build": "rm -fr ./dist && rm -fr ./grpc && mkdir ./grpc && cp -R ../../../data-service/priv/grpc/* ./grpc && proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js --includeDirs grpc/v1 --keepCase=true --longs=number --enums=string --defaults=true --oneofs==true && pnpx tsc && cp -RL grpc dist",
     "test": "pnpx jest"
   },
   "repository": {
@@ -23,11 +23,15 @@
   },
   "homepage": "https://github.com/cipherstash/stashjs-grpc#readme",
   "devDependencies": {
-    "rimraf": "^3.0.2",
     "typescript": "^4.2.4"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.3.2",
     "@grpc/proto-loader": "^0.6.2"
-  }
+  },
+  "files": [
+    "src/**",
+    "dist/**",
+    "tsconfig.json"
+  ]
 }
