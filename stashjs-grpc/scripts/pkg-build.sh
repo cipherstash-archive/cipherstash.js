@@ -7,11 +7,12 @@ set -e # exit when a command fails
 set -u # exit when script tries to use undeclared variables
 set -x # trace what gets executed (useful for debugging)
 
-if [ -d ./src/crypto/ore/fastore ]; then
-  rm -fr ./dist
-  node-gyp configure
-  node-gyp build
-  cp src/crypto/ore/napi_ore.d.ts build/Release/
-else
-  exit 0
-fi
+ rm -fr ./dist
+ rm -fr ./grpc
+ mkdir ./grpc
+ cp -R ../../../data-service/priv/grpc/* ./grpc
+ proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js \
+    --includeDirs grpc/v1 --keepCase=true --longs=number --enums=string \
+    --defaults=true --oneofs==true
+pnpx tsc
+cp -RL grpc dist

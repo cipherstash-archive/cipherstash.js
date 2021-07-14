@@ -14,7 +14,7 @@ subproject_setup() {
 }
 
 subproject_build() {
-  pnpm install
+  pnpm install --filter ./
   pnpm build
 }
 
