@@ -1,0 +1,3 @@
+# This file exists so that we can include the gitignored `fastore` directory in
+# the published package. `.npmignore` overrides `.gitignore`. This file is
+# deliberately empty but necessary.
