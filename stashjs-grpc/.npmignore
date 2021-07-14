@@ -1,0 +1,7 @@
+# This file exists so that we can include the gitignored `grpc` directory in
+# the published package. `.npmignore` overrides `.gitignore`. This file is
+# deliberately the same as `.gitignore` but without the `grpc` entry.
+/generated/**
+/node_modules
+/dist
+/.pnpm-debug.log
