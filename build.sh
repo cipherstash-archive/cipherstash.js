@@ -21,6 +21,7 @@ subproject_build() {
 
 subproject_test() {
   shellcheck "${0}"
+  shellcheck "$(dirname "${0}")"/*/scripts/*.sh
   pnpm test --filter @cipherstash/*
 }
 
