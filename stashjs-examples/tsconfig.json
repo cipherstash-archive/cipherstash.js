@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "outDir": "./dist", 
+    "outDir": "./dist",
+    "incremental": true,
     "allowJs": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
@@ -39,5 +40,14 @@
     "useDefineForClassFields": false
   },
   "include": [ "**/*.ts" ],
-  "exclude": [ "dist", "node_modules" ]
+  "exclude": [ "dist", "node_modules" ],
+  "watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority",
+    "excludeDirectories": [
+      "node_modules",
+      "build"
+    ]
+  }
 }

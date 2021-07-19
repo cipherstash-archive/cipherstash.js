@@ -4,7 +4,8 @@
   "description": "Example client code for the CipherStash Typescript client",
   "main": "index.js",
   "scripts": {
-    "build": "pnpx tsc"
+    "build": "pnpx tsc",
+    "build-then-watch": "pnpm build && pnpx tsc --watch"
   },
   "repository": {
     "type": "git",

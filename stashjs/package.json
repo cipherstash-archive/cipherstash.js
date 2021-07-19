@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "./scripts/pkg-build.sh",
+    "build-then-watch": "pnpm build && pnpx tsc --watch",
     "prepublishOnly": "pnpm build --filter ./",
     "postinstall": "./scripts/pkg-postinstall.sh",
     "clean": "rm -fr ./dist ./build",
