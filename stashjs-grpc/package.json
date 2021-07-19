@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "prepublishOnly": "pnpm build --filter ./",
-    "build": "./scripts/pkg-build.sh"
+    "build": "./scripts/pkg-build.sh",
+    "build-then-watch": "pnpm build && pnpx tsc --watch"
   },
   "repository": {
     "type": "git",
