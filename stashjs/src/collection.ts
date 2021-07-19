@@ -4,6 +4,7 @@ import { Stash } from "./stash"
 import { idStringToBuffer, makeId } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
+import { convertGetReplyToUserRecord } from "./grpc/get-helper"
 import { CollectionSchema } from "./collection-schema"
 import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer } from "./analyzer"
 
@@ -39,17 +40,19 @@ export class Collection<
     return this.schema.buildQuery
   }
 
-  public async get(id: string): Promise<R | null> {
-    return new Promise((resolve, reject) => {
+  public async get(id: string | Buffer): Promise<R | null> {
+    const docId = id instanceof Buffer ? id : idStringToBuffer(id)
+    return new Promise(async (resolve, reject) => {
       this.stash.stub.get({
-        collectionId: this.ref,
-        id: idStringToBuffer(id)
+        context: { authToken: await this.stash.refreshToken() },
+        collectionId: idStringToBuffer(this.id),
+        id: docId
       }, (err, res) => {
         if (err) { reject(err) }
-        if (res!.source) {
-          resolve(this.stash.cipherSuite.decrypt(res!.source!.source!))
+        if (res?.source) {
+          resolve(convertGetReplyToUserRecord(res, this.stash.cipherSuite))
         } else {
-          resolve(null)
+          reject("Unexpectedly received empty response from data-service")
         }
       })
     })
@@ -58,10 +61,10 @@ export class Collection<
   public async put(doc: NewStashRecord<R>): Promise<string> {
     return new Promise(async (resolve, reject) => {
       const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
-      const docWithId: R = {
+      const docWithId = {
         ...doc,
         id: docId,
-      } as R // TODO: figure out why I need to do this
+      } as R
       this.stash.stub.put({
         context: { authToken: await this.stash.refreshToken() },
         collectionId: idStringToBuffer(this.id),
@@ -115,8 +118,18 @@ export class Collection<
     })
   }
 
-  public delete(_id: string): Promise<string> {
-    return Promise.reject("Not implemented: delete record by ID")
+  public async delete(id: string | Buffer): Promise<null> {
+    const docId = id instanceof Buffer ? id : idStringToBuffer(id)
+    return new Promise(async (resolve, reject) => {
+      this.stash.stub.delete({
+        context: { authToken: await this.stash.refreshToken() },
+        collectionId: idStringToBuffer(this.id),
+        id: docId
+      }, (err, _res) => {
+        if (err) { reject(err) }
+        resolve(null)
+      })
+    })
   }
 }
 
