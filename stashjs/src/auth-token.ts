@@ -26,7 +26,7 @@ export class AuthToken {
 
   /*
    * Instantiates a new AuthToken.
-   * 
+   *
    * Tokens are cached up to just before they expire along with the data service
    * for which they have been issued. This prevents a cached token being
    * eroneously used for a new data server.  Consequently, the AuthToken can
@@ -155,7 +155,7 @@ export class AuthToken {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       }
-    }  
+    }
   }
 }
 

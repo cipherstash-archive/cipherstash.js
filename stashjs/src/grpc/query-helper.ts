@@ -8,7 +8,7 @@ export async function convertQueryReplyToUserRecords<
   output: V1.QueryReplyOutput,
   cipherSuite: CipherSuite
 ): Promise<Array<R>> {
-  return await Promise.all(output.result!.map(async encryptedSource =>
-    await cipherSuite.decrypt(encryptedSource)
+  return await Promise.all(output.result!.map(encryptedSource =>
+    cipherSuite.decrypt(encryptedSource)
   )) as unknown as Array<R>
 }
