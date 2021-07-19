@@ -7,9 +7,8 @@ set -e # exit when a command fails
 set -u # exit when script tries to use undeclared variables
 set -x # trace what gets executed (useful for debugging)
 
- rm -fr ./dist
- rm -fr ./grpc
- mkdir ./grpc
+ rm -fr ./grpc ./dist ./generated
+ mkdir -p ./grpc ./dist ./generated
  cp -R ../../../data-service/priv/grpc/* ./grpc
  proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js \
     --includeDirs grpc/v1 --keepCase=true --longs=number --enums=string \
