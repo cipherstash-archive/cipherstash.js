@@ -15,6 +15,8 @@ import * as GrpcInfoRequest from './generated/stash/GRPC/V1/Collections/InfoRequ
 import * as GrpcDocument from './generated/stash/GRPC/V1/Documents/Document'
 import * as GrpcGetReply from './generated/stash/GRPC/V1/Documents/GetReply'
 import * as GrpcGetRequest from './generated/stash/GRPC/V1/Documents/GetRequest'
+import * as GrpcDocumentDeleteReply from './generated/stash/GRPC/V1/Documents/DeleteReply'
+import * as GrpcDocumentDeleteRequest from './generated/stash/GRPC/V1/Documents/DeleteRequest'
 import * as GrpcPutReply from './generated/stash/GRPC/V1/Documents/PutReply'
 import * as GrpcPutRequest from './generated/stash/GRPC/V1/Documents/PutRequest'
 import * as GrpcTerm from './generated/stash/GRPC/V1/Documents/Term'
@@ -74,6 +76,10 @@ export namespace V1  {
   export type GetReplyInput = GrpcGetReply.GetReply
   export type GetRequestOutput = GrpcGetRequest.GetRequest__Output
   export type GetRequestInput = GrpcGetRequest.GetRequest
+  export type DocumentDeleteRequestOutput = GrpcDocumentDeleteRequest.DeleteRequest__Output
+  export type DocumentDeleteRequest = GrpcDocumentDeleteRequest.DeleteRequest
+  export type DocumentDeleteReplyOutput = GrpcDocumentDeleteReply.DeleteReply__Output
+  export type DocumentDeleteReply = GrpcDocumentDeleteReply.DeleteReply
   export type PutReplyOutput = GrpcPutReply.PutReply__Output
   export type PutReplyInput = GrpcPutReply.PutReply
   export type PutRequestOutput = GrpcPutRequest.PutRequest__Output
