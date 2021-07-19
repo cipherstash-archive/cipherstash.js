@@ -10,17 +10,20 @@ async function deleteRecord() {
 
     if (queryResult.documents.length == 1) {
       await employees.delete(queryResult.documents[0]!.id)
-      const deleted = await employees.get(queryResult.documents[0]!.id)
-      if (!!deleted) {
-        console.log("☑️  Successfully deleted record")
-      } else {
-        console.error("Failed to delete record!")
+      try {
+        await employees.get(queryResult.documents[0]!.id)
+      } catch (err) {
+        if (err.message.match(/NOT_FOUND/)) {
+          console.log("☑️  Successfully deleted record")
+        } else {
+          console.error(err.message)
+        }
       }
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
   } catch (err) {
-    console.error(`Could not deleteRecord collection! Reason: ${JSON.stringify(err)}`)
+    console.error(`Could not delete record ! Reason: ${JSON.stringify(err)}`)
   }
 }
 

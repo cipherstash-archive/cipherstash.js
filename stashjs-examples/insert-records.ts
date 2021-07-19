@@ -10,7 +10,7 @@ async function insertRecords() {
     await employees.put({
       name: "Ada Lovelace",
       jobTitle: "Chief Executive Officer (CEO)",
-      dateOfBirth: new Date(1852, 11, 27), 
+      dateOfBirth: new Date(1852, 11, 27),
       email: "ada@security4u.example",
       grossSalary: 250000n
     })
