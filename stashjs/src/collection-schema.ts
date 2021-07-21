@@ -24,35 +24,59 @@ export class CollectionSchema<
   ) { }
 
   /**
-   * Defines a named Collection.
+   * Defines a named Collection via a fluent API.
    *
-   * @param name the name of the collection
-   * @returns a function that when invoked will be passed a MappingsDSL tailored
-   *          to the specific StashRecord user type and return a CollectionDefinition
-   *          instance.
+   * e.g.
+   * ```typescript
+   * const schema = CollectionSchema.define<Employee>("employees").indexedWith(mappings => ({ ... }))
+   * // or
+   * const schema = CollectionSchema.define<Employee>("employees").notIndexed()
+   * ```
+   *
+   * @param collectionName the name of the collection
    */
-  public static define<R extends StashRecord>(name: string) {
-    return <
-      M extends Mappings<R>,
-      MM extends MappingsMeta<M>
-    >(
-      callback: (define: MappingsDSL<R>) => M
-    ) => {
-      const mappings = callback(makeMappingsDSL<R>())
-      return new CollectionSchema<R, M, MM>(
-        name,
-        mappings,
-        Object.fromEntries(Object.keys(mappings).map((indexName) => {
-          return [
-            indexName, {
-              $indexName: indexName,
-              $indexId: makeId().toString('hex'),
-              $prf: crypto.randomBytes(16),
-              $prp: crypto.randomBytes(16)
-            }
-          ]
-        })) as MM
-      )
+  public static define<R extends StashRecord>(collectionName: string) {
+    return {
+      /**
+       * Defines a named Collection with mappings.
+       *
+       * @params callback that will be invoked to define mappings on the record type.
+       * @returns a CollectionSchema instance
+       */
+      indexedWith<
+        M extends Mappings<R>,
+        MM extends MappingsMeta<M>
+      >(callback: (define: MappingsDSL<R>) => M) {
+        const mappings = callback(makeMappingsDSL<R>())
+        return new CollectionSchema<R, M, MM>(
+          collectionName,
+          mappings,
+          Object.fromEntries(Object.keys(mappings).map((indexName) => {
+            return [
+              indexName, {
+                $indexName: indexName,
+                $indexId: makeId().toString('hex'),
+                $prf: crypto.randomBytes(16),
+                $prp: crypto.randomBytes(16)
+              }
+            ]
+          })) as MM
+        )
+      },
+      /**
+       * Defines a named Collection *without* any mappings.
+       *
+       * This is useful for defining a collection to serve as a simple key value
+       * store.  The only operations supported on a collection with this schema will
+       * be `put`, `get` and `delete`. It will not be queryable.
+       *
+       * @returns a CollectionSchema instance
+       */
+      notIndexed() {
+        type M = Mappings<R>
+        type MM = MappingsMeta<M>
+        return new CollectionSchema<R, M, MM>(collectionName, {} as M, {} as MM)
+      }
     }
   }
 
