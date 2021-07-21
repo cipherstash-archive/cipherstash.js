@@ -24,7 +24,7 @@ type PatientRecord = {
   prescriptions: Array<string>
 }
 
-let schema = CollectionSchema.define<PatientRecord>("patients")(mapping => ({
+let schema = CollectionSchema.define<PatientRecord>("patients").indexedWith(mapping => ({
   email: mapping.Exact("email"),
   age: mapping.Exact("age"),
   ageRange: mapping.Range("age"),

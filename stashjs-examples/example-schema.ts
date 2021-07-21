@@ -9,7 +9,7 @@ export type Employee = {
   grossSalary: bigint
 }
 
-export const employeeSchema = CollectionSchema.define<Employee>("employees")(mapping => ({
+export const employeeSchema = CollectionSchema.define<Employee>("employees").indexedWith(mapping => ({
   email: mapping.Exact("email"),
   dateOfBirth: mapping.Range("dateOfBirth"),
   jobTitle: mapping.Match(["jobTitle"], {
