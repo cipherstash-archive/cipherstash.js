@@ -1,6 +1,7 @@
 export { Stash } from "./stash"
 export { Collection } from "./collection"
 export { CollectionSchema } from "./collection-schema"
+
 export {
   DynamicMatchMapping,
   EncryptedIndexId,
@@ -21,14 +22,35 @@ export {
   RangeMappingFieldType,
   StashRecord,
 } from "./dsl/mappings-dsl"
+
 export {
-  all,
+  Condition,
+  ConjunctiveCondition,
+  DynamicMatchCondition,
+  DynamicMatchOperators,
+  ExactCondition,
+  ExactOperators,
+  FieldDynamicMatchCondition,
+  FieldDynamicMatchOperators,
+  IndexCondition,
+  MatchCondition,
+  MatchOperators,
+  OperatorsForIndex,
   Query,
-  QueryBuilder
+  QueryBuilder,
+  RangeCondition,
+  RangeOperator,
+  RangeOperators,
+  all,
 } from './dsl/query-dsl'
+
 export {
   downcase,
-  upcase,
   ngram,
-  standard
+  standard,
+  upcase,
 } from "./dsl/filters-and-tokenizers-dsl";
+
+export {
+  FieldOfType
+} from './type-utils'
