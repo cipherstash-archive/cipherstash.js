@@ -1,5 +1,17 @@
 import { FieldOfType, FieldType } from "../type-utils"
-import { Mappings, StashRecord, FieldTypeOfMapping, ExactMapping, MatchMapping, RangeMapping, RangeMappingFieldType, ExactMappingFieldType, MatchMappingFieldType, DynamicMatchMapping, FieldDynamicMatchMapping } from "./mappings-dsl"
+import {
+  Mappings,
+  DynamicMatchMapping,
+  ExactMapping,
+  ExactMappingFieldType,
+  FieldDynamicMatchMapping,
+  FieldTypeOfMapping,
+  MatchMapping,
+  MatchMappingFieldType,
+  RangeMapping,
+  RangeMappingFieldType,
+  StashRecord,
+} from "./mappings-dsl"
 
 /*
   A note on types
