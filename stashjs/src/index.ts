@@ -24,6 +24,7 @@ export {
 } from "./dsl/mappings-dsl"
 
 export {
+  AllCondition,
   Condition,
   ConjunctiveCondition,
   DynamicMatchCondition,
