@@ -12,7 +12,7 @@ export type ClientCredentials = {
 }
 
 export type FederationConfig = {
-  IdentityPoolId: string,
+  IdentityPoolId?: string,
   region: string
 }
 
@@ -39,7 +39,7 @@ export class AuthToken {
   constructor(
     private idpHost: string,
     private clientCredentials: ClientCredentials,
-    private federation: FederationConfig
+    private federation?: FederationConfig
   ) {}
 
   /*
@@ -75,21 +75,24 @@ export class AuthToken {
    */
   federateToken(accessToken: string): Promise<void> {
     if (this.federation) {
-      return new Promise((resolve, reject) => {
-        const { IdentityPoolId, region } = this.federation
+      const { IdentityPoolId, region } = this.federation
+      if (IdentityPoolId) {
+        return new Promise((resolve, reject) => {
+          AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+            IdentityPoolId,
+            Logins: {
+              [this.idpHost]: accessToken
+            }
+          }, { region })
 
-        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-          IdentityPoolId,
-          Logins: {
-            [this.idpHost]: accessToken
-          }
-        }, {region})
-
-        AWS.config.getCredentials((err) => {
-          if (err) reject(err)
-          resolve(undefined)
+          AWS.config.getCredentials((err) => {
+            if (err) reject(err)
+            resolve(undefined)
+          })
         })
-      })
+      } else {
+        return Promise.resolve(undefined)
+      }
     } else {
       return Promise.resolve(undefined)
     }
