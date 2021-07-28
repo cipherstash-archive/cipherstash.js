@@ -5,7 +5,7 @@ export type StashConfig = {
     readonly clientId: string,
   },
   readonly federationConfig: {
-    readonly IdentityPoolId: string,
+    readonly IdentityPoolId?: string,
     readonly region: string,
   }
   readonly serviceFqdn: string,
@@ -21,7 +21,7 @@ export function loadConfigFromEnv(): StashConfig {
       clientSecret: getVar('CS_SECRET'),
     },
     federationConfig: {
-      IdentityPoolId: getVar('CS_FEDERATED_IDENTITY_ID'),
+      IdentityPoolId: getOptionalVar('CS_FEDERATED_IDENTITY_ID'),
       region: 'ap-southeast-2'
     },
     serviceFqdn: getVar('CS_SERVICE_FQDN'),
@@ -32,9 +32,13 @@ export function loadConfigFromEnv(): StashConfig {
 
 function getVar(envVar: string): string {
   const value = process.env[envVar]
-  if (typeof value == 'undefined') {
-    throw Error(`"missing configuration: ${envVar}`)
-  } else {
+  if (typeof value != 'undefined') {
     return value
+  } else {
+    throw Error(`"missing configuration: ${envVar}`)
   }
+}
+
+function getOptionalVar(envVar: string): string | undefined {
+  return process.env[envVar]
 }
