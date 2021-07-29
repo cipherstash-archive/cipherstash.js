@@ -1,7 +1,7 @@
 import { CollectionSchema, downcase, standard } from "@cipherstash/stashjs"
 
 export type Employee = {
-  id: string,
+  id?: string,
   name: string,
   jobTitle: string,
   dateOfBirth: Date,

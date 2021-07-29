@@ -1,4 +1,4 @@
-import { StashRecord, Mappings, NewStashRecord, MappingsMeta } from "./dsl/mappings-dsl"
+import { StashRecord, Mappings, MappingsMeta, HasID } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { Stash } from "./stash"
 import { idStringToBuffer, makeId } from "./utils"
@@ -40,7 +40,7 @@ export class Collection<
     return this.schema.buildQuery
   }
 
-  public async get(id: string | Buffer): Promise<R | null> {
+  public async get(id: string | Buffer): Promise<R & HasID | null> {
     const docId = id instanceof Buffer ? id : idStringToBuffer(id)
     return new Promise(async (resolve, reject) => {
       this.stash.stub.get({
@@ -58,7 +58,7 @@ export class Collection<
     })
   }
 
-  public async put(doc: NewStashRecord<R>): Promise<string> {
+  public async put(doc: R): Promise<string> {
     return new Promise(async (resolve, reject) => {
       const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
       const docWithId = {
@@ -85,7 +85,7 @@ export class Collection<
     })
   }
 
-  public async all(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R>> {
+  public async all(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
     const options = queryOptions ? queryOptions : {}
     return new Promise(async (resolve, reject) => {
       this.stash.stub.query({
@@ -108,7 +108,7 @@ export class Collection<
       }, async (err, res) => {
         if (err) { reject(err) }
         resolve({
-          documents: await convertQueryReplyToUserRecords<R>(res!, this.stash.cipherSuite),
+          documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
           aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
             name: agg.name! as Aggregate,
             value: BigInt(agg.value!.toString())
