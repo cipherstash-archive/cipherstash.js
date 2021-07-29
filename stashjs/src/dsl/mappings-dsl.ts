@@ -1,16 +1,13 @@
 import { TokenFilter, Tokenizer } from "./filters-and-tokenizers-dsl"
-import { FieldOfType, FieldType, Optional } from "../type-utils"
-
-/**
- * All user-defined type that is stored in a Collection must extend this type.
- */
-export type StashRecord = { id: string }
+import { FieldOfType, FieldType } from "../type-utils"
 
 /**
  * A new record is permitted to not already have an assigned ID (the client will
  * create an ID when one is not already set).
  */
-export type NewStashRecord<R extends StashRecord> = Optional<R, 'id'>
+export type StashRecord = { id?: string }
+
+export type HasID = { id: string }
 
 /**
  * Fields of this type can be indexed and queried.
@@ -203,7 +200,7 @@ export type EncryptedIndexId = string
  */
 export type MappingsMeta<M> =
   M extends Mappings<infer _R> ? {
-    [F in keyof M]: {
+    [F in keyof M]-?: {
       $indexName: string,
       $indexId: EncryptedIndexId,
       $prf: Buffer,

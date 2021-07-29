@@ -11,15 +11,15 @@ import { loadConfigFromEnv, StashConfig } from './stash-config'
 
 /**
  * Represents an authenticated session to a CipherStash instance.
- * 
+ *
  * Provides methods for creating, loading and deleting collections.
- * 
+ *
  * TODO: extract the GRPC-message-munging code into helpers in the `src/grpc`
  * directory.
  */
 export class Stash {
   readonly cipherSuite: CipherSuite
-  readonly stub: V1.APIClient 
+  readonly stub: V1.APIClient
   readonly clusterId: string
   readonly #authToken: AuthToken
 
@@ -65,7 +65,7 @@ export class Stash {
       const request: V1.CreateRequestInput = {
         context: { authToken: await this.refreshToken() },
         ref: await makeRef(definition.name, this.clusterId),
-        indexes: await this.encryptMappings(definition) 
+        indexes: await this.encryptMappings(definition)
       }
 
       this.stub.createCollection(request, async (err, res) => {
@@ -154,7 +154,7 @@ export class Stash {
           $prf: Buffer.from(meta!.$prf, 'hex'),
           $prp: Buffer.from(meta!.$prp, 'hex'),
         }
-      } 
+      }
     })) as Array<StoredMapping>
 
     return storedMappings
@@ -171,7 +171,7 @@ export class Stash {
     const encryptedIndexes = await Promise.all(Object.entries(definition.mappings).map(async ([indexName, mapping]) => {
       const storedMapping: StoredMapping = {
         mapping,
-        meta: { 
+        meta: {
           ...definition.meta[indexName]!,
           $prf: definition.meta[indexName]!.$prf.toString('hex'),
           $prp: definition.meta[indexName]!.$prp.toString('hex'),
