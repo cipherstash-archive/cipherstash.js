@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs",
-  "version": "0.2.20",
+  "version": "0.2.22",
   "description": "Datastore & Search API for CipherStash",
   "main": "dist/index.js",
   "scripts": {
@@ -52,7 +52,6 @@
     "babel-jest": "^26.6.3",
     "jest": "^26.6.3",
     "node-addon-api": "^3.1.0",
-    "node-gyp": "^8.0.0",
     "ts-node": "^10.0.0",
     "typescript": "^4.3.5"
   },
@@ -64,6 +63,7 @@
     "aws-sdk": "^2.918.0",
     "bson": "^4.4.0",
     "is-plain-object": "^5.0.0",
+    "node-gyp": "^8.0.0",
     "siphash": "^1.1.0",
     "uuid": "^8.3.2"
   },
