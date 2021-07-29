@@ -24,8 +24,8 @@ export function isFieldDotField<
  * Extracts the available fields from R. Nested fields will be returned in dot notation.
  */
 export type Field<R> = {
-  [K in keyof R]:
-    K extends string ? 
+  [K in keyof R]-?:
+    K extends string ?
       R[K] extends {[key: string]: unknown } ?
         FieldDotField<K, Field<R[K]>> : K
     : never
@@ -61,7 +61,7 @@ export type FieldOfType<R, T> = FindFieldsOfType<R, Field<R>, T>
 
 /**
  * Get the type name of a type.
- * 
+ *
  * JS sucks at this, e.g. typeof new Date() returns "[object Object]"
  */
 export type TypeName<T> =
