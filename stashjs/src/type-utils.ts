@@ -1,6 +1,14 @@
 
+type SupportedType =
+  | number
+  | bigint
+  | string
+  | boolean
+  | Date
+  | { [key: string]: SupportedType }
+
 /**
- * Utility for conatenating two field names together in order to support typing
+ * Utility for concatenating two field names together in order to support typing
  * of accessors for nested fields.
  */
 export type FieldDotField<
@@ -26,7 +34,7 @@ export function isFieldDotField<
 export type Field<R> = {
   [K in keyof R]-?:
     K extends string ?
-      R[K] extends {[key: string]: unknown } ?
+      R[K] extends {[key: string]: SupportedType } ?
         FieldDotField<K, Field<R[K]>> : K
     : never
 }[keyof R]
