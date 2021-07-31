@@ -81,7 +81,7 @@ export class Collection<
     })
   }
 
-  public async all(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
+  public async query(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
     const options = queryOptions ? queryOptions : {}
     return new Promise(async (resolve, reject) => {
       this.stash.stub.query({
