@@ -99,7 +99,7 @@ export class CollectionSchema<
       entries.map(
         ([key, mapping]) => [key, this.operatorsFor(key, mapping)]
       )
-    ) as any // FIXME: this is a type hack
+    ) as QueryBuilder<R, M>
   }
 
   /**
