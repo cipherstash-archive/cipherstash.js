@@ -36,10 +36,6 @@ export class Collection<
     return this.schema.name
   }
 
-  public get query() {
-    return this.schema.buildQuery
-  }
-
   public async get(id: string | Buffer): Promise<R & HasID | null> {
     const docId = id instanceof Buffer ? id : idStringToBuffer(id)
     return new Promise(async (resolve, reject) => {
