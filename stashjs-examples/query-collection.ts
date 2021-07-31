@@ -6,7 +6,7 @@ async function queryCollection() {
     const stash = await Stash.connect(Stash.loadConfigFromEnv())
     const employees = await stash.loadCollection(employeeSchema)
 
-    let queryResult = await employees.query($ => $.email.eq("ada@security4u.example"))
+    let queryResult = await employees.query(employee => employee.email.eq("ada@security4u.example"))
 
     if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Ada Lovelace") {
       console.log("☑️  Successfully queried using an `Exact` mapping")
@@ -14,8 +14,8 @@ async function queryCollection() {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
 
-    queryResult = await employees.query($ =>
-      $.dateOfBirth.between(
+    queryResult = await employees.query(employee =>
+      employee.dateOfBirth.between(
         new Date(Date.parse("1852-11-27")),
         new Date(Date.parse("1917-12-09"))
       )
@@ -27,8 +27,8 @@ async function queryCollection() {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
 
-    queryResult = await employees.query($ =>
-      $.dateOfBirth.between(
+    queryResult = await employees.query(employee =>
+      employee.dateOfBirth.between(
         new Date(Date.parse("1852-11-27")),
         new Date(Date.parse("1917-12-09"))
       ),
@@ -41,8 +41,8 @@ async function queryCollection() {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
 
-    queryResult = await employees.query($ =>
-      $.dateOfBirth.between(
+    queryResult = await employees.query(employee =>
+      employee.dateOfBirth.between(
         new Date(Date.parse("1852-11-27")),
         new Date(Date.parse("1917-12-09"))
       ),
@@ -57,7 +57,7 @@ async function queryCollection() {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
 
-    queryResult = await employees.query($ => $.allStringFields1.match("Grace"))
+    queryResult = await employees.query(employee => employee.allStringFields1.match("Grace"))
 
     if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Grace Hopper") {
       console.log("☑️  Successfully queried using a `DynamicMatch` mapper!")
@@ -65,7 +65,7 @@ async function queryCollection() {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
     }
 
-    queryResult = await employees.query($ => $.allStringFields2.match("name", "hopper"))
+    queryResult = await employees.query(employee => employee.allStringFields2.match("name", "hopper"))
 
     if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Grace Hopper") {
       console.log("☑️  Successfully queried using a `FieldDynamicMatch` mapper!")

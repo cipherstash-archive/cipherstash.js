@@ -6,7 +6,7 @@ async function deleteRecord() {
     const stash = await Stash.connect(Stash.loadConfigFromEnv())
     const employees = await stash.loadCollection(employeeSchema)
 
-    let queryResult = await employees.query($ => $.email.eq("ada@security4u.example"))
+    let queryResult = await employees.query(employee => employee.email.eq("ada@security4u.example"))
 
     if (queryResult.documents.length == 1) {
       await employees.delete(queryResult.documents[0]!.id)
