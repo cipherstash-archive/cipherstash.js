@@ -1,6 +1,7 @@
 import * as crypto from 'crypto'
 import { getSecret } from './secrets'
 import { v4 as uuidv4 } from 'uuid'
+import stringifyObject from 'stringify-object'
 
 /**
  * Makes a collection ref (anonymised string)
@@ -52,13 +53,27 @@ export const biggest = (a: bigint, b: bigint) => a > b ? a : b
 export const smallest = (a: bigint, b: bigint) => a < b ? a : b
 
 /**
- * Like JSON.stringify(...) but handles bigints.
- * 
+ * Like JSON.stringify(...) but handles bigints and prettifies the output.
+ *
  * NOTE: this is for debugging purposes ONLY.
  */
-export const stringify = (value: any) =>
-  JSON.stringify(value, (_key, value) =>
-    typeof value === 'bigint'
-      ? `bigint:${value.toString()}`
-      : value
-  )
+export function stringify(item: any): string {
+  return stringifyObject(objectify(item), {
+    indent: '  ',
+    singleQuotes: false
+  })
+}
+
+function objectify(item: any): any {
+  if (Array.isArray(item)) {
+    return item.map(elem => objectify(elem))
+  } else if (Buffer.isBuffer(item)) {
+    return `ciphertext:${item.toString('hex')}`
+  } else if (typeof item == 'bigint') {
+    return `${item.toString()}n`
+  } else if (typeof item == 'object') {
+    return Object.fromEntries(Object.keys(item).map(key => [key, objectify(item[key])]))
+  } else {
+    return item
+  }
+}
