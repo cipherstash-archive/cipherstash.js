@@ -1,7 +1,7 @@
 import { StashRecord, Mappings, MappingsMeta, HasID } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { Stash } from "./stash"
-import { idStringToBuffer, makeId } from "./utils"
+import { idStringToBuffer, makeId, stringify } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord } from "./grpc/get-helper"
@@ -61,13 +61,17 @@ export class Collection<
         ...doc,
         id: docId,
       } as R
+      const vectors = convertAnalyzedRecordToVectors(
+        this.analyzeRecord(docWithId),
+        this.schema.meta
+      )
+      if (process.env['CS_DEBUG'] == 'yes') {
+        console.log(stringify(vectors))
+      }
       this.stash.stub.put({
         context: { authToken: await this.stash.refreshToken() },
         collectionId: idStringToBuffer(this.id),
-        vectors: convertAnalyzedRecordToVectors(
-          this.analyzeRecord(docWithId),
-          this.schema.meta
-        ),
+        vectors,
         source: {
           id: docId,
           source: (await this.stash.cipherSuite.encrypt(docWithId)).result
@@ -84,12 +88,16 @@ export class Collection<
   public async query(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
     const options = queryOptions ? queryOptions : {}
     return new Promise(async (resolve, reject) => {
+      const constraints = this.analyzeQuery(callback(this.schema.makeQueryBuilder())).constraints
+      if (process.env['CS_DEBUG']) {
+        console.log(stringify(constraints))
+      }
       this.stash.stub.query({
         context: { authToken: await this.stash.refreshToken() },
         collectionId: idStringToBuffer(this.id),
         query: {
           limit: options.limit,
-          constraints: this.analyzeQuery(callback(this.schema.makeQueryBuilder())).constraints,
+          constraints,
           aggregates: options.aggregation ? options.aggregation.map(agg => ({
             indexId: this.schema.meta[agg.ofIndex]!.$indexId,
             type: agg.aggregate
