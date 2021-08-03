@@ -23,7 +23,6 @@ type ThenArg<T> = T extends PromiseLike<infer U> ? U : never
 type EncryptOutput = ThenArg<ReturnType<ReturnType<typeof buildClient>['encrypt']>>
 
 const cacheCapacity = 1000
-const cache = getLocalCryptographicMaterialsCache(cacheCapacity)
 
 /* maxAge is the time in milliseconds that an entry will be cached.
  * Elements are actively removed from the cache.
@@ -50,7 +49,11 @@ export type CipherSuite = {
 }
 
 export function makeCipherSuite(generatorKeyId: string): CipherSuite {
+  console.log("CipherSuite", 1)
+  const cache = getLocalCryptographicMaterialsCache(cacheCapacity)
+  console.log("CipherSuite", 2)
   const keyring = new KmsKeyringNode({ generatorKeyId })
+  console.log("CipherSuite", 3)
   const context = {
     version: "0.1",
     format: "BSON"
@@ -63,14 +66,21 @@ export function makeCipherSuite(generatorKeyId: string): CipherSuite {
     partition,
     maxMessagesEncrypted,
   })
+  console.log("CipherSuite", 4)
 
   return {
     encrypt: async <T>(plaintext: T) => {
+      console.log("CipherSuite", 5)
       const buffer = serialize(plaintext)
-      return client.encrypt(cmm, buffer, {
-        encryptionContext: context,
-        plaintextLength: buffer.byteLength
-      })
+      console.log("CipherSuite", 6)
+      try {
+        return await client.encrypt(cmm, buffer, {
+          encryptionContext: context,
+          plaintextLength: buffer.byteLength
+        })
+      } catch (err) {
+        return Promise.reject(err)
+      }
     },
 
     decrypt: async <T>(ciphertext: Buffer) => {
