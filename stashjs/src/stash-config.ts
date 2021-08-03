@@ -7,8 +7,8 @@ export type AuthenticationConfig =
     readonly kind: "client-credentials",
     readonly clientSecret: string,
     readonly clientId: string,
-  }
-  | {
+  },
+ | {
     readonly kind: "stored-access-token",
     readonly clientId: string
   }

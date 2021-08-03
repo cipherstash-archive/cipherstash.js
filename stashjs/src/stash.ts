@@ -21,6 +21,10 @@ import { loadConfigFromEnv, StashConfig } from './stash-config'
  */
 export class Stash {
   readonly cipherSuite: CipherSuite
+  readonly stub: V1.APIClient
+  readonly clusterId: string
+  readonly authStrategy: AuthStrategy
+  readonly cmk: string
 
   private constructor(
     public readonly stub: V1.APIClient,
@@ -29,6 +33,8 @@ export class Stash {
     public readonly cmk: string
   ) {
     this.cipherSuite = makeCipherSuite(cmk)
+    this.clusterId = clusterId
+    this.cmk = cmk
   }
 
   public static loadConfigFromEnv(): StashConfig {
