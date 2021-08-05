@@ -6,7 +6,7 @@ import { MappableFieldType } from '../dsl/mappings-dsl'
 export { DateResolution } from './date-encoding-helpers'
 
 export const UINT64_MIN: bigint = 0n
-export const UINT64_MAX: bigint = 2n^64n - 1n
+export const UINT64_MAX: bigint = 18446744073709551615n
 
 /**
  * A uint64 encoding of a source type that retains ordering properties of the
