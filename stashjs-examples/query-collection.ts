@@ -8,8 +8,11 @@ function displayResults(result: any) {
       year: movie.year,
       runningTime: movie.runningTime
     })
-    // TODO: print count (and ideally query time)
   })
+  // TODO: print count
+  console.log("--------------------------------------------------")
+  console.log(`Executed in ${result.took} secs`)
+  console.log("--------------------------------------------------")
 }
 
 async function queryCollection() {
