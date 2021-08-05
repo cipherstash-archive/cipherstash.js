@@ -177,7 +177,7 @@ const indexMatch: (terms: Array<MatchMappingFieldType>) => Array<bigint> = terms
 }
 
 const buildTextProcessingPipeline: (options: MatchOptions) => TextProcessor = options => {
-  let pipeline: Array<TextProcessor> = options.tokenFilters.map(loadTextProcessor).concat([loadTextProcessor(options.tokenizer)])
+  let pipeline: Array<TextProcessor> = [loadTextProcessor(options.tokenizer)].concat(options.tokenFilters.map(loadTextProcessor))
   return textPipeline(pipeline)
 }
 
