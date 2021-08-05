@@ -1,14 +1,24 @@
 import { Stash } from "@cipherstash/stashjs"
-import { employeeSchema } from "./example-schema";
+import { movieSchema, Movie } from "./example-schema";
 
 async function queryCollection() {
   try {
     const stash = await Stash.connect(Stash.loadConfigFromEnv())
-    const employees = await stash.loadCollection(employeeSchema)
+    const movies = await stash.loadCollection(movieSchema)
 
-    let queryResult = await employees.query(employee => employee.email.eq("ada@security4u.example"))
+      /*let queryResult = await movies.query(movie => movie.title.match("biz bon"))
+    queryResult.documents.forEach((movie: Movie) => {
+      console.log(movie)
+      // TODO: print count (and ideally query time)
+    })*/
 
-    if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Ada Lovelace") {
+    // TODO: I think gte isn't working
+    let queryResult = await movies.query(movie => movie.year.gte(1980))
+    queryResult.documents.forEach((movie: Movie) => {
+      console.log(movie)
+    })
+
+    /*if (queryResult.documents.length == 1 && queryResult.documents[0]!.name == "Ada Lovelace") {
       console.log("☑️  Successfully queried using an `Exact` mapping")
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
@@ -71,7 +81,7 @@ async function queryCollection() {
       console.log("☑️  Successfully queried using a `FieldDynamicMatch` mapper!")
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
-    }
+    }*/
 
   } catch (err) {
     console.error(`Could not query collection! Reason: ${JSON.stringify(err)}`)

@@ -1,9 +1,9 @@
-import { Stash  } from "@cipherstash/stashjs"
-import { employeeSchema } from "./example-schema"
+//import { Stash  } from "@cipherstash/stashjs"
+//import { movieSchema } from "./example-schema"
 
 async function deleteRecord() {
   try {
-    const stash = await Stash.connect(Stash.loadConfigFromEnv())
+    /*    const stash = await Stash.connect(Stash.loadConfigFromEnv())
     const employees = await stash.loadCollection(employeeSchema)
 
     let queryResult = await employees.query(employee => employee.email.eq("ada@security4u.example"))
@@ -21,7 +21,7 @@ async function deleteRecord() {
       }
     } else {
       console.error(`Unexpected result: ${JSON.stringify(queryResult)}`)
-    }
+    }*/
   } catch (err) {
     console.error(`Could not delete record ! Reason: ${JSON.stringify(err)}`)
   }
