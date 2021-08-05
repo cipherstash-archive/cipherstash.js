@@ -22,7 +22,8 @@
   },
   "homepage": "https://github.com/cipherstash/stashjs-examples#readme",
   "dependencies": {
-    "@cipherstash/stashjs": "workspace:*"
+    "@cipherstash/stashjs": "workspace:*",
+    "csv-parse": "^4.16.0"
   },
   "devDependencies": {
     "typescript": "^4.3.4"

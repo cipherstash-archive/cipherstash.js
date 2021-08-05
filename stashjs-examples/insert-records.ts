@@ -1,13 +1,31 @@
 import { Stash } from "@cipherstash/stashjs"
-import { employeeSchema } from "./example-schema"
+import { movieSchema } from "./example-schema"
+import parse from 'csv-parse'
+import fs from 'fs'
 
 async function insertRecords() {
   try {
     const stash = await Stash.connect(Stash.loadConfigFromEnv())
-    const employees = await stash.loadCollection(employeeSchema)
-    console.log(`Collection "${employees.name}" loaded`)
+    const movies = await stash.loadCollection(movieSchema)
+    console.log(`Collection "${movies.name}" loaded`)
 
-    await employees.put({
+    const data = fs.readFileSync('titles.tsv', 'utf8')
+    console.log(data)
+
+    parse(data, {
+      delimiter: "\t"
+    }, function(_err, records) {
+      records.forEach((movie: Array<string>) => {
+        console.log(movie[2])
+        movies.put({
+          title: movie[2]!,
+          year: parseInt(movie[5]!),
+          runningTime: parseInt(movie[7]!)
+        }).catch((err: any) => console.log('ERROR', err))
+      })
+    })
+
+      /*    await employees.put({
       name: "Ada Lovelace",
       jobTitle: "Chief Executive Officer (CEO)",
       dateOfBirth: new Date(1852, 11, 27),
@@ -31,7 +49,7 @@ async function insertRecords() {
       grossSalary: 250000n
     })
 
-    console.log("Inserted 3 records")
+    console.log("Inserted 3 records")*/
   } catch (err) {
     console.error(`Could not insert records into collection! Reason: ${JSON.stringify(err)}`)
   }
