@@ -92,6 +92,10 @@ export class Collection<
       if (process.env['CS_DEBUG']) {
         console.log(stringify(constraints))
       }
+
+      // Time the execution
+      const timerStart = (new Date()).getTime()
+
       this.stash.stub.query({
         context: { authToken: await this.stash.refreshToken() },
         collectionId: idStringToBuffer(this.id),
@@ -111,7 +115,10 @@ export class Collection<
         }
       }, async (err, res) => {
         if (err) { reject(err) }
+        const timerEnd = (new Date()).getTime()
+
         resolve({
+          took: (timerEnd - timerStart)/1000,
           documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
           aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
             name: agg.name! as Aggregate,
@@ -138,6 +145,7 @@ export class Collection<
 }
 
 export type QueryResult<R> = {
+  took: number,
   documents: Array<R>,
   aggregates: Array<AggregateResult>
 }
