@@ -31,4 +31,23 @@ describe("tokenizers & filters", () => {
     let pipeline = textPipeline([upcaseFilter, ngramsTokenizer({ tokenLength: 3 })])
     expect(pipeline(["HeLlOwOrLd"])).toEqual(['HEL', 'ELL', 'LLO', 'LOW', 'OWO', 'WOR', 'ORL', 'RLD'])
   })
+
+  it("tokenizes before filters", () => {
+    const input = "CipherStash Dev Team"
+    let pipeline = textPipeline([standardTokenizer, ngramsTokenizer({ tokenLength: 3 })])
+    expect(pipeline([input])).toEqual([
+      "Cip",
+      "iph",
+      "phe",
+      "her",
+      "erS",
+      "rSt",
+      "Sta",
+      "tas",
+      "ash",
+      "Dev",
+      "Tea",
+      "eam"
+    ])
+  })
 })
