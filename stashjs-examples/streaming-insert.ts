@@ -1,15 +1,15 @@
 import { Stash } from "@cipherstash/stashjs"
-import { Employee, employeeSchema } from "./example-schema"
+import { Movie, movieSchema } from "./example-schema"
+import * as uuid from "uuid"
 import * as faker from 'faker'
 
-function *recordGenerator(count: number): Iterator<Employee> {
+async function *fakeMovieGenerator(count: number): AsyncIterator<Movie> {
   for (let n = 0; n < count; n++) {
     yield {
-      name: `${faker.name.firstName()} ${faker.name.lastName()}`,
-      jobTitle: `Head of ${faker.commerce.department()}`,
-      dateOfBirth: faker.date.past(),
-      email: faker.internet.email(),
-      grossSalary: BigInt(parseInt(faker.finance.amount(100000, 500000)))
+      id: uuid.v4(),
+      title: faker.lorem.words(4),
+      year: faker.date.past(100).getFullYear(),
+      runningTime: faker.datatype.number({min: 60, max: 180})
     }
   }
 }
@@ -17,13 +17,13 @@ function *recordGenerator(count: number): Iterator<Employee> {
 async function insertRecords() {
   try {
     const stash = await Stash.connect(Stash.loadConfigFromEnv())
-    const employees = await stash.loadCollection(employeeSchema)
-    console.log(`Collection "${employees.name}" loaded`)
+    const movies = await stash.loadCollection(movieSchema)
+    console.log(`Collection "${movies.name}" loaded`)
 
-    const count = 1
-    await employees.putStream(recordGenerator(count))
+    const count = 1000
+    const result = await movies.putStream(fakeMovieGenerator(count))
 
-    console.log(`Inserted ${count} records`)
+    console.log(`Finished! ${JSON.stringify(result)}`)
     process.exit(0)
   } catch (err) {
     console.error(`Could not insert records into collection! Reason: ${JSON.stringify(err)}`)

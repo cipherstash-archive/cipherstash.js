@@ -8,7 +8,7 @@ import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./
 import { CollectionSchema } from "./collection-schema"
 import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer, AnalyzedQuery } from "./analyzer"
 import { StreamWriter } from "./stream-writer"
-import { AnalysisPool } from "./analysis-pool"
+import { V1 } from "../../stashjs-grpc/dist"
 
 const DEFAULT_QUERY_LIMIT = 50;
 
@@ -25,7 +25,6 @@ export class Collection<
 
   private analyzeRecord: RecordAnalyzer<R, M, MM>
   private analyzeQuery: QueryAnalyzer<R, M>
-  private analysisPool: AnalysisPool = new AnalysisPool()
 
   public constructor(
     private readonly stash: Stash,
@@ -159,24 +158,19 @@ export class Collection<
     )
   }
 
-<<<<<<< HEAD
-  async queryWithConstraints(callback: (where: QueryBuilder<R, M>) => Query<R, M>,
-    queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
-
-=======
-  public async putStream(records: Iterator<R>): Promise<void> {
+  // TODO: do not leak GRPC types from this public API. Define a new type and convert it.
+  public async putStream(records: AsyncIterator<R>): Promise<V1.StreamingPutReply> {
     const streamWriter = new StreamWriter(
       this.stash,
+      await this.stash.refreshToken(),
       this.schema,
-      this.analysisPool,
       idStringToBuffer(this.id),
       await this.stash.federateToken()
     )
     return await streamWriter.writeAll(records)
   }
 
-  public async query(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
->>>>>>> a2bc4860 (WIP)
+  async queryWithConstraints(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
     const options = queryOptions ? queryOptions : {}
     return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
