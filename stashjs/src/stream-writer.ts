@@ -1,7 +1,7 @@
-import { ClientDuplexStream } from "@grpc/grpc-js"
+import { ClientWritableStream } from "@grpc/grpc-js"
 import { V1 } from "@cipherstash/stashjs-grpc"
 import { CollectionSchema } from "."
-import { AnalysisJob, AnalysisPool, AnalysisResult } from "./analysis-pool"
+import { AnalysisRunner, AnalysisResult } from "./analysis-runner"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { Stash } from "./stash"
 import AWS from "aws-sdk"
@@ -12,30 +12,25 @@ export class StreamWriter<
   MM extends MappingsMeta<M>
 > {
 
-  private stream: ClientDuplexStream<V1.StreamingPutRequest, V1.StreamingPutReplyOutput>
+  private analysisRunner: AnalysisRunner
 
   constructor(
     private stash: Stash,
+    private token: string,
     private schema: CollectionSchema<R, M, MM>,
-    private analysisPool: AnalysisPool,
     private collectionId: Buffer,
     private awsCredentials: AWS.Credentials,
   ) {
-    this.stream = this.stash.stub.putStream()
-    // this.stream.on('data', function(putReply) {
-    //   console.log("RECV MSG", putReply)
-    //   writer.writeBatch()
-    // })
-    // this.stream.on('end', function() {
-    //   console.log("END")
-    // })
-    // this.stream.on('error', function(e) {
-    //   console.log("ERROR", e)
-    // })
-    // this.stream.on('status', function(status) {
-    //   console.log("STATUS", status)
-    // })
-  }
+    this.analysisRunner = new AnalysisRunner({
+      awsCredentials: {
+        accessKeyId: this.awsCredentials.accessKeyId,
+        secretAccessKey: this.awsCredentials.secretAccessKey,
+        sessionToken: this.awsCredentials.sessionToken
+      },
+      cmk: this.stash.cmk,
+      schema: this.schema
+    })
+   }
 
   /**
    * Performs a streaming insert to a collection.
@@ -46,64 +41,53 @@ export class StreamWriter<
    * @returns a Promise that will resolve once all records from the iterator
    *          have been written.
    */
-  public writeAll(records: Iterator<R>): Promise<void> {
-    return this.writeStream(this.analysisPool.analyze(this.convertRecordsToJobs(records)))
+  public writeAll(records: AsyncIterator<R>): Promise<V1.StreamingPutReply> {
+    return this.writeStream(this.analysisRunner.analyze(records))
   }
 
-  private *convertRecordsToJobs(records: Iterator<R>): Iterator<AnalysisJob> {
-    let record = records.next()
-    console.log("convertRecordsToJobs", 1)
-    while (!record.done) {
-      console.log("convertRecordsToJobs", 2)
-      yield {
-        awsCredentials: {
-          accessKeyId: this.awsCredentials.accessKeyId,
-          secretAccessKey: this.awsCredentials.secretAccessKey,
-          sessionToken: this.awsCredentials.sessionToken
-        },
-        cmk: this.stash.cmk,
-        schema: this.schema,
-        record: record.value
+  private async writeStream(analysisResults: AsyncIterator<AnalysisResult>): Promise<V1.StreamingPutReply> {
+    return new Promise(async (resolve, reject) => {
+      const stream = this.stash.stub.putStream((err, result) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(result!)
+        }
+      })
+      let result = await analysisResults.next()
+      while (!result.done) {
+        await this.writeOneStreamingPutRequest(stream, result.value)
+        result = await analysisResults.next()
       }
-      record = records.next()
-    }
+      stream.end()
+    })
   }
 
-  private async writeStream(analysisResults: AsyncIterator<AnalysisResult>): Promise<void> {
-    console.log("WriteStream", 1)
-    let result = await analysisResults.next()
-    console.log("WriteStream ", 2, result)
-
-    while (!result.done) {
-      console.log("WriteStream", 3)
-      await this.writeOneAnalysisResult(result.value)
-      console.log("WriteStream", 4)
-      result = await analysisResults.next()
-      console.log("WriteStream", 5)
-    }
-    console.log("WriteStream", 6)
-    this.stream.end()
-    console.log("WriteStream", 7)
-    return void 0
-  }
-
-  private async writeOneAnalysisResult(analysisResult: AnalysisResult): Promise<void> {
-    const payload = {
+  private toStreamingPutRequest(analysisResult: AnalysisResult): V1.StreamingPutRequest {
+    return {
+      // context: { authToken: await this.stash.refreshToken() },
+      context: { authToken: this.token },
       collectionId: this.collectionId,
       vectors: analysisResult.vectors,
       source: {
         id: analysisResult.docId,
         source: analysisResult.encryptedSource
-      },
-    }
-    while (!this.stream.write(payload)) {
-      await this.waitForDrain()
+      }
     }
   }
 
-  private async waitForDrain(): Promise<void> {
+  private async writeOneStreamingPutRequest(stream: ClientWritableStream<V1.StreamingPutRequest>, analysisResult: AnalysisResult): Promise<void> {
+    const payload = this.toStreamingPutRequest(analysisResult)
+    return new Promise(async (resolve) => {
+      while (!stream.write(payload, () => { resolve(void 0) })) {
+        await this.waitForDrain(stream)
+      }
+    })
+  }
+
+  private async waitForDrain(stream: ClientWritableStream<V1.StreamingPutRequest>): Promise<void> {
     return new Promise(resolve => {
-      this.stream.once('drain', () => resolve(void 0))
+      stream.once('drain', () => resolve(void 0))
     })
   }
 }

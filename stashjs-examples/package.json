@@ -23,10 +23,11 @@
   "homepage": "https://github.com/cipherstash/stashjs-examples#readme",
   "dependencies": {
     "@cipherstash/stashjs": "workspace:*",
-    "csv-parse": "^4.16.0",
-    "node-repl-await": "^0.1.2",
     "@types/faker": "^5.5.7",
-    "faker": "^5.5.3"
+    "csv-parse": "^4.16.0",
+    "faker": "^5.5.3",
+    "node-repl-await": "^0.1.2",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
     "typescript": "^4.3.4"
