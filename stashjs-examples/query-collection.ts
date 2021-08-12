@@ -29,7 +29,7 @@ async function queryCollection() {
     queryResult = await movies.query({ limit: 50, order: [{byIndex: "year", direction: "DESC"}] })
     displayResults(queryResult)
 
-    queryResult = await movies.query({})
+    queryResult = await movies.query()
     displayResults(queryResult)
 
   } catch (err) {
