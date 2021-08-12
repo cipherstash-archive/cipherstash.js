@@ -8,6 +8,8 @@ import { convertGetReplyToUserRecord } from "./grpc/get-helper"
 import { CollectionSchema } from "./collection-schema"
 import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer, AnalyzedQuery } from "./analyzer"
 
+const DEFAULT_QUERY_LIMIT = 50;
+
 /**
  * A CollectionProxy represents a connection to an underlying Collection.
  *
@@ -173,7 +175,7 @@ export class Collection<
       context: { authToken: await this.stash.refreshToken() },
       collectionId: idStringToBuffer(this.id),
       query: {
-        limit: options.limit,
+        limit: options.limit || DEFAULT_QUERY_LIMIT,
         constraints,
         aggregates: options.aggregation ? options.aggregation.map(agg => ({
           indexId: this.schema.meta[agg.ofIndex]!.$indexId,
@@ -188,8 +190,6 @@ export class Collection<
       }
     }
   }
-
-
 }
 
 export type QueryResult<R> = {
