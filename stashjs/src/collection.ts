@@ -4,7 +4,7 @@ import { Stash } from "./stash"
 import { idStringToBuffer, makeId, stringify } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
-import { convertGetReplyToUserRecord } from "./grpc/get-helper"
+import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./grpc/get-helper"
 import { CollectionSchema } from "./collection-schema"
 import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer, AnalyzedQuery } from "./analyzer"
 
@@ -55,6 +55,28 @@ export class Collection<
       })
     })
   }
+
+  public async getAll(ids: Array<string | Buffer>): Promise<Array<R>> {
+    const docIds = ids.map((id) => {
+      return (id instanceof Buffer) ? id : idStringToBuffer(id)
+    })
+
+    return new Promise(async (resolve, reject) => {
+      this.stash.stub.getAll({
+        context: { authToken: await this.stash.refreshToken() },
+        collectionId: idStringToBuffer(this.id),
+        ids: docIds
+      }, (err, res) => {
+        if (err) { reject(err) }
+        if (res?.documents) {
+          resolve(convertGetAllReplyToUserRecords(res, this.stash.cipherSuite))
+        } else {
+          reject("Unexpectedly received empty response from data-service")
+        }
+      })
+    })
+  }
+
 
   public async put(doc: R): Promise<string> {
     return new Promise(async (resolve, reject) => {

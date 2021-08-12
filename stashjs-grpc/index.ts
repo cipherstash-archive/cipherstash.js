@@ -15,6 +15,8 @@ import * as GrpcInfoRequest from './generated/stash/GRPC/V1/Collections/InfoRequ
 import * as GrpcDocument from './generated/stash/GRPC/V1/Documents/Document'
 import * as GrpcGetReply from './generated/stash/GRPC/V1/Documents/GetReply'
 import * as GrpcGetRequest from './generated/stash/GRPC/V1/Documents/GetRequest'
+import * as GrpcGetAllReply from './generated/stash/GRPC/V1/Documents/GetAllReply'
+import * as GrpcGetAllRequest from './generated/stash/GRPC/V1/Documents/GetAllRequest'
 import * as GrpcDocumentDeleteReply from './generated/stash/GRPC/V1/Documents/DeleteReply'
 import * as GrpcDocumentDeleteRequest from './generated/stash/GRPC/V1/Documents/DeleteRequest'
 import * as GrpcPutReply from './generated/stash/GRPC/V1/Documents/PutReply'
@@ -74,6 +76,8 @@ export namespace V1  {
   export type DocumentInput = GrpcDocument.Document
   export type GetReplyOutput = GrpcGetReply.GetReply__Output
   export type GetReplyInput = GrpcGetReply.GetReply
+  export type GetAllReplyOutput = GrpcGetAllReply.GetAllReply__Output
+  export type GetAllReplyInput = GrpcGetAllReply.GetAllReply
   export type GetRequestOutput = GrpcGetRequest.GetRequest__Output
   export type GetRequestInput = GrpcGetRequest.GetRequest
   export type DocumentDeleteRequestOutput = GrpcDocumentDeleteRequest.DeleteRequest__Output
