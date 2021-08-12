@@ -6,7 +6,7 @@ import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord } from "./grpc/get-helper"
 import { CollectionSchema } from "./collection-schema"
-import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer } from "./analyzer"
+import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer, AnalyzedQuery } from "./analyzer"
 
 /**
  * A CollectionProxy represents a connection to an underlying Collection.
@@ -85,48 +85,18 @@ export class Collection<
     })
   }
 
-  public async query(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
-    const options = queryOptions ? queryOptions : {}
-    return new Promise(async (resolve, reject) => {
-      const constraints = this.analyzeQuery(callback(this.schema.makeQueryBuilder())).constraints
-      if (process.env['CS_DEBUG']) {
-        console.log(stringify(constraints))
-      }
+  public async query(
+    callbackOrQueryOptions: ((where: QueryBuilder<R, M>) => Query<R, M>) | QueryOptions<R, M>,
+    queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
 
-      // Time the execution
-      const timerStart = (new Date()).getTime()
-
-      this.stash.stub.query({
-        context: { authToken: await this.stash.refreshToken() },
-        collectionId: idStringToBuffer(this.id),
-        query: {
-          limit: options.limit,
-          constraints,
-          aggregates: options.aggregation ? options.aggregation.map(agg => ({
-            indexId: this.schema.meta[agg.ofIndex]!.$indexId,
-            type: agg.aggregate
-          })) : [],
-          skipResults: typeof options.skipResults == "boolean" ? options.skipResults : false,
-          offset: options.offset,
-          ordering: options.order ? options.order.map(o => ({
-            indexId: this.schema.meta[o.byIndex]!.$indexId,
-            direction: o.direction
-          })) : []
-        }
-      }, async (err, res) => {
-        if (err) { reject(err) }
-        const timerEnd = (new Date()).getTime()
-
-        resolve({
-          took: (timerEnd - timerStart)/1000,
-          documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
-          aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
-            name: agg.name! as Aggregate,
-            value: BigInt(agg.value!.toString())
-          })) : []
-        })
-      })
-    })
+    if (typeof callbackOrQueryOptions === 'function') {
+      return this.queryWithConstraints(
+        callbackOrQueryOptions as (where: QueryBuilder<R, M>) => Query<R, M>,
+        queryOptions ? queryOptions : {}
+      )
+    } else {
+      return this.queryWithoutConstraints(callbackOrQueryOptions as QueryOptions<R, M>)
+    }
   }
 
   public async delete(id: string | Buffer): Promise<null> {
@@ -142,6 +112,84 @@ export class Collection<
       })
     })
   }
+
+  async queryWithConstraints(callback: (where: QueryBuilder<R, M>) => Query<R, M>,
+    queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
+
+    const options = queryOptions ? queryOptions : {}
+    return new Promise(async (resolve, reject) => {
+      const query = this.analyzeQuery(callback(this.schema.makeQueryBuilder()))
+
+      if (process.env['CS_DEBUG']) {
+        console.log(stringify(query.constraints))
+      }
+
+      // Time the execution
+      const timerStart = (new Date()).getTime()
+      let request = await this.buildQueryRequest(options, query)
+
+      this.stash.stub.query(request, async (err, res) => {
+        if (err) { reject(err) }
+        const timerEnd = (new Date()).getTime()
+
+        resolve({
+          took: (timerEnd - timerStart)/1000,
+          documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
+          aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
+            name: agg.name! as Aggregate,
+            value: BigInt(agg.value!.toString())
+          })) : []
+        })
+      })
+    })
+  }
+
+  async queryWithoutConstraints(options: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
+    return new Promise(async (resolve, reject) => {
+      // Time the execution
+      const timerStart = (new Date()).getTime()
+      const request = await this.buildQueryRequest(options, {constraints: []})
+
+      this.stash.stub.query(request, async (err, res) => {
+        if (err) { reject(err) }
+        const timerEnd = (new Date()).getTime()
+
+        resolve({
+          took: (timerEnd - timerStart)/1000,
+          documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
+          aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
+            name: agg.name! as Aggregate,
+            value: BigInt(agg.value!.toString())
+          })) : []
+        })
+      })
+    })
+  }
+
+  async buildQueryRequest(options: QueryOptions<R, M>, query: AnalyzedQuery) {
+    const constraints = query.constraints
+
+    return {
+      context: { authToken: await this.stash.refreshToken() },
+      collectionId: idStringToBuffer(this.id),
+      query: {
+        limit: options.limit,
+        constraints,
+        aggregates: options.aggregation ? options.aggregation.map(agg => ({
+          indexId: this.schema.meta[agg.ofIndex]!.$indexId,
+          type: agg.aggregate
+        })) : [],
+        skipResults: typeof options.skipResults == "boolean" ? options.skipResults : false,
+        offset: options.offset,
+        ordering: options.order ? options.order.map(o => ({
+          indexId: idStringToBuffer(this.schema.meta[o.byIndex]!.$indexId),
+          direction: o.direction
+        })) : []
+      }
+    }
+  }
+
+
 }
 
 export type QueryResult<R> = {
