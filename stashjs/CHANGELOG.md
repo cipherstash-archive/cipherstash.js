@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Queries can now be performed with no constraints (to retrieve all records)
+- Added getAll function to retrieve several records at once by their ID
 
 ### Fixed
 - Ordering by a particular field now works correctly
