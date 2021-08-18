@@ -188,21 +188,15 @@ export type FieldTypeOfMapping<R extends StashRecord, M extends MappingOn<R>> =
   : never
 
 /**
- * Right now this is just an alias for `string`, but the type name is a reminder
- * that we need to treat this as an opaque value.
- */
-export type EncryptedIndexId = string
-
-/**
  * This type represents some auto-generated meta information about a
- * Mappings<R>.  It associates a plain text $indexName and encrypted $indexId
- * and also stores the encyrption key for the index.
+ * Mappings<R>. It associates a plain text $indexName and $indexId (UUID)
+ * and also stores the encryption key for the index.
  */
 export type MappingsMeta<M> =
   M extends Mappings<infer _R> ? {
     [F in keyof M]-?: {
       $indexName: string,
-      $indexId: EncryptedIndexId,
+      $indexId: string,
       $prf: Buffer,
       $prp: Buffer
     }

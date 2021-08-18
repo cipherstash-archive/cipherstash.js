@@ -1,7 +1,7 @@
 import { StashRecord, Mappings, MappingsMeta, HasID } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { Stash } from "./stash"
-import { idStringToBuffer, makeId, stringify } from "./utils"
+import { idStringToBuffer, idBufferToString, makeId, stringify } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./grpc/get-helper"
@@ -77,16 +77,27 @@ export class Collection<
     })
   }
 
+  maybeGenerateId(doc: R): R {
+    if (doc.id) {
+      return doc
+    } else {
+      const id = idBufferToString(makeId())
+      return { id: id, ...doc }
+    }
+  }
 
   public async put(doc: R): Promise<string> {
     return new Promise(async (resolve, reject) => {
-      const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
-      const docWithId = {
+      /* Note: this will use an ID if one is provided in the doc
+       * and will generate a UUID otherwise.*/
+      //const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
+      doc = this.maybeGenerateId(doc)
+      const docWithBufferId = {
         ...doc,
-        id: docId,
+        id: idStringToBuffer(doc.id as string),
       } as R
       const vectors = convertAnalyzedRecordToVectors(
-        this.analyzeRecord(docWithId),
+        this.analyzeRecord(docWithBufferId),
         this.schema.meta
       )
       if (process.env['CS_DEBUG'] == 'yes') {
@@ -97,14 +108,14 @@ export class Collection<
         collectionId: idStringToBuffer(this.id),
         vectors,
         source: {
-          id: docId,
-          source: (await this.stash.cipherSuite.encrypt(docWithId)).result
+          id: idStringToBuffer(doc.id as string),
+          source: (await this.stash.cipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
         },
       }, (err, _res) => {
         if (err) { reject(err) }
         // TODO we should return the doc ID from the response but `put` does not
         // yet return an ID at the GRPC level.
-        resolve(docId.toString('hex'))
+        resolve(doc.id as string)
       })
     })
   }
@@ -142,6 +153,7 @@ export class Collection<
 
     const options = queryOptions ? queryOptions : {}
     return new Promise(async (resolve, reject) => {
+      // TODO: Can this use schema.buildQuery ?
       const query = this.analyzeQuery(callback(this.schema.makeQueryBuilder()))
 
       if (process.env['CS_DEBUG']) {
@@ -152,6 +164,7 @@ export class Collection<
       const timerStart = (new Date()).getTime()
       let request = await this.buildQueryRequest(options, query)
 
+      // TODO: Can this be extracted into its own function?
       this.stash.stub.query(request, async (err, res) => {
         if (err) { reject(err) }
         const timerEnd = (new Date()).getTime()
@@ -200,7 +213,7 @@ export class Collection<
         limit: options.limit || DEFAULT_QUERY_LIMIT,
         constraints,
         aggregates: options.aggregation ? options.aggregation.map(agg => ({
-          indexId: this.schema.meta[agg.ofIndex]!.$indexId,
+          indexId: idStringToBuffer(this.schema.meta[agg.ofIndex]!.$indexId),
           type: agg.aggregate
         })) : [],
         skipResults: typeof options.skipResults == "boolean" ? options.skipResults : false,

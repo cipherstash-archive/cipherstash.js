@@ -4,7 +4,6 @@ export { CollectionSchema } from "./collection-schema"
 
 export {
   DynamicMatchMapping,
-  EncryptedIndexId,
   ExactMapping,
   ExactMappingFieldType,
   FieldDynamicMatchMapping,
