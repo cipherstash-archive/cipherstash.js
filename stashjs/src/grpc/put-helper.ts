@@ -2,6 +2,7 @@ import { V1 } from "@cipherstash/stashjs-grpc";
 import { AnalyzedRecord } from "../analyzer";
 import { oreEncryptTermToBuffer } from "../crypto/ore";
 import { StashRecord, Mappings, MappingsMeta } from "../dsl/mappings-dsl";
+import { idStringToBuffer } from "../utils"
 
 export function convertAnalyzedRecordToVectors<
   R extends StashRecord,
@@ -15,7 +16,7 @@ export function convertAnalyzedRecordToVectors<
     ([indexId, terms]) => {
       const idxMeta = findByIndexId(meta, indexId)!
       return {
-        indexId: Buffer.from(indexId, 'hex'),
+        indexId: idStringToBuffer(indexId),
         terms: terms.map((term) => {
           return {
             term: oreEncryptTermToBuffer(term, idxMeta.$prf, idxMeta.$prp),

@@ -1,6 +1,6 @@
 import { StashRecord, Mappings, MappingsMeta, makeMappingsDSL, MappingsDSL, MappingOn } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder, OperatorsForIndex, operators } from "./dsl/query-dsl"
-import { makeId } from "./utils"
+import { makeId, idBufferToString } from "./utils"
 import * as crypto from 'crypto'
 
 /**
@@ -55,7 +55,10 @@ export class CollectionSchema<
             return [
               indexName, {
                 $indexName: indexName,
-                $indexId: makeId().toString('hex'),
+                // Keep the generated UUID as a string
+                // because we'll use it later to key analysis objects
+                //$indexId: idBufferToString(makeId()),
+                $indexId: idBufferToString(makeId()),
                 $prf: crypto.randomBytes(16),
                 $prp: crypto.randomBytes(16)
               }

@@ -6,7 +6,7 @@ import { AuthToken } from './auth-token'
 import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
 
 import { Collection } from './collection'
-import { idBufferToString, makeRef, refBufferToString } from './utils'
+import { idBufferToString, idStringToBuffer, makeRef, refBufferToString } from './utils'
 import { loadConfigFromEnv, StashConfig } from './stash-config'
 
 /**
@@ -145,12 +145,13 @@ export class Stash {
     encryptedMappings: V1.IndexOutput[]
   ): Promise<Array<StoredMapping>> {
 
-    const storedMappings = await Promise.all(encryptedMappings.map(async ({ settings }) => {
+    const storedMappings = await Promise.all(encryptedMappings.map(async ({ settings, id: indexId }) => {
       const { mapping, meta } = await this.cipherSuite.decrypt(settings!)
       return {
         mapping,
         meta: {
           ...meta,
+          $indexId: idBufferToString(indexId),
           $prf: Buffer.from(meta!.$prf, 'hex'),
           $prp: Buffer.from(meta!.$prp, 'hex'),
         }
@@ -180,7 +181,7 @@ export class Stash {
 
       const { result } = await this.cipherSuite.encrypt(storedMapping)
       return {
-        id: Buffer.from(storedMapping.meta.$indexId, 'hex'),
+        id: idStringToBuffer(storedMapping.meta.$indexId),
         settings: result
       }
     }))
