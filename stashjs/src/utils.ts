@@ -1,6 +1,6 @@
 import * as crypto from 'crypto'
 import { getSecret } from './secrets'
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4, parse as parseUUID, stringify as stringifyUUID } from 'uuid'
 import stringifyObject from 'stringify-object'
 
 /**
@@ -17,17 +17,12 @@ export async function makeRef(collectionName: string, clusterId: string): Promis
 }
 
 export function idStringToBuffer(id: string): Buffer {
-  if (!id.match(/^[0-9a-f]{32}$/)) {
-    throw new Error("Expected a 32 character string of hex characters")
-  }
-  return Buffer.from(id, 'hex');
+  // Throws `TypeError` if id is not a valid UUID
+  return parseUUID(id) as unknown as Buffer
 }
 
 export function idBufferToString(id: Buffer): string {
-  if (id.byteLength != 16) {
-    throw new Error(`Expected a 16 byte Buffer; received: ${id}`)
-  }
-  return id.toString('hex')
+  return stringifyUUID(id!)
 }
 
 export function refBufferToString(ref: Buffer): string {
