@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.28]
 
 ### Changed
-- Treat all document IDs are UUIDs
+- Treat all document IDs as UUIDs
 
 ## [0.2.27]
 
