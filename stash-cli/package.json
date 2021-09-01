@@ -54,5 +54,8 @@
   "prettier": {
     "semi": false,
     "singleQuote": true
+  },
+  "engines": {
+    "npm": "use pnpm!"
   }
 }
