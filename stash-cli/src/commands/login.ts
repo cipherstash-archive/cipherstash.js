@@ -77,13 +77,13 @@ const command: GluegunCommand = {
     const api = http.create(IDP_API)
     const ret = await api.post("/oauth/device/code", {
       client_id: CLIENT_ID,
-      scope: 'collection.create',
+      scope: 'collection.create collection.delete document.put document.delete document.get document.query',
       audience: 'dev-local'
     })
 
     if (ret.ok) {
       const data = ret.data as DeviceCodeAuthorizationResponse
-      print.info(`Visit console.cipherstash.com/auth and enter "${data.user_code}"`)
+      print.info(`Visit ${data.verification_uri_complete} to complete authentication`)
       print.info("Waiting for authentication...")
       await open(data.verification_uri_complete)
 
