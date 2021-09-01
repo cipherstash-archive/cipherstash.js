@@ -1,6 +1,6 @@
 
 import { GluegunCommand } from 'gluegun'
-import open = require("../../node_modules/open")
+import * as open from 'open'
 
 // The client ID could be retrieved by selecting the region
 // from a meta-data service
@@ -19,6 +19,10 @@ type DeviceCodeAuthorizationResponse = {
   user_code: string,
   device_code: string,
   interval: number
+}
+
+function makeTokenPoll(interval: number): TokenPoll {
+  return new TokenPoll(interval)
 }
 
 class TokenPoll {
@@ -78,12 +82,12 @@ const command: GluegunCommand = {
     })
 
     if (ret.ok) {
-      const data = <DeviceCodeAuthorizationResponse>ret.data
+      const data = ret.data as DeviceCodeAuthorizationResponse
       print.info(`Visit console.cipherstash.com/auth and enter "${data.user_code}"`)
       print.info("Waiting for authentication...")
-      open(data.verification_uri_complete);
+      await open(data.verification_uri_complete)
 
-      (new TokenPoll(5))
+      makeTokenPoll(5)
         .poll((next) => {
           api
             .post("/oauth/token", {
@@ -94,7 +98,7 @@ const command: GluegunCommand = {
             .then((ret: any) => {
               const { data } = ret
               // See https://auth0.com/docs/flows/call-your-api-using-the-device-authorization-flow#token-responses
-              if (data.error == "authorization_pending") {
+              if (data.error === "authorization_pending") {
                 return next.pending()
               }
               if (data.error) {
