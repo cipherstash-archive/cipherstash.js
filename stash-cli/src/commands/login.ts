@@ -77,7 +77,7 @@ const command: GluegunCommand = {
     const api = http.create(IDP_API)
     const ret = await api.post("/oauth/device/code", {
       client_id: CLIENT_ID,
-      scope: 'collection.create collection.delete document.put document.delete document.get document.query',
+      scope: 'offline_access collection.create collection.delete document.put document.delete document.get document.query',
       audience: 'dev-local'
     })
 
