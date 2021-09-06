@@ -17,3 +17,4 @@ proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js \
   --defaults=true --oneofs==true
 pnpx tsc
 cp -RL grpc dist
+
