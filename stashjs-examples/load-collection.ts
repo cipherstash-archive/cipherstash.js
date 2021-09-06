@@ -1,4 +1,4 @@
-import { describeError, Stash } from "@cipherstash/stashjs"
+import { Stash, describeError } from "@cipherstash/stashjs"
 import { movieSchema } from "./example-schema"
 
 async function createCollection() {
@@ -8,10 +8,11 @@ async function createCollection() {
       ...configFromEnv,
       authenticationConfig: { kind: "stored-access-token", clientId: configFromEnv.authenticationConfig.clientId }
     })
-    const movies = await stash.createCollection(movieSchema)
-    console.log(`Collection "${movies.name}" created`)
+    const movies = await stash.loadCollection(movieSchema)
+    console.log(`Collection "${movies.name}" loaded`)
   } catch (err) {
-    console.error(`Could not create collection! Reason: ${describeError(err)}`)
+    console.error(`Could not load collection! Reason: ${describeError(err)}`)
+    console.error(err)
   }
 }
 
