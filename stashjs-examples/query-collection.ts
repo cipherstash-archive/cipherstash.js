@@ -14,7 +14,11 @@ function displayResults(result: any, name: string) {
 
 async function queryCollection() {
   try {
-    const stash = await Stash.connect(Stash.loadConfigFromEnv())
+    const configFromEnv = Stash.loadConfigFromEnv()
+    const stash = await Stash.connect({
+      ...configFromEnv,
+      authenticationConfig: { kind: "stored-access-token", clientId: configFromEnv.authenticationConfig.clientId }
+    })
     const movies = await stash.loadCollection(movieSchema)
 
     let queryResult = await movies.query(movie => movie.title.match("The Matrix"))
