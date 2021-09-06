@@ -28,7 +28,7 @@ export type StashConfig = {
 }
 
 export function loadConfigFromEnv(): StashConfig {
-  const authStrategy: AuthStrategyName = getVar("CS_AUTH_STRATEGY") as AuthStrategyName
+  const authStrategy: AuthStrategyName = getVar("CS_AUTH_STRATEGY", "client-credentials") as AuthStrategyName
   switch (authStrategy) {
     case "client-credentials": return {
       idpHost: getVar('CS_IDP_HOST'),
@@ -63,12 +63,16 @@ export function loadConfigFromEnv(): StashConfig {
   }
 }
 
-function getVar(envVar: string): string {
+function getVar(envVar: string, fallback?: string): string {
   const value = process.env[envVar]
   if (typeof value != 'undefined') {
     return value
   } else {
-    throw Error(`"missing configuration: ${envVar}`)
+    if (fallback) {
+      return fallback
+    } else {
+      throw Error(`"missing configuration: ${envVar}`)
+    }
   }
 }
 
