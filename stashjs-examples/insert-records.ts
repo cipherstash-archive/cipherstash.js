@@ -3,7 +3,11 @@ import { movieSchema } from "./example-schema"
 
 async function insertRecords() {
   try {
-    const stash = await Stash.connect(Stash.loadConfigFromEnv())
+    const configFromEnv = Stash.loadConfigFromEnv()
+    const stash = await Stash.connect({
+      ...configFromEnv,
+      authenticationConfig: { kind: "stored-access-token", clientId: configFromEnv.authenticationConfig.clientId }
+    })
     const movies = await stash.loadCollection(movieSchema)
     console.log(`Collection "${movies.name}" loaded`)
 
@@ -35,4 +39,4 @@ async function insertRecords() {
 }
 
 insertRecords()
- 
+
