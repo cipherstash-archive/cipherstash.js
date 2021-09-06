@@ -16,7 +16,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "module": "CommonJS",
-    "moduleResolution": "Node",
+    "moduleResolution": "node",
     "noErrorTruncation": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
