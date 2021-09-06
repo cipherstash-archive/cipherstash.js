@@ -1,6 +1,6 @@
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import { promises } from 'fs'
+import { tokenStore, stashOauth } from '@cipherstash/stashjs'
 
 // The client ID could be retrieved by selecting the region
 // from a meta-data service
@@ -114,10 +114,8 @@ const command: GluegunCommand = {
         })
         .success(async (ret) => {
           print.info("Login Successful")
-          const dir = `${process.env['HOME']}/.cipherstash`
-          await promises.mkdir(dir, { recursive: true })
-          await promises.writeFile(`${dir}/auth-token`, JSON.stringify(ret))
-          print.info(`Auth-token saved to ${dir}/auth-token`)
+          await tokenStore.save(stashOauth.unpackResponse(ret))
+          print.info(`Auth-token saved to ${tokenStore.configDir()}`)
         })
         .failure((message) => {
           print.error(`Could not login. Message from server: "${message}"`)
