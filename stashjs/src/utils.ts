@@ -72,3 +72,11 @@ function objectify(item: any): any {
     return item
   }
 }
+
+export function describeError(err: any): string {
+  if (err instanceof Error) {
+    return err.message
+  } else {
+    return JSON.stringify(err)
+  }
+}

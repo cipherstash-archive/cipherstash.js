@@ -1,32 +1,65 @@
+export type AuthStrategyName =
+    | "client-credentials"
+    | "stored-access-token"
+
+export type AuthenticationConfig =
+ | {
+    readonly kind: "client-credentials",
+    readonly clientSecret: string,
+    readonly clientId: string,
+  }
+  | {
+    readonly kind: "stored-access-token",
+    readonly clientId: string
+  }
+
+export type FederationConfig = {
+  readonly IdentityPoolId: string,
+  readonly region: string,
+}
+
 export type StashConfig = {
   readonly idpHost: string,
-  readonly clientCredentials: {
-    readonly clientSecret: string
-    readonly clientId: string,
-  },
-  readonly federationConfig: {
-    readonly IdentityPoolId?: string,
-    readonly region: string,
-  }
+  readonly authenticationConfig: AuthenticationConfig,
+  readonly federationConfig: FederationConfig,
   readonly serviceFqdn: string,
   readonly cmk: string,
   readonly clusterId: string
 }
 
 export function loadConfigFromEnv(): StashConfig {
-  return {
-    idpHost: getVar('CS_IDP_HOST'),
-    clientCredentials: {
-      clientId: getVar('CS_CLIENT_ID'),
-      clientSecret: getVar('CS_SECRET'),
-    },
-    federationConfig: {
-      IdentityPoolId: getOptionalVar('CS_FEDERATED_IDENTITY_ID'),
-      region: 'ap-southeast-2'
-    },
-    serviceFqdn: getVar('CS_SERVICE_FQDN'),
-    cmk: getVar('CS_DEV_CMK'),
-    clusterId: getVar('CS_SERVICE_FQDN').split('.')[0]!,
+  const authStrategy: AuthStrategyName = getVar("CS_AUTH_STRATEGY") as AuthStrategyName
+  switch (authStrategy) {
+    case "client-credentials": return {
+      idpHost: getVar('CS_IDP_HOST'),
+      authenticationConfig: {
+        kind: "client-credentials",
+        clientId: getVar('CS_CLIENT_ID'),
+        clientSecret: getVar('CS_SECRET'),
+      },
+      federationConfig: {
+        IdentityPoolId: getVar('CS_FEDERATED_IDENTITY_ID'),
+        region: 'ap-southeast-2'
+      },
+      serviceFqdn: getVar('CS_SERVICE_FQDN'),
+      cmk: getVar('CS_DEV_CMK'),
+      clusterId: getClusterId()
+    }
+    case "stored-access-token": return {
+      idpHost: getVar('CS_IDP_HOST'),
+      authenticationConfig: {
+        kind: "stored-access-token",
+        clientId: getVar('CS_CLIENT_ID')
+      },
+      federationConfig: {
+        IdentityPoolId: getVar('CS_FEDERATED_IDENTITY_ID'),
+        region: 'ap-southeast-2'
+      },
+      serviceFqdn: getVar('CS_SERVICE_FQDN'),
+      cmk: getVar('CS_DEV_CMK'),
+      clusterId: getClusterId()
+    }
+    default: throw new Error(`Unknown authentication strategy "${authStrategy}"`)
   }
 }
 
@@ -39,6 +72,18 @@ function getVar(envVar: string): string {
   }
 }
 
-function getOptionalVar(envVar: string): string | undefined {
-  return process.env[envVar]
+function getClusterId(): string {
+  let fqdn = getVar('CS_SERVICE_FQDN')
+
+  // Remove port
+  if (fqdn.indexOf(':') > -1) {
+    fqdn = fqdn.split(':')[0]!
+  }
+
+  // Grab left-most subdomain
+  if (fqdn.indexOf('.') > -1) {
+    fqdn = fqdn.split('.')[0]!
+  }
+
+  return fqdn
 }

@@ -40,20 +40,22 @@ export class Collection<
 
   public async get(id: string | Buffer): Promise<R & HasID | null> {
     const docId = id instanceof Buffer ? id : idStringToBuffer(id)
-    return new Promise(async (resolve, reject) => {
-      this.stash.stub.get({
-        context: { authToken: await this.stash.refreshToken() },
-        collectionId: idStringToBuffer(this.id),
-        id: docId
-      }, (err, res) => {
-        if (err) { reject(err) }
-        if (res?.source) {
-          resolve(convertGetReplyToUserRecord(res, this.stash.cipherSuite))
-        } else {
-          reject("Unexpectedly received empty response from data-service")
-        }
+    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        this.stash.stub.get({
+          context: { authToken },
+          collectionId: idStringToBuffer(this.id),
+          id: docId
+        }, (err, res) => {
+          if (err) { reject(err) }
+          if (res?.source) {
+            resolve(convertGetReplyToUserRecord(res, this.stash.cipherSuite))
+          } else {
+            reject("Unexpectedly received empty response from data-service")
+          }
+        })
       })
-    })
+    )
   }
 
   public async getAll(ids: Array<string | Buffer>): Promise<Array<R>> {
@@ -61,20 +63,22 @@ export class Collection<
       return (id instanceof Buffer) ? id : idStringToBuffer(id)
     })
 
-    return new Promise(async (resolve, reject) => {
-      this.stash.stub.getAll({
-        context: { authToken: await this.stash.refreshToken() },
-        collectionId: idStringToBuffer(this.id),
-        ids: docIds
-      }, (err, res) => {
-        if (err) { reject(err) }
-        if (res?.documents) {
-          resolve(convertGetAllReplyToUserRecords(res, this.stash.cipherSuite))
-        } else {
-          reject("Unexpectedly received empty response from data-service")
-        }
+    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        this.stash.stub.getAll({
+          context: { authToken },
+          collectionId: idStringToBuffer(this.id),
+          ids: docIds
+        }, (err, res) => {
+          if (err) { reject(err) }
+          if (res?.documents) {
+            resolve(convertGetAllReplyToUserRecords(res, this.stash.cipherSuite))
+          } else {
+            reject("Unexpectedly received empty response from data-service")
+          }
+        })
       })
-    })
+    )
   }
 
   maybeGenerateId(doc: R): R {
@@ -87,37 +91,39 @@ export class Collection<
   }
 
   public async put(doc: R): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-      /* Note: this will use an ID if one is provided in the doc
-       * and will generate a UUID otherwise.*/
-      //const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
-      doc = this.maybeGenerateId(doc)
-      const docWithBufferId = {
-        ...doc,
-        id: idStringToBuffer(doc.id as string),
-      } as R
-      const vectors = convertAnalyzedRecordToVectors(
-        this.analyzeRecord(docWithBufferId),
-        this.schema.meta
-      )
-      if (process.env['CS_DEBUG'] == 'yes') {
-        console.log(stringify(vectors))
-      }
-      this.stash.stub.put({
-        context: { authToken: await this.stash.refreshToken() },
-        collectionId: idStringToBuffer(this.id),
-        vectors,
-        source: {
+    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        /* Note: this will use an ID if one is provided in the doc
+         * and will generate a UUID otherwise.*/
+        //const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
+        doc = this.maybeGenerateId(doc)
+        const docWithBufferId = {
+          ...doc,
           id: idStringToBuffer(doc.id as string),
-          source: (await this.stash.cipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
-        },
-      }, (err, _res) => {
-        if (err) { reject(err) }
-        // TODO we should return the doc ID from the response but `put` does not
-        // yet return an ID at the GRPC level.
-        resolve(doc.id as string)
+        } as R
+        const vectors = convertAnalyzedRecordToVectors(
+          this.analyzeRecord(docWithBufferId),
+          this.schema.meta
+        )
+        if (process.env['CS_DEBUG'] == 'yes') {
+          console.log(stringify(vectors))
+        }
+        this.stash.stub.put({
+          context: { authToken },
+          collectionId: idStringToBuffer(this.id),
+          vectors,
+          source: {
+            id: idStringToBuffer(doc.id as string),
+            source: (await this.stash.cipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
+          },
+        }, (err, _res) => {
+          if (err) { reject(err) }
+          // TODO we should return the doc ID from the response but `put` does not
+          // yet return an ID at the GRPC level.
+          resolve(doc.id as string)
+        })
       })
-    })
+    )
   }
 
   public async query(
@@ -136,78 +142,84 @@ export class Collection<
 
   public async delete(id: string | Buffer): Promise<null> {
     const docId = id instanceof Buffer ? id : idStringToBuffer(id)
-    return new Promise(async (resolve, reject) => {
-      this.stash.stub.delete({
-        context: { authToken: await this.stash.refreshToken() },
-        collectionId: idStringToBuffer(this.id),
-        id: docId
-      }, (err, _res) => {
-        if (err) { reject(err) }
-        resolve(null)
+    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        this.stash.stub.delete({
+          context: { authToken },
+          collectionId: idStringToBuffer(this.id),
+          id: docId
+        }, (err, _res) => {
+          if (err) { reject(err) }
+          resolve(null)
+        })
       })
-    })
+    )
   }
 
   async queryWithConstraints(callback: (where: QueryBuilder<R, M>) => Query<R, M>,
     queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
 
     const options = queryOptions ? queryOptions : {}
-    return new Promise(async (resolve, reject) => {
-      // TODO: Can this use schema.buildQuery ?
-      const query = this.analyzeQuery(callback(this.schema.makeQueryBuilder()))
+    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        // TODO: Can this use schema.buildQuery ?
+        const query = this.analyzeQuery(callback(this.schema.makeQueryBuilder()))
 
-      if (process.env['CS_DEBUG']) {
-        console.log(stringify(query.constraints))
-      }
+        if (process.env['CS_DEBUG']) {
+          console.log(stringify(query.constraints))
+        }
 
-      // Time the execution
-      const timerStart = (new Date()).getTime()
-      let request = await this.buildQueryRequest(options, query)
+        // Time the execution
+        const timerStart = (new Date()).getTime()
+        let request = this.buildQueryRequest(options, query, authToken)
 
-      // TODO: Can this be extracted into its own function?
-      this.stash.stub.query(request, async (err, res) => {
-        if (err) { reject(err) }
-        const timerEnd = (new Date()).getTime()
+        // TODO: Can this be extracted into its own function?
+        this.stash.stub.query(request, async (err, res) => {
+          if (err) { reject(err) }
+          const timerEnd = (new Date()).getTime()
 
-        resolve({
-          took: (timerEnd - timerStart)/1000,
-          documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
-          aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
-            name: agg.name! as Aggregate,
-            value: BigInt(agg.value!.toString())
-          })) : []
+          resolve({
+            took: (timerEnd - timerStart) / 1000,
+            documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
+            aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
+              name: agg.name! as Aggregate,
+              value: BigInt(agg.value!.toString())
+            })) : []
+          })
         })
       })
-    })
+    )
   }
 
   async queryWithoutConstraints(options: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
-    return new Promise(async (resolve, reject) => {
-      // Time the execution
-      const timerStart = (new Date()).getTime()
-      const request = await this.buildQueryRequest(options, {constraints: []})
+    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        // Time the execution
+        const timerStart = (new Date()).getTime()
+        const request = this.buildQueryRequest(options, { constraints: [] }, authToken)
 
-      this.stash.stub.query(request, async (err, res) => {
-        if (err) { reject(err) }
-        const timerEnd = (new Date()).getTime()
+        this.stash.stub.query(request, async (err, res) => {
+          if (err) { reject(err) }
+          const timerEnd = (new Date()).getTime()
 
-        resolve({
-          took: (timerEnd - timerStart)/1000,
-          documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
-          aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
-            name: agg.name! as Aggregate,
-            value: BigInt(agg.value!.toString())
-          })) : []
+          resolve({
+            took: (timerEnd - timerStart) / 1000,
+            documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
+            aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
+              name: agg.name! as Aggregate,
+              value: BigInt(agg.value!.toString())
+            })) : []
+          })
         })
       })
-    })
+    )
   }
 
-  async buildQueryRequest(options: QueryOptions<R, M>, query: AnalyzedQuery) {
+  private buildQueryRequest(options: QueryOptions<R, M>, query: AnalyzedQuery, authToken: string) {
     const constraints = query.constraints
 
     return {
-      context: { authToken: await this.stash.refreshToken() },
+      context: { authToken },
       collectionId: idStringToBuffer(this.id),
       query: {
         limit: options.limit || DEFAULT_QUERY_LIMIT,
