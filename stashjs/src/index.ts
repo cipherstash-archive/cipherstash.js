@@ -1,3 +1,4 @@
+export { AuthStrategyName, AuthenticationConfig, StashConfig } from './stash-config'
 export { Stash } from "./stash"
 export { Collection } from "./collection"
 export { CollectionSchema } from "./collection-schema"
@@ -54,3 +55,16 @@ export {
 export {
   FieldOfType
 } from './type-utils'
+
+export {
+  describeError
+} from './utils'
+
+export {
+  AuthenticationInfo,
+  stashOauth
+} from './auth/oauth-utils'
+
+export {
+  tokenStore
+} from './auth/token-store'

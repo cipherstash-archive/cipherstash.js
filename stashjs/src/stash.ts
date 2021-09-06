@@ -2,7 +2,9 @@ import { V1 } from '@cipherstash/stashjs-grpc'
 
 import { CipherSuite, makeCipherSuite } from './crypto/cipher'
 import { CollectionSchema } from './collection-schema'
-import { AuthToken } from './auth-token'
+import { AuthStrategy } from './auth/auth-strategy'
+import { ViaClientCredentials } from './auth/via-client-credentials'
+import { ViaStoredToken } from './auth/via-stored-token'
 import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
 
 import { Collection } from './collection'
@@ -21,18 +23,18 @@ export class Stash {
   readonly cipherSuite: CipherSuite
   readonly stub: V1.APIClient
   readonly clusterId: string
-  readonly #authToken: AuthToken
+  readonly authStrategy: AuthStrategy
 
   private constructor(
     stub: V1.APIClient,
     clusterId: string,
-    authToken: AuthToken,
+    authStrategy: AuthStrategy,
     cmk: string
   ) {
     this.stub = stub
     this.cipherSuite = makeCipherSuite(cmk)
     this.clusterId = clusterId
-    this.#authToken = authToken
+    this.authStrategy = authStrategy
   }
 
   public static loadConfigFromEnv(): StashConfig {
@@ -40,12 +42,29 @@ export class Stash {
   }
 
   public static async connect(config: StashConfig): Promise<Stash> {
-    const authToken = new AuthToken(config.idpHost, config.clientCredentials, config.federationConfig)
     try {
-      await authToken.getToken(config.clusterId)
-      return new Stash(V1.connect(config.serviceFqdn), config.clusterId, authToken, config.cmk)
+      const authStrategy = Stash.makeAuthStrategy(config)
+      await authStrategy.initialise()
+      return new Stash(V1.connect(config.serviceFqdn), config.clusterId, authStrategy, config.cmk)
     } catch (err) {
       return Promise.reject(err)
+    }
+  }
+
+  private static makeAuthStrategy(config: StashConfig): AuthStrategy {
+    switch (config.authenticationConfig.kind) {
+      case "client-credentials": return new ViaClientCredentials(
+        config.idpHost,
+        config.authenticationConfig,
+        config.clusterId,
+        config.federationConfig
+      )
+
+      case "stored-access-token": return new ViaStoredToken(
+        config.authenticationConfig.clientId,
+        config.idpHost,
+        config.federationConfig,
+      )
     }
   }
 
@@ -60,19 +79,20 @@ export class Stash {
   >(
     definition: CollectionSchema<R, M, MM>
   ): Promise<Collection<R, M, MM>> {
+    return this.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        const request: V1.CreateRequestInput = {
+          context: { authToken },
+          ref: await makeRef(definition.name, this.clusterId),
+          indexes: await this.encryptMappings(definition)
+        }
 
-    return new Promise(async (resolve, reject) => {
-      const request: V1.CreateRequestInput = {
-        context: { authToken: await this.refreshToken() },
-        ref: await makeRef(definition.name, this.clusterId),
-        indexes: await this.encryptMappings(definition)
-      }
-
-      this.stub.createCollection(request, async (err, res) => {
-        if (err) { reject(err) }
-        resolve(await this.unpackCollection<R, M, MM>(definition.name, res!))
+        this.stub.createCollection(request, async (err, res) => {
+          if (err) { reject(err) }
+          this.unpackCollection<R, M, MM>(definition.name, res!).then(resolve, reject)
+        })
       })
-    })
+    )
   }
 
   public async loadCollection<
@@ -82,31 +102,35 @@ export class Stash {
   >(
     definition: CollectionSchema<R, M, MM>
   ): Promise<Collection<R, M, MM>> {
-    return new Promise(async (resolve, reject) => {
-      const ref = await makeRef(definition.name, this.clusterId)
-      this.stub.collectionInfo({
-        context: { authToken: await this.refreshToken() },
-        ref
-      }, async (err, res) => {
-        if (err) { reject(err) }
-        resolve(await this.unpackCollection<R, M, MM>(definition.name, res!))
+    return this.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        const ref = await makeRef(definition.name, this.clusterId)
+        this.stub.collectionInfo({
+          context: { authToken },
+          ref
+        }, async (err, res) => {
+          if (err) { reject(err) }
+          this.unpackCollection<R, M, MM>(definition.name, res!).then(resolve, reject)
+        })
       })
-    })
+    )
   }
 
   public deleteCollection(
     collectionName: string
   ): Promise<void> {
-    return new Promise(async (resolve, reject) => {
-      const ref = await makeRef(collectionName, this.clusterId)
-      this.stub.deleteCollection({
-        context: { authToken: await this.refreshToken() },
-        ref
-      }, async (err, _res) => {
-        if (err) { reject(err) }
-        resolve(undefined)
+    return this.authStrategy.authenticatedRequest((authToken: string) =>
+      new Promise(async (resolve, reject) => {
+        const ref = await makeRef(collectionName, this.clusterId)
+        this.stub.deleteCollection({
+          context: { authToken },
+          ref
+        }, async (err, _res) => {
+          if (err) { reject(err) }
+          resolve(undefined)
+        })
       })
-    })
+    )
   }
 
   private async unpackCollection<
@@ -187,10 +211,6 @@ export class Stash {
     }))
 
     return encryptedIndexes
-  }
-
-  public async refreshToken(): Promise<string> {
-    return await this.#authToken.getToken(this.clusterId)
   }
 }
 
