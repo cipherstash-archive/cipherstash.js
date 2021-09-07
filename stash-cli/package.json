@@ -1,7 +1,7 @@
 {
-  "name": "stash",
+  "name": "@cipherstash/stash",
   "version": "0.0.1",
-  "description": "stash CLI",
+  "description": "CipherStash CLI",
   "private": true,
   "types": "build/types/types.d.ts",
   "bin": {
