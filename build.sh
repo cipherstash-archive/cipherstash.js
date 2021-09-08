@@ -28,6 +28,7 @@ subproject_test() {
 }
 
 subproject_publish() {
+  pnpm build --filter @cipherstash/*
   pnpm publish --filter @cipherstash/*
 }
 
