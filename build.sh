@@ -27,6 +27,11 @@ subproject_test() {
   pnpm test --filter @cipherstash/*
 }
 
+subproject_publish() {
+  pnpm build --filter @cipherstash/*
+  pnpm publish --filter @cipherstash/*
+}
+
 subproject_clean() {
   pnpm run clean --filter @cipherstash/*
 }
@@ -56,6 +61,10 @@ case $subcommand in
 
   build)
     subproject_build
+    ;;
+
+  publish)
+    subproject_publish
     ;;
 
   *)
