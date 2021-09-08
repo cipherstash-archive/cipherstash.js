@@ -25,7 +25,7 @@ class StashOauth {
         client_id: clientId,
         client_secret: clientSecret
       }))
-      if (response.status > 200 && response.status < 400) {
+      if (response.status >= 200 && response.status < 400) {
         return camelcaseKeys(response.data) as AuthenticationInfo
       } else {
         return Promise.reject(`Authentication failed - returned status ${response.status}`)
