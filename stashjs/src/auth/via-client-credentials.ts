@@ -89,10 +89,14 @@ export class ViaClientCredentials implements AuthStrategy {
         this.clientCredentials.clientId,
         this.clientCredentials.clientSecret
       )
-      await federateToken(this.idpHost, this.federationConfig, authInfo.accessToken)
-      this.state = { name: "authenticated", authInfo }
+      try {
+        await federateToken(this.idpHost, this.federationConfig, authInfo.accessToken)
+        this.state = { name: "authenticated", authInfo }
+      } catch (error) {
+        this.state = { name: "authentication-failed", error: `Token federation failure: ${describeError(error)}` }
+      }
     } catch (error) {
-      this.state = { name: "authentication-failed", error: describeError(error) }
+      this.state = { name: "authentication-failed", error: `Authentication failure: ${describeError(error)}` }
     }
   }
 }
