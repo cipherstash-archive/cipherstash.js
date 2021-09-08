@@ -21,20 +21,14 @@ import { loadConfigFromEnv, StashConfig } from './stash-config'
  */
 export class Stash {
   readonly cipherSuite: CipherSuite
-  readonly stub: V1.APIClient
-  readonly clusterId: string
-  readonly authStrategy: AuthStrategy
 
   private constructor(
-    stub: V1.APIClient,
-    clusterId: string,
-    authStrategy: AuthStrategy,
-    cmk: string
+    public readonly stub: V1.APIClient,
+    public readonly clusterId: string,
+    public readonly authStrategy: AuthStrategy,
+    public readonly cmk: string
   ) {
-    this.stub = stub
     this.cipherSuite = makeCipherSuite(cmk)
-    this.clusterId = clusterId
-    this.authStrategy = authStrategy
   }
 
   public static loadConfigFromEnv(): StashConfig {
