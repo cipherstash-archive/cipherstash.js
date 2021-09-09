@@ -1,3 +1,8 @@
+import { AWSCredentials } from "./aws-credentials";
+
+export type AuthenticationDetailsCallback<R> =
+  (authToken: string, awsCredentials: AWSCredentials) => Promise<R>
+
 export interface AuthStrategy {
   /**
    * Initialise the strategy. This can be used to perform authentication without
@@ -22,5 +27,5 @@ export interface AuthStrategy {
    * If an authentication attempt fails, or an attempt to refresh the token
    * fails then the Promise will be rejected with an error.
    */
-  authenticatedRequest<R>(callback: (authToken: string) => Promise<R>): Promise<R>
+  authenticatedRequest<R>(callback: AuthenticationDetailsCallback<R>): Promise<R>
 }

@@ -6,13 +6,8 @@ import { join } from 'path'
 import { Worker } from "worker_threads"
 import { EventEmitter } from "events"
 import { AsyncQueue } from "./async-queue";
+import { AWSCredentials } from './auth/aws-credentials'
 require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
-
-export type AWSCredentials = {
-  accessKeyId: string,
-  secretAccessKey: string
-  sessionToken: string
-}
 
 export type AnalysisResult = {
   docId: Buffer,

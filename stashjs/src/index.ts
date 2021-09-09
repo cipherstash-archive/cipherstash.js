@@ -61,7 +61,7 @@ export {
 } from './utils'
 
 export {
-  AuthenticationInfo,
+  OauthAuthenticationInfo,
   stashOauth
 } from './auth/oauth-utils'
 

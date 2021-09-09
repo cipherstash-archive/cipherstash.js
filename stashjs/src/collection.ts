@@ -160,14 +160,16 @@ export class Collection<
 
   // TODO: do not leak GRPC types from this public API. Define a new type and convert it.
   public async putStream(records: AsyncIterator<R>): Promise<V1.StreamingPutReply> {
-    const streamWriter = new StreamWriter(
-      this.stash,
-      await this.stash.refreshToken(),
-      this.schema,
-      idStringToBuffer(this.id),
-      await this.stash.federateToken()
-    )
-    return await streamWriter.writeAll(records)
+    return this.stash.authStrategy.authenticatedRequest(async (authToken, awsCredentials) => {
+      const streamWriter: StreamWriter<R, M, MM> = new StreamWriter(
+        this.stash,
+        this.schema,
+        idStringToBuffer(this.id),
+        authToken,
+        awsCredentials
+      )
+      return streamWriter.writeAll(records)
+    })
   }
 
   async queryWithConstraints(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {

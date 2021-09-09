@@ -27,6 +27,7 @@
     "csv-parse": "^4.16.0",
     "faker": "^5.5.3",
     "node-repl-await": "^0.1.2",
+    "timer-node": "^5.0.5",
     "uuid": "^8.3.2"
   },
   "devDependencies": {

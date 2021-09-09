@@ -5,11 +5,12 @@ import jws from 'jws'
 import { describeError } from '../utils'
 
 
-export type AuthenticationInfo = {
+export type OauthAuthenticationInfo = {
   accessToken: string,
   refreshToken: string,
   expiry: number
 }
+
 class StashOauth {
 
   public async authenticateViaClientCredentials(
@@ -17,7 +18,7 @@ class StashOauth {
     audience: string,
     clientId: string,
     clientSecret: string
-  ): Promise<AuthenticationInfo> {
+  ): Promise<OauthAuthenticationInfo> {
     try {
       const response = await makeOauthClient(idpHost).post('/oauth/token', querystring.stringify({
         audience,
@@ -26,7 +27,7 @@ class StashOauth {
         client_secret: clientSecret
       }))
       if (response.status >= 200 && response.status < 400) {
-        return camelcaseKeys(response.data) as AuthenticationInfo
+        return camelcaseKeys(response.data) as OauthAuthenticationInfo
       } else {
         return Promise.reject(`Authentication failed - returned status ${response.status}`)
       }
@@ -39,7 +40,7 @@ class StashOauth {
     idpHost: string,
     refreshToken: string,
     clientId: string
-  ): Promise<AuthenticationInfo> {
+  ): Promise<OauthAuthenticationInfo> {
     try {
       let params = {
         grant_type: "refresh_token",
@@ -57,7 +58,7 @@ class StashOauth {
     }
   }
 
-  public unpackResponse(json: any): AuthenticationInfo {
+  public unpackResponse(json: any): OauthAuthenticationInfo {
     json = camelcaseKeys(json)
     if (!json['accessToken'] || !json['refreshToken']) {
       throw new Error(`Unexpected reponse payload: ${JSON.stringify(json)}`)
