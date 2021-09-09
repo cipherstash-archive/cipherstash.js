@@ -1,5 +1,6 @@
 import AWS from "aws-sdk"
 import { FederationConfig } from '../stash-config'
+import { AWSCredentials } from "./aws-credentials"
 
 /*
   * Federates the accessToken to any configfured identity pools.
@@ -10,7 +11,11 @@ import { FederationConfig } from '../stash-config'
   * NOTE: we will not be federating these tokens in production but we need to
   * for local dev and the development plan that we will sell.
   */
-export async function federateToken(idpHost: string, config: FederationConfig, accessToken: string): Promise<void> {
+export async function federateToken(
+  accessToken: string,
+  idpHost: string,
+  config: FederationConfig
+): Promise<AWSCredentials> {
   const { IdentityPoolId, region } = config
 
   try {
@@ -22,9 +27,18 @@ export async function federateToken(idpHost: string, config: FederationConfig, a
         }
       }, { region })
 
-      AWS.config.getCredentials((err) => {
-        if (err) reject(err)
-        resolve(void 0)
+      AWS.config.getCredentials((err, creds) => {
+        if (err) {
+          reject(err)
+        } else if (creds) {
+          resolve({
+            accessKeyId: creds.accessKeyId,
+            secretAccessKey: creds.secretAccessKey,
+            sessionToken: creds.sessionToken!
+          })
+        } else {
+          reject("Could not federate token in exchange for AWS credentials")
+        }
       })
     })
   } catch (err) {

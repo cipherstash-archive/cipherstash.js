@@ -1,6 +1,7 @@
 import { GluegunCommand } from 'gluegun'
-import * as open from 'open'
+// import * as open from 'open'
 import { tokenStore, stashOauth } from '@cipherstash/stashjs'
+import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 // The client ID could be retrieved by selecting the region
 // from a meta-data service
@@ -71,13 +72,14 @@ class TokenPoll {
 
 const command: GluegunCommand = {
   name: 'login',
-  run: async toolbox => {
+
+  run: async (toolbox: Toolbox) => {
     const { print, http } = toolbox
 
     const api = http.create(IDP_API)
     const ret = await api.post("/oauth/device/code", {
       client_id: CLIENT_ID,
-      scope: 'offline_access collection.create collection.delete document.put document.delete document.get document.query',
+      scope: 'offline_access collection.create collection.delete collection.info document.put document.delete document.get document.query',
       audience: 'dev-local'
     })
 
@@ -85,7 +87,8 @@ const command: GluegunCommand = {
       const data = ret.data as DeviceCodeAuthorizationResponse
       print.info(`Visit ${data.verification_uri_complete} to complete authentication`)
       print.info("Waiting for authentication...")
-      await open(data.verification_uri_complete)
+
+        // await open(data.verification_uri_complete)
 
       makeTokenPoll(5)
         .poll((next) => {
