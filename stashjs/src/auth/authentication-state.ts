@@ -1,7 +1,8 @@
-import { AuthenticationInfo } from './oauth-utils'
+import { AWSCredentials } from './aws-credentials'
+import { OauthAuthenticationInfo } from './oauth-utils'
 
 export type AuthenticationState =
-  | { name: "unauthenticated" }
-  | { name: "authentication-failed", error?: string }
-  | { name: "authentication-expired", authInfo: AuthenticationInfo }
-  | { name: "authenticated", authInfo: AuthenticationInfo }
+  | { readonly name: "unauthenticated" }
+  | { readonly name: "authentication-failed", readonly error?: string }
+  | { readonly name: "authentication-expired", readonly oauthInfo: OauthAuthenticationInfo }
+  | { readonly name: "authenticated", readonly oauthInfo: OauthAuthenticationInfo, readonly awsCredentials: AWSCredentials }

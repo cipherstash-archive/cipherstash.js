@@ -27,8 +27,7 @@ if (!isMainThread) {
       secretAccessKey: config.awsCredentials.secretAccessKey,
       sessionToken: config.awsCredentials.sessionToken
     }
-    // const encryptedSource = (await cipherSuite.encrypt(record)).result
-    const encryptedSource = Buffer.from("123456789098765432123456789098765432123456789876543212345678909876543245676545", 'hex')
+    const encryptedSource = (await cipherSuite.encrypt(record)).result
     const result = {
       docId: record.id ? idStringToBuffer(record.id) : makeId(),
       vectors,

@@ -1,7 +1,7 @@
-import { AuthStrategy } from "./auth-strategy";
+import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy";
 import { AuthenticationState } from './authentication-state'
 import { federateToken } from "./federation-utils"
-import { AuthenticationInfo, stashOauth } from './oauth-utils'
+import { stashOauth } from './oauth-utils'
 import { FederationConfig } from "../stash-config"
 import { describeError } from "../utils"
 import { tokenStore } from './token-store'
@@ -18,16 +18,25 @@ export class ViaStoredToken implements AuthStrategy {
   public async initialise(): Promise<void> {
     try {
       const config = await tokenStore.load()
-      this.state = {
-        name: this.isExpired(config.expiry) ? "authentication-expired" : "authenticated",
-        authInfo: {
-          accessToken: config.accessToken,
-          refreshToken: config.refreshToken,
-          expiry: config.expiry
+      if (!this.isExpired(config.expiry)) {
+        this.state = {
+          name: "authenticated",
+          oauthInfo: {
+            accessToken: config.accessToken,
+            refreshToken: config.refreshToken,
+            expiry: config.expiry
+          },
+          awsCredentials: await federateToken(config.accessToken, this.idpHost, this.federationConfig)
         }
-      }
-      if (this.state.name == "authenticated") {
-        await federateToken(this.idpHost, this.federationConfig, this.state.authInfo.accessToken)
+      } else {
+        this.state = {
+          name: "authentication-expired",
+          oauthInfo: {
+            accessToken: config.accessToken,
+            refreshToken: config.refreshToken,
+            expiry: config.expiry
+          },
+        }
       }
       this.scheduleTokenRefresh()
     } catch (err) {
@@ -35,10 +44,10 @@ export class ViaStoredToken implements AuthStrategy {
     }
   }
 
-  public async authenticatedRequest<R>(callback: (authToken: string) => Promise<R>): Promise<R> {
+  public async authenticatedRequest<R>(callback: AuthenticationDetailsCallback<R>): Promise<R> {
     if (this.state.name == "authenticated") {
       try {
-        return await callback(this.state.authInfo.accessToken)
+        return await callback(this.state.oauthInfo.accessToken, this.state.awsCredentials)
       } catch (err) {
         return Promise.reject(`API call failed: ${describeError(err)}`)
       }
@@ -53,7 +62,7 @@ export class ViaStoredToken implements AuthStrategy {
 
   private async scheduleTokenRefresh(): Promise<void> {
     if (this.state.name == "authenticated") {
-      const { refreshToken, expiry } = this.state.authInfo
+      const { refreshToken, expiry } = this.state.oauthInfo
       const timeout = setTimeout(async () => {
         try {
           await this.performTokenRefreshAndUpdateState(refreshToken)
@@ -63,7 +72,7 @@ export class ViaStoredToken implements AuthStrategy {
       }, (expiry * 1000) - (EXPIRY_BUFFER_SECONDS * 1000) - Date.now())
       timeout.unref()
     } else if (this.state.name == "authentication-expired") {
-      const { refreshToken } = this.state.authInfo
+      const { refreshToken } = this.state.oauthInfo
       try {
         await this.performTokenRefreshAndUpdateState(refreshToken)
       } finally {
@@ -74,24 +83,19 @@ export class ViaStoredToken implements AuthStrategy {
 
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
-      const response = await stashOauth.performTokenRefresh(this.idpHost, refreshToken, this.clientId)
-      this.updateStateFromTokenAuthenticationResponse(response)
-      if (this.state.name == "authenticated") {
-        await tokenStore.save(this.state.authInfo)
-        await federateToken(this.idpHost, this.federationConfig, this.state.authInfo.accessToken)
+      const oauthInfo = await stashOauth.performTokenRefresh(this.idpHost, refreshToken, this.clientId)
+      await tokenStore.save(oauthInfo)
+      const awsCredentials = await federateToken(oauthInfo.accessToken, this.idpHost, this.federationConfig)
+      this.state ={
+        name: "authenticated",
+        oauthInfo,
+        awsCredentials
       }
     } catch (err) {
       this.state = {
         name: "authentication-failed",
         error: describeError(err)
       }
-    }
-  }
-
-  private updateStateFromTokenAuthenticationResponse(authInfo: AuthenticationInfo): void {
-    this.state = {
-      name: "authenticated",
-      authInfo
     }
   }
 }

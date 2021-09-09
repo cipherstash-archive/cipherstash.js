@@ -22,6 +22,7 @@ import * as GrpcDocumentDeleteRequest from './generated/stash/GRPC/V1/Documents/
 import * as GrpcPutReply from './generated/stash/GRPC/V1/Documents/PutReply'
 import * as GrpcPutRequest from './generated/stash/GRPC/V1/Documents/PutRequest'
 import * as GrpcStreamingPutRequest from './generated/stash/GRPC/V1/Documents/StreamingPutRequest'
+import * as GrpcStreamingPutBegin from './generated/stash/GRPC/V1/Documents/StreamingPutBegin'
 import * as GrpcStreamingPutReply from './generated/stash/GRPC/V1/Documents/StreamingPutReply'
 import * as GrpcTerm from './generated/stash/GRPC/V1/Documents/Term'
 import * as GrpcVector from './generated/stash/GRPC/V1/Documents/Vector'
@@ -94,6 +95,8 @@ export namespace V1  {
   export type StreamingPutRequestOutput = GrpcStreamingPutRequest.StreamingPutRequest__Output
   export type StreamingPutReply = GrpcStreamingPutReply.StreamingPutReply
   export type StreamingPutReplyOutput = GrpcStreamingPutReply.StreamingPutReply__Output
+  export type StreamingPutBegin = GrpcStreamingPutBegin.StreamingPutBegin
+  export type StreamingPutBeginOutput = GrpcStreamingPutBegin.StreamingPutBegin__Output
   export type TermOutput = GrpcTerm.Term__Output
   export type TermInput = GrpcTerm.Term
   export type VectorOutput = GrpcVector.Vector__Output
