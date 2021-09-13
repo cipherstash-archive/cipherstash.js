@@ -98,10 +98,8 @@ export class Stash {
   >(
     definition: CollectionSchema<R, M, MM>
   ): Promise<Collection<R, M, MM>> {
-    console.log('loadCollection', 1)
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
-        console.log('loadCollection', 2, { authToken, clusterId: this.clusterId })
         const ref = await makeRef(definition.name, this.clusterId)
         this.stub.collectionInfo({
           context: { authToken },
