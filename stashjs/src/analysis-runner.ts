@@ -58,7 +58,6 @@ export class AnalysisRunner {
   private shutdown(): void {
     this.workers.forEach(worker => worker.terminate())
     this.workers.clear()
-    console.log(`Completed ${this.resultCount} jobs`)
   }
 
   public analyze(jobsIter: AsyncIterator<StashRecord>): AsyncIterator<AnalysisResult> {
