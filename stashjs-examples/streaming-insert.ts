@@ -25,7 +25,7 @@ async function insertRecords() {
     const movies = await stash.loadCollection(movieSchema)
     console.log(`Collection "${movies.name}" loaded`)
 
-    const count = 1
+    const count = 10000
     const timer = new Timer({ label: 'test-timer' })
     timer.start()
     const result = await movies.putStream(fakeMovieGenerator(count))
