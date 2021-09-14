@@ -52,7 +52,7 @@ export class AsyncQueue<T> implements AsyncIterator<T, T | undefined> {
    * signal that there are no more items.
    */
   public push(item: T): void {
-    if (this.items.length > 0 && (this.items[this.items.length - 1] as any).done) {
+    if (this.isDone()) {
       throw new Error("Illegal attempt to push item onto AsyncQueue that has been marked as finished")
     }
 
@@ -61,7 +61,7 @@ export class AsyncQueue<T> implements AsyncIterator<T, T | undefined> {
   }
 
   public end(): void {
-    if (this.items.length > 0 && (this.items[this.items.length - 1] as any).done) {
+    if (this.isDone()) {
       return
     }
 
@@ -69,14 +69,17 @@ export class AsyncQueue<T> implements AsyncIterator<T, T | undefined> {
     this.events.emit('push')
   }
 
+  public once(event: 'drained', callback: () => void): void {
+    this.events.once(event, callback)
+  }
+
   private waitForMore(): Promise<void> {
     return new Promise((resolve) => {
       this.events.once('push', resolve)
     })
   }
-
-  public once(event: 'drained', callback: () => void): void {
-    this.events.once(event, callback)
+  private isDone(): boolean {
+    return this.items.length > 0 && (this.items[this.items.length - 1] as any).done
   }
 }
 
