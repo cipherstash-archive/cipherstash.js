@@ -1,5 +1,5 @@
 import { GluegunCommand } from 'gluegun'
-// import * as open from 'open'
+import * as open from 'open'
 import { tokenStore, stashOauth } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
@@ -88,7 +88,7 @@ const command: GluegunCommand = {
       print.info(`Visit ${data.verification_uri_complete} to complete authentication`)
       print.info("Waiting for authentication...")
 
-        // await open(data.verification_uri_complete)
+      await open(data.verification_uri_complete)
 
       makeTokenPoll(5)
         .poll((next) => {
