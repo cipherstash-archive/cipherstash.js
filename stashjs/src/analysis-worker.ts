@@ -1,7 +1,7 @@
 import { parentPort, workerData, isMainThread } from "worker_threads"
 import AWS from "aws-sdk"
 import { NodeCachingMaterialsManager } from '@aws-crypto/client-node'
-import { makeCipherSuite2, makeNodeCachingMaterialsManager } from "./crypto/cipher"
+import { makeCipherSuite, makeNodeCachingMaterialsManager } from "./crypto/cipher"
 import { CollectionSchema } from "./collection-schema"
 import { AnalysisConfig, AnalysisResult } from "./analysis-runner"
 import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
@@ -20,7 +20,7 @@ if (!isMainThread) {
     const analyzer = getRecordAnalyzer(config.schema)
     const analyzedRecord = analyzer(record)
     const vectors = convertAnalyzedRecordToVectors(analyzedRecord, config.schema.meta)
-    const cipherSuite = makeCipherSuite2(cachingMaterialsManager)
+    const cipherSuite = makeCipherSuite(cachingMaterialsManager)
     // TODO: we will need to do token refreshing logic here
     AWS.config.credentials = {
       accessKeyId: config.awsCredentials.accessKeyId,
