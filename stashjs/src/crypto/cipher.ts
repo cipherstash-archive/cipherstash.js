@@ -22,8 +22,7 @@ type ThenArg<T> = T extends PromiseLike<infer U> ? U : never
 // not exported).  Also publish the info on how to work around it (see below)
 type EncryptOutput = ThenArg<ReturnType<ReturnType<typeof buildClient>['encrypt']>>
 
-export const cacheCapacity = 100000
-// export const cacheCapacity = 1000
+export const cacheCapacity = 1000
 
 /* maxAge is the time in milliseconds that an entry will be cached.
  * Elements are actively removed from the cache.
@@ -40,8 +39,7 @@ const maxBytesEncrypted = 100*1000
  * This value is optional,
  * but you should configure the lowest value possible.
  */
-// const maxMessagesEncrypted = 1000
-const maxMessagesEncrypted = 1000000
+const maxMessagesEncrypted = 1000
 
 const partition = "source"
 
@@ -61,36 +59,34 @@ export function makeNodeCachingMaterialsManager(generatorKeyId: string) {
   })
 }
 
-export function makeCipherSuite(generatorKeyId: string): CipherSuite {
-  return makeCipherSuite2(makeNodeCachingMaterialsManager(generatorKeyId))
-}
+export function makeCipherSuite(generatorKeyId: string): CipherSuite
+export function makeCipherSuite(cmm: NodeCachingMaterialsManager): CipherSuite
+export function makeCipherSuite(arg: string | NodeCachingMaterialsManager): CipherSuite {
+  if (typeof arg === 'string') {
+    return makeCipherSuite(makeNodeCachingMaterialsManager(arg))
+  } else {
+    const context = {
+      version: "0.1",
+      format: "BSON"
+    }
 
-export function makeCipherSuite2(
-  cmm: NodeCachingMaterialsManager
-): CipherSuite {
-  const context = {
-    version: "0.1",
-    format: "BSON"
-  }
+    return {
+      encrypt: async <T>(plaintext: T) => {
+        const buffer = serialize(plaintext)
+        try {
+          return await client.encrypt(arg, buffer, {
+            encryptionContext: context,
+            plaintextLength: buffer.byteLength
+          })
+        } catch (err) {
+          return Promise.reject(err)
+        }
+      },
 
-  return {
-    encrypt: async <T>(plaintext: T) => {
-      const buffer = serialize(plaintext)
-      try {
-        return await client.encrypt(cmm, buffer, {
-          encryptionContext: context,
-          plaintextLength: buffer.byteLength
-        })
-      } catch (err) {
-        return Promise.reject(err)
+      decrypt: async <T>(ciphertext: Buffer) => {
+        const decrypted = await client.decrypt(arg, ciphertext)
+        return deserialize(decrypted.plaintext) as T
       }
-    },
-
-    decrypt: async <T>(ciphertext: Buffer) => {
-      const decrypted = await client.decrypt(cmm, ciphertext)
-      return deserialize(decrypted.plaintext) as T
     }
   }
 }
-
-
