@@ -16,6 +16,7 @@ export type DeviceCodePollingInfo = {
   deviceCode: string
   userCode: string
   verificationUri: string
+  interval: number
 }
 
 class StashOauth {
@@ -100,13 +101,15 @@ class StashOauth {
         const {
           device_code: deviceCode,
           user_code: userCode,
-          verification_uri_complete: verificationUri
+          verification_uri_complete: verificationUri,
+          interval
         } = response.data
 
         return {
           deviceCode,
           userCode,
-          verificationUri
+          verificationUri,
+          interval
         }
       } else {
         return Promise.reject(`Could not initiate login: ${describeError(response.data)}`)
@@ -120,11 +123,9 @@ class StashOauth {
     idpHost: string,
     clientId: string,
     deviceCode: string,
-    retries: number = 10
+    interval: number
   ): Promise<OauthAuthenticationInfo> {
-    let remainingAttempts = retries
-    while (remainingAttempts > 0) {
-      remainingAttempts = remainingAttempts - 1
+    while (true) {
       const response: any = await makeOauthClient(idpHost).post("/oauth/token", {
         grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
         device_code: deviceCode,
@@ -140,15 +141,14 @@ class StashOauth {
       // See https://auth0.com/docs/flows/call-your-api-using-the-device-authorization-flow#token-responses
       if (response.data?.access_token) {
         return this.unpackResponse(response.data)
+      } else if (response.data?.error === "authorization_pending") {
+        await new Promise((resolve) => {
+          setTimeout(() => resolve(null), interval * 1000)
+        })
       } else if (response.error) {
         return Promise.reject(response.data.error_description)
       }
-
-      await new Promise((resolve) => {
-        setTimeout(() => resolve(null), 1000)
-      })
     }
-    return Promise.reject(`Failed to authenticate after polling for token ${retries} times`)
   }
 }
 
