@@ -45,7 +45,8 @@ const command: GluegunCommand = {
       const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
         IDP,
         STASH_CLI_CLIENT_ID,
-        pollingInfo.deviceCode
+        pollingInfo.deviceCode,
+        pollingInfo.interval
       )
 
       print.info("Login Successful")
