@@ -164,7 +164,6 @@ function makeOauthClient(idpHost: string): AxiosInstance {
     timeout: 5000,
     headers: {
       'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/x-www-form-urlencoded'
     },
     httpsAgent: new https.Agent({
       port: 443,
