@@ -141,7 +141,7 @@ class StashOauth {
       // See https://auth0.com/docs/flows/call-your-api-using-the-device-authorization-flow#token-responses
       if (response.data?.access_token) {
         return this.unpackResponse(response.data)
-      } else if (response.data?.error === "authorization_pending") {
+      } else if (response.data?.error === "authorization_pending" || response.data?.error === "slow_down") {
         await new Promise((resolve) => {
           setTimeout(() => resolve(null), interval * 1000)
         })
