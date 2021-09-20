@@ -40,12 +40,10 @@ import * as GrpcQueryReply from './generated/stash/GRPC/V1/Queries/QueryReply'
 import * as GrpcQueryRequest from './generated/stash/GRPC/V1/Queries/QueryRequest'
 import * as GrpcRange from './generated/stash/GRPC/V1/Queries/Range'
 
-const PROTO_BASE_PATH = path.join(module.path, 'grpc')
-const API_PROTO_FILE = path.join(PROTO_BASE_PATH, 'v1', 'api.proto')
+import { protoDefsBuffer  } from './generated/stashjs-api-v1'
 
-const grpcDefinition = protoLoader.loadSync(
-  API_PROTO_FILE, {
-    includeDirs: [path.join(PROTO_BASE_PATH, 'v1')],
+const grpcDefinition = protoLoader.loadFileDescriptorSetFromBuffer(
+  protoDefsBuffer, {
     keepCase: true,
     longs: Number,
     enums: String,
@@ -53,6 +51,7 @@ const grpcDefinition = protoLoader.loadSync(
     oneofs: true,
   }
 )
+
 
 const APIProto = (gRPC.loadPackageDefinition(grpcDefinition) as unknown as ProtoGrpcType.ProtoGrpcType).stash
 
