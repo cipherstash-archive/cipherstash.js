@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/cipherstash/stashjs-grpc#readme",
   "devDependencies": {
+    "@types/node": "^16.9.4",
     "typescript": "^4.2.4"
   },
   "dependencies": {
