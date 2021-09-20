@@ -12,9 +12,12 @@ trap "echo SOMETHING WENT WRONG - please read the logs above and see if it helps
 rm -fr ./grpc ./dist ./generated
 mkdir -p ./grpc ./dist ./generated
 cp -R ../../../data-service/priv/grpc/* ./grpc
+
 proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js \
   --includeDirs grpc/v1 --keepCase=true --longs=number --enums=string \
   --defaults=true --oneofs==true
+
+./scripts/pack-api.sh
 pnpx tsc
 cp -RL grpc dist
 
