@@ -14,11 +14,7 @@
     "compile": "tsc -p .",
     "copy-templates": "if [ -e ./src/templates ]; then cp -a ./src/templates ./build/; fi",
     "build": "pnpm run format && pnpm run lint && pnpm run clean-build && pnpm run compile && pnpm run copy-templates",
-    "prepublishOnly": "pnpm run build",
-    "test": "jest",
-    "watch": "jest --watch",
-    "snapupdate": "jest --updateSnapshot",
-    "coverage": "jest --coverage"
+    "prepublishOnly": "pnpm run build"
   },
   "files": [
     "tsconfig.json",
