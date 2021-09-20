@@ -1,5 +1,5 @@
 {
-  "name": "@cipherstash/stash",
+  "name": "@cipherstash/stash-cli",
   "version": "0.0.2",
   "description": "CipherStash CLI",
   "private": true,
