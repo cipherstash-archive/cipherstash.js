@@ -141,15 +141,24 @@ class StashOauth {
       // See https://auth0.com/docs/flows/call-your-api-using-the-device-authorization-flow#token-responses
       if (response.data?.access_token) {
         return this.unpackResponse(response.data)
-      } else if (response.data?.error === "authorization_pending" || response.data?.error === "slow_down") {
-        await new Promise((resolve) => {
-          setTimeout(() => resolve(null), interval * 1000)
-        })
+      } else if (response.data?.error === "authorization_pending") {
+        await pause(interval)
+      } else if (response.data?.error === "slow_down") {
+        // increase polling interval by 5 seconds
+        // see: https://datatracker.ietf.org/doc/html/rfc8628#section-3.5
+        interval += 5
+        await pause(interval)
       } else if (response.error) {
         return Promise.reject(response.data.error_description)
       }
     }
   }
+}
+
+async function pause(seconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), seconds * 1000)
+  })
 }
 
 function camelcaseKeys(json: any): any {
