@@ -4,11 +4,19 @@ import axios, { AxiosInstance } from 'axios'
 import jws from 'jws'
 import { describeError } from '../utils'
 
+const SCOPES = "collection.create collection.delete collection.info document.put document.delete document.get document.query"
 
 export type OauthAuthenticationInfo = {
   accessToken: string,
   refreshToken: string,
   expiry: number
+}
+
+export type DeviceCodePollingInfo = {
+  deviceCode: string
+  userCode: string
+  verificationUri: string
+  interval: number
 }
 
 class StashOauth {
@@ -71,6 +79,86 @@ class StashOauth {
       expiry: decoded.payload.exp
     }
   }
+
+  public async loginViaDeviceCodeAuthentication(
+    idpHost: string,
+    clientId: string,
+    audience: string,
+    workspace: string | undefined
+  ): Promise<DeviceCodePollingInfo> {
+    const scope = !!workspace ?
+      `offline_access ${SCOPES} ${workspace}` :
+      `offline_access ${SCOPES}`
+
+    const response: any = await makeOauthClient(idpHost).post("/oauth/device/code", {
+      client_id: clientId,
+      scope,
+      audience
+    })
+
+    if (response) {
+      if (response.status === 200) {
+        const {
+          device_code: deviceCode,
+          user_code: userCode,
+          verification_uri_complete: verificationUri,
+          interval
+        } = response.data
+
+        return {
+          deviceCode,
+          userCode,
+          verificationUri,
+          interval
+        }
+      } else {
+        return Promise.reject(`Could not initiate login: ${describeError(response.data)}`)
+      }
+    } else {
+      return Promise.reject(`Could not initiate login (empty respone from IDP)`)
+    }
+  }
+
+  public async pollForDeviceCodeAcceptance(
+    idpHost: string,
+    clientId: string,
+    deviceCode: string,
+    interval: number
+  ): Promise<OauthAuthenticationInfo> {
+    while (true) {
+      const response: any = await makeOauthClient(idpHost).post("/oauth/token", {
+        grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+        device_code: deviceCode,
+        client_id: clientId
+      }).catch((err: any) => {
+        if (err.response) {
+          return Promise.resolve(err.response)
+        } else {
+          return Promise.reject(err)
+        }
+      })
+
+      // See https://auth0.com/docs/flows/call-your-api-using-the-device-authorization-flow#token-responses
+      if (response.data?.access_token) {
+        return this.unpackResponse(response.data)
+      } else if (response.data?.error === "authorization_pending") {
+        await pause(interval)
+      } else if (response.data?.error === "slow_down") {
+        // increase polling interval by 5 seconds
+        // see: https://datatracker.ietf.org/doc/html/rfc8628#section-3.5
+        interval += 5
+        await pause(interval)
+      } else if (response.error) {
+        return Promise.reject(response.data.error_description)
+      }
+    }
+  }
+}
+
+async function pause(seconds: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), seconds * 1000)
+  })
 }
 
 function camelcaseKeys(json: any): any {
@@ -84,7 +172,7 @@ function makeOauthClient(idpHost: string): AxiosInstance {
     baseURL: `https://${idpHost}`,
     timeout: 5000,
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
+      'Accept': 'application/vnd.github.v3+json',
     },
     httpsAgent: new https.Agent({
       port: 443,
