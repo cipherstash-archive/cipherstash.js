@@ -1,132 +1,67 @@
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import { tokenStore, stashOauth } from '@cipherstash/stashjs'
+import { tokenStore, stashOauth, describeError } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
-// The client ID could be retrieved by selecting the region
-// from a meta-data service
-const CLIENT_ID = 'tz5daCHFQLJRshlk9xr2Tl1G2nVJP5nv'
+// This is the client ID configured in Auth0. It is not a secret
+// and it is only used for initiating device code authentication.
+const STASH_CLI_CLIENT_ID = 'tz5daCHFQLJRshlk9xr2Tl1G2nVJP5nv'
 
-const IDP_API = {
-  baseURL: 'https://cipherstash-dev.au.auth0.com/',
-  headers: {
-    Accept: 'application/vnd.github.v3+json',
-    ContentType: 'application/x-www-form-urlencoded'
-  },
-}
-
-type DeviceCodeAuthorizationResponse = {
-  verification_uri_complete: string,
-  user_code: string,
-  device_code: string,
-  interval: number
-}
-
-function makeTokenPoll(interval: number): TokenPoll {
-  return new TokenPoll(interval)
-}
-
-class TokenPoll {
-  private interval
-  private successCallback
-  private failCallback
-  private pollFunc
-
-  constructor(interval: number) {
-    this.interval = interval
-  }
-
-  // TODO: Define the type
-  poll(func: any) {
-    this.pollFunc = func
-    this.pending()
-    return this
-  }
-
-  // TODO: Define the type
-  success(func: any) {
-    this.successCallback = func
-    return this
-  }
-
-  // TODO: Define the type
-  failure(func: any) {
-    this.failCallback = func
-    return this
-  }
-
-  pending() {
-    setTimeout(() => {
-      this.pollFunc(this)
-    }, this.interval * 1000)
-  }
-
-  done(response: any) {
-    this.successCallback(response)
-  }
-
-  failed(message: string) {
-    this.failCallback(message)
-  }
-}
+const IDP = 'cipherstash-dev.au.auth0.com'
 
 const command: GluegunCommand = {
   name: 'login',
 
   run: async (toolbox: Toolbox) => {
-    const { print, http } = toolbox
+    const { print, parameters } = toolbox
 
-    const api = http.create(IDP_API)
-    const ret = await api.post("/oauth/device/code", {
-      client_id: CLIENT_ID,
-      scope: 'offline_access collection.create collection.delete collection.info document.put document.delete document.get document.query',
-      audience: 'dev-local'
-    })
+    const audience = parameters.first
+    const workspace: string | undefined = parameters.second
 
-    if (ret.ok) {
-      const data = ret.data as DeviceCodeAuthorizationResponse
-      print.info(`Visit ${data.verification_uri_complete} to complete authentication`)
+    if (!audience) {
+      print.error('Error: an audience must be provided')
+      process.exit(1)
+    }
+
+    try {
+      const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
+        IDP,
+        STASH_CLI_CLIENT_ID,
+        audience,
+        workspace
+      )
+
+      print.info(`Visit ${pollingInfo.verificationUri} to complete authentication`)
       print.info("Waiting for authentication...")
 
-      await open(data.verification_uri_complete)
+      // Only open the browser when running this command locally.  If we are
+      // running under SSH then the browser will open on the remote host - which
+      // is not what we want.  Instead the user can simply click the
+      // verification link that gets printed.
+      if (!isRunningUnderSsh()) {
+        await open(pollingInfo.verificationUri)
+      }
 
-      makeTokenPoll(5)
-        .poll((next) => {
-          api
-            .post("/oauth/token", {
-              grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-              device_code: data.device_code,
-              client_id: CLIENT_ID
-            })
-            .then((ret: any) => {
-              const { data } = ret
-              // See https://auth0.com/docs/flows/call-your-api-using-the-device-authorization-flow#token-responses
-              if (data.error === "authorization_pending") {
-                return next.pending()
-              }
-              if (data.error) {
-                return next.failed(data.error_description)
-              }
-              if (data.access_token) {
-                return next.done(data)
-              }
-            })
-            .catch(() => {
-              next.error()
-            })
-        })
-        .success(async (ret) => {
-          print.info("Login Successful")
-          await tokenStore.save(stashOauth.unpackResponse(ret))
-          print.info(`Auth-token saved to ${tokenStore.configDir()}`)
-        })
-        .failure((message) => {
-          print.error(`Could not login. Message from server: "${message}"`)
-        })
-    } else {
-      print.error("Could not login")
+      const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
+        IDP,
+        STASH_CLI_CLIENT_ID,
+        pollingInfo.deviceCode,
+        pollingInfo.interval
+      )
+
+      print.info("Login Successful")
+
+      await tokenStore.save(authInfo)
+
+      print.info(`Auth-token saved to ${tokenStore.configDir()}`)
+    } catch (error) {
+      print.error(`Could not login. Message from server: "${describeError(error)}"`)
     }
   },
 }
 
 module.exports = command
+
+function isRunningUnderSsh(): boolean {
+  return process.env['SSH_CLIENT'] !== undefined || process.env['SSH_TTY'] !== undefined
+}
