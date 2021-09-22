@@ -75,18 +75,21 @@ export class Stash {
     M extends Mappings<R>,
     MM extends MappingsMeta<M>
   >(
-    definition: CollectionSchema<R, M, MM>
+    schema: CollectionSchema<R, M, MM>
   ): Promise<Collection<R, M, MM>> {
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
         const request: V1.CreateRequestInput = {
-          ref: await makeRef(definition.name, this.clusterId),
-          indexes: await this.encryptMappings(definition)
+          ref: await makeRef(schema.name, this.clusterId),
+          indexes: await this.encryptMappings(schema)
         }
 
         this.stub.createCollection(request, grpcMetadata(authToken), async (err, res) => {
-          if (err) { reject(err) }
-          this.unpackCollection<R, M, MM>(definition.name, res!).then(resolve, reject)
+          if (err) {
+            reject(err)
+            return
+          }
+          this.unpackCollection<R, M, MM>(schema.name, res!).then(resolve, reject)
         })
       })
     )
@@ -105,8 +108,11 @@ export class Stash {
         this.stub.collectionInfo({
           ref
         }, grpcMetadata(authToken), async (err, res) => {
-          if (err) { reject(err) }
-          this.unpackCollection<R, M, MM>(definition.name, res!).then(resolve, reject)
+          if (err) {
+            reject(err)
+          } else {
+            this.unpackCollection<R, M, MM>(definition.name, res!).then(resolve, reject)
+          }
         })
       })
     )
