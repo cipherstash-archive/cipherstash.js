@@ -8,7 +8,8 @@ import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./
 import { CollectionSchema } from "./collection-schema"
 import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer, AnalyzedQuery } from "./analyzer"
 import { StreamWriter } from "./stream-writer"
-import { V1 } from "../../stashjs-grpc/dist"
+import { V1 } from "@cipherstash/stashjs-grpc"
+import { grpcMetadata } from "./auth/grpc-metadata"
 
 const DEFAULT_QUERY_LIMIT = 50;
 
@@ -45,10 +46,9 @@ export class Collection<
     return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
         this.stash.stub.get({
-          context: { authToken },
           collectionId: idStringToBuffer(this.id),
           id: docId
-        }, (err, res) => {
+        }, grpcMetadata(authToken), (err, res) => {
           if (err) { reject(err) }
           if (res?.source) {
             resolve(convertGetReplyToUserRecord(res, this.stash.cipherSuite))
@@ -68,10 +68,9 @@ export class Collection<
     return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
         this.stash.stub.getAll({
-          context: { authToken },
           collectionId: idStringToBuffer(this.id),
           ids: docIds
-        }, (err, res) => {
+        }, grpcMetadata(authToken), (err, res) => {
           if (err) { reject(err) }
           if (res?.documents) {
             resolve(convertGetAllReplyToUserRecords(res, this.stash.cipherSuite))
@@ -111,14 +110,13 @@ export class Collection<
           console.log(stringify(vectors))
         }
         this.stash.stub.put({
-          context: { authToken },
           collectionId: idStringToBuffer(this.id),
           vectors,
           source: {
             id: idStringToBuffer(doc.id as string),
             source: (await this.stash.cipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
           },
-        }, (err, _res) => {
+        }, grpcMetadata(authToken), (err, _res) => {
           if (err) { reject(err) }
           // TODO we should return the doc ID from the response but `put` does not
           // yet return an ID at the GRPC level.
@@ -147,10 +145,9 @@ export class Collection<
     return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
         this.stash.stub.delete({
-          context: { authToken },
           collectionId: idStringToBuffer(this.id),
           id: docId
-        }, (err, _res) => {
+        }, grpcMetadata(authToken), (err, _res) => {
           if (err) { reject(err) }
           resolve(null)
         })
@@ -185,10 +182,10 @@ export class Collection<
 
         // Time the execution
         const timerStart = (new Date()).getTime()
-        let request = this.buildQueryRequest(options, query, authToken)
+        let request = this.buildQueryRequest(options, query)
 
         // TODO: Can this be extracted into its own function?
-        this.stash.stub.query(request, async (err, res) => {
+        this.stash.stub.query(request, grpcMetadata(authToken), async (err, res) => {
           if (err) { reject(err) }
           const timerEnd = (new Date()).getTime()
 
@@ -210,9 +207,9 @@ export class Collection<
       new Promise(async (resolve, reject) => {
         // Time the execution
         const timerStart = (new Date()).getTime()
-        const request = this.buildQueryRequest(options, { constraints: [] }, authToken)
+        const request = this.buildQueryRequest(options, { constraints: [] })
 
-        this.stash.stub.query(request, async (err, res) => {
+        this.stash.stub.query(request, grpcMetadata(authToken), async (err, res) => {
           if (err) { reject(err) }
           const timerEnd = (new Date()).getTime()
 
@@ -229,11 +226,10 @@ export class Collection<
     )
   }
 
-  private buildQueryRequest(options: QueryOptions<R, M>, query: AnalyzedQuery, authToken: string) {
+  private buildQueryRequest(options: QueryOptions<R, M>, query: AnalyzedQuery) {
     const constraints = query.constraints
 
     return {
-      context: { authToken },
       collectionId: idStringToBuffer(this.id),
       query: {
         limit: options.limit || DEFAULT_QUERY_LIMIT,
