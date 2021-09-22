@@ -5,8 +5,6 @@ import * as path from 'path'
 import * as ProtoGrpcType from './generated/api'
 import * as API from './generated/stash/GRPC/V1/API'
 
-import * as GrpcRequestContext from './generated/stash/GRPC/V1/RequestContext'
-
 import * as GrpcCreateRequest from './generated/stash/GRPC/V1/Collections/CreateRequest'
 import * as GrpcDeleteRequest from './generated/stash/GRPC/V1/Collections/DeleteRequest'
 import * as GrpcInfoReply from './generated/stash/GRPC/V1/Collections/InfoReply'
@@ -64,8 +62,6 @@ export namespace V1  {
   export type APIClient = API.APIClient
   export type APIDefinition = API.APIDefinition
 
-  export type RequestContextOutput = GrpcRequestContext.RequestContext__Output
-  export type RequestContextInput = GrpcRequestContext.RequestContext
   export type CreateRequestOutput = GrpcCreateRequest.CreateRequest__Output
   export type CreateRequestInput = GrpcCreateRequest.CreateRequest
   export type DeleteRequestOutput = GrpcDeleteRequest.DeleteRequest__Output
