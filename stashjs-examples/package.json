@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs-examples",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Example client code for the CipherStash Typescript client",
   "main": "index.js",
   "scripts": {
