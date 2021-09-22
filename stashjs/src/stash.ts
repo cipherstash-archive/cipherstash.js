@@ -11,6 +11,8 @@ import { Collection } from './collection'
 import { idBufferToString, idStringToBuffer, makeRef, refBufferToString } from './utils'
 import { loadConfigFromEnv, StashConfig } from './stash-config'
 
+import { grpcMetadata } from './auth/grpc-metadata'
+
 /**
  * Represents an authenticated session to a CipherStash instance.
  *
@@ -78,12 +80,11 @@ export class Stash {
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
         const request: V1.CreateRequestInput = {
-          context: { authToken },
           ref: await makeRef(definition.name, this.clusterId),
           indexes: await this.encryptMappings(definition)
         }
 
-        this.stub.createCollection(request, async (err, res) => {
+        this.stub.createCollection(request, grpcMetadata(authToken), async (err, res) => {
           if (err) { reject(err) }
           this.unpackCollection<R, M, MM>(definition.name, res!).then(resolve, reject)
         })
@@ -102,9 +103,8 @@ export class Stash {
       new Promise(async (resolve, reject) => {
         const ref = await makeRef(definition.name, this.clusterId)
         this.stub.collectionInfo({
-          context: { authToken },
           ref
-        }, async (err, res) => {
+        }, grpcMetadata(authToken), async (err, res) => {
           if (err) { reject(err) }
           this.unpackCollection<R, M, MM>(definition.name, res!).then(resolve, reject)
         })
@@ -119,9 +119,8 @@ export class Stash {
       new Promise(async (resolve, reject) => {
         const ref = await makeRef(collectionName, this.clusterId)
         this.stub.deleteCollection({
-          context: { authToken },
           ref
-        }, async (err, _res) => {
+        }, grpcMetadata(authToken), async (err, _res) => {
           if (err) { reject(err) }
           resolve(undefined)
         })
