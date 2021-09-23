@@ -2,7 +2,6 @@
   "name": "@cipherstash/stash-cli",
   "version": "0.0.3",
   "description": "CipherStash CLI",
-  "private": false,
   "types": "build/types/types.d.ts",
   "bin": {
     "stash": "bin/stash"
@@ -30,7 +29,6 @@
     "@cipherstash/stashjs": "workspace:*",
     "gluegun": "latest",
     "open": "^8.2.1",
-    "stash": "link:",
     "yarn": "^1.22.11"
   },
   "devDependencies": {
