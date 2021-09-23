@@ -49,11 +49,14 @@ export class Collection<
           collectionId: idStringToBuffer(this.id),
           id: docId
         }, grpcMetadata(authToken), (err, res) => {
-          if (err) { reject(err) }
-          if (res?.source) {
-            resolve(convertGetReplyToUserRecord(res, this.stash.cipherSuite))
+          if (err) {
+            reject(err)
           } else {
-            reject("Unexpectedly received empty response from data-service")
+            if (res?.source) {
+              resolve(convertGetReplyToUserRecord(res, this.stash.cipherSuite))
+            } else {
+              reject("Unexpectedly received empty response from data-service")
+            }
           }
         })
       })
@@ -71,11 +74,14 @@ export class Collection<
           collectionId: idStringToBuffer(this.id),
           ids: docIds
         }, grpcMetadata(authToken), (err, res) => {
-          if (err) { reject(err) }
-          if (res?.documents) {
-            resolve(convertGetAllReplyToUserRecords(res, this.stash.cipherSuite))
+          if (err) {
+            reject(err)
           } else {
-            reject("Unexpectedly received empty response from data-service")
+            if (res?.documents) {
+              resolve(convertGetAllReplyToUserRecords(res, this.stash.cipherSuite))
+            } else {
+              reject("Unexpectedly received empty response from data-service")
+            }
           }
         })
       })
@@ -117,10 +123,13 @@ export class Collection<
             source: (await this.stash.cipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
           },
         }, grpcMetadata(authToken), (err, _res) => {
-          if (err) { reject(err) }
-          // TODO we should return the doc ID from the response but `put` does not
-          // yet return an ID at the GRPC level.
-          resolve(doc.id as string)
+          if (err) {
+            reject(err)
+          } else {
+            // TODO we should return the doc ID from the response but `put` does not
+            // yet return an ID at the GRPC level.
+            resolve(doc.id as string)
+          }
         })
       })
     )
@@ -148,8 +157,11 @@ export class Collection<
           collectionId: idStringToBuffer(this.id),
           id: docId
         }, grpcMetadata(authToken), (err, _res) => {
-          if (err) { reject(err) }
-          resolve(null)
+          if (err) {
+            reject(err)
+          } else {
+            resolve(null)
+          }
         })
       })
     )
@@ -186,17 +198,20 @@ export class Collection<
 
         // TODO: Can this be extracted into its own function?
         this.stash.stub.query(request, grpcMetadata(authToken), async (err, res) => {
-          if (err) { reject(err) }
-          const timerEnd = (new Date()).getTime()
+          if (err) {
+            reject(err)
+          } else {
+            const timerEnd = (new Date()).getTime()
 
-          resolve({
-            took: (timerEnd - timerStart) / 1000,
-            documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
-            aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
-              name: agg.name! as Aggregate,
-              value: BigInt(agg.value!.toString())
-            })) : []
-          })
+            resolve({
+              took: (timerEnd - timerStart) / 1000,
+              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
+              aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
+                name: agg.name! as Aggregate,
+                value: BigInt(agg.value!.toString())
+              })) : []
+            })
+          }
         })
       })
     )
@@ -210,17 +225,20 @@ export class Collection<
         const request = this.buildQueryRequest(options, { constraints: [] })
 
         this.stash.stub.query(request, grpcMetadata(authToken), async (err, res) => {
-          if (err) { reject(err) }
-          const timerEnd = (new Date()).getTime()
+          if (err) {
+            reject(err)
+          } else {
+            const timerEnd = (new Date()).getTime()
 
-          resolve({
-            took: (timerEnd - timerStart) / 1000,
-            documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
-            aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
-              name: agg.name! as Aggregate,
-              value: BigInt(agg.value!.toString())
-            })) : []
-          })
+            resolve({
+              took: (timerEnd - timerStart) / 1000,
+              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
+              aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
+                name: agg.name! as Aggregate,
+                value: BigInt(agg.value!.toString())
+              })) : []
+            })
+          }
         })
       })
     )

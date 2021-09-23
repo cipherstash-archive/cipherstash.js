@@ -87,9 +87,9 @@ export class Stash {
         this.stub.createCollection(request, grpcMetadata(authToken), async (err, res) => {
           if (err) {
             reject(err)
-            return
+          } else {
+            this.unpackCollection<R, M, MM>(schema.name, res!).then(resolve, reject)
           }
-          this.unpackCollection<R, M, MM>(schema.name, res!).then(resolve, reject)
         })
       })
     )
@@ -127,8 +127,11 @@ export class Stash {
         this.stub.deleteCollection({
           ref
         }, grpcMetadata(authToken), async (err, _res) => {
-          if (err) { reject(err) }
-          resolve(undefined)
+          if (err) {
+            reject(err)
+          } else {
+            resolve(undefined)
+          }
         })
       })
     )
