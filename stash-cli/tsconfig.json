@@ -7,8 +7,7 @@
       "scripthost",
       "es2015.promise",
       "es2015.generator",
-      "es2015.iterable",
-      "dom"
+      "es2015.iterable"
     ],
     "module": "commonjs",
     "moduleResolution": "node",
@@ -18,8 +17,8 @@
     "sourceMap": false,
     "inlineSourceMap": true,
     "outDir": "build",
-    "strict": false,
-    "target": "es5",
+    "strict": true,
+    "target": "es2020",
     "declaration": true,
     "declarationDir": "build/types"
   },
