@@ -100,37 +100,41 @@ export class Collection<
   public async put(doc: R): Promise<string> {
     return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
-        /* Note: this will use an ID if one is provided in the doc
-         * and will generate a UUID otherwise.*/
-        //const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
-        doc = this.maybeGenerateId(doc)
-        const docWithBufferId = {
-          ...doc,
-          id: idStringToBuffer(doc.id as string),
-        } as R
-        const vectors = convertAnalyzedRecordToVectors(
-          this.analyzeRecord(docWithBufferId),
-          this.schema.meta
-        )
-        if (process.env['CS_DEBUG'] == 'yes') {
-          console.log(stringify(vectors))
-        }
-        this.stash.stub.put({
-          collectionId: idStringToBuffer(this.id),
-          vectors,
-          source: {
+        try {
+          /* Note: this will use an ID if one is provided in the doc
+           * and will generate a UUID otherwise.*/
+          //const docId = doc.id ? idStringToBuffer(doc.id) : makeId()
+          doc = this.maybeGenerateId(doc)
+          const docWithBufferId = {
+            ...doc,
             id: idStringToBuffer(doc.id as string),
-            source: (await this.stash.cipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
-          },
-        }, grpcMetadata(authToken), (err, _res) => {
-          if (err) {
-            reject(err)
-          } else {
-            // TODO we should return the doc ID from the response but `put` does not
-            // yet return an ID at the GRPC level.
-            resolve(doc.id as string)
+          } as R
+          const vectors = convertAnalyzedRecordToVectors(
+            this.analyzeRecord(docWithBufferId),
+            this.schema.meta
+          )
+          if (process.env['CS_DEBUG'] == 'yes') {
+            console.log(stringify(vectors))
           }
-        })
+          this.stash.stub.put({
+            collectionId: idStringToBuffer(this.id),
+            vectors,
+            source: {
+              id: idStringToBuffer(doc.id as string),
+              source: (await this.stash.cipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
+            },
+          }, grpcMetadata(authToken), (err, _res) => {
+            if (err) {
+              reject(err)
+            } else {
+              // TODO we should return the doc ID from the response but `put` does not
+              // yet return an ID at the GRPC level.
+              resolve(doc.id as string)
+            }
+          })
+        } catch(error) {
+          reject(error)
+        }
       })
     )
   }
