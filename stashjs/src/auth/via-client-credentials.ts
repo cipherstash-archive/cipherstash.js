@@ -66,7 +66,7 @@ export class ViaClientCredentials implements AuthStrategy {
         this.state = {
           name: "authenticated",
           oauthInfo,
-          awsCredentials: await federateToken(oauthInfo.accessToken, this.idpHost, this.federationConfig)
+          awsCredentials: await federateToken(oauthInfo.accessToken, this.federationConfig)
         }
       }
     } catch (err) {
@@ -86,7 +86,7 @@ export class ViaClientCredentials implements AuthStrategy {
         this.clientCredentials.clientSecret
       )
       try {
-        const awsCredentials = await federateToken(oauthInfo.accessToken, this.idpHost, this.federationConfig)
+        const awsCredentials = await federateToken(oauthInfo.accessToken, this.federationConfig)
         this.state = {
           name: "authenticated",
           oauthInfo,
