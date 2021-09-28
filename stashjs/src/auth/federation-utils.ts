@@ -20,18 +20,22 @@ export async function federateToken(
 
   try {
     const client = new STS({region: region})
-    const { Credentials } = await client.assumeRoleWithWebIdentity({
+    const { Credentials: credentials } = await client.assumeRoleWithWebIdentity({
       RoleArn,
       WebIdentityToken: accessToken,
       // TODO: This should possibly be the user ID (sub from the access token)
       RoleSessionName: "stash-client"
     })
 
-    if (Credentials) {
-      const { AccessKeyId, SecretAccessKey, SessionToken } = Credentials
+    if (credentials) {
+      const {
+        AccessKeyId: accessKeyId,
+        SecretAccessKey: secretAccessKey,
+        SessionToken: sessionToken
+      } = credentials
       // TODO: Track expiry - federated STS tokens should be re-fetched before they expire
 
-      const AWScreds = new AWS.Credentials(AccessKeyId!, SecretAccessKey!, SessionToken!)
+      const AWScreds = new AWS.Credentials(accessKeyId!, secretAccessKey!, sessionToken!)
       AWS.config.credentials = AWScreds
       return AWScreds
     } else {
