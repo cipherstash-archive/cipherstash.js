@@ -14,7 +14,7 @@ export type AuthenticationConfig =
  }
 
 export type FederationConfig = {
-  readonly IdentityPoolId: string,
+  readonly RoleArn: string,
   readonly region: string,
 }
 
@@ -38,7 +38,8 @@ export function loadConfigFromEnv(): StashConfig {
         clientSecret: getVar('CS_SECRET'),
       },
       federationConfig: {
-        IdentityPoolId: getVar('CS_FEDERATED_IDENTITY_ID'),
+        // TODO: Make this able to be overridden via an env var
+        RoleArn: "arn:aws:iam::377140853070:role/DanSTSAssumeRoleTesting",
         region: 'ap-southeast-2'
       },
       serviceFqdn: getVar('CS_SERVICE_FQDN'),
@@ -52,7 +53,8 @@ export function loadConfigFromEnv(): StashConfig {
         clientId: getVar('CS_CLIENT_ID')
       },
       federationConfig: {
-        IdentityPoolId: getVar('CS_FEDERATED_IDENTITY_ID'),
+        // TODO: Make this able to be overridden via an env var
+        RoleArn: "arn:aws:iam::377140853070:role/DanSTSAssumeRoleTesting",
         region: 'ap-southeast-2'
       },
       serviceFqdn: getVar('CS_SERVICE_FQDN'),
