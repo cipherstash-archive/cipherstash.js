@@ -16,14 +16,15 @@ export async function federateToken(
   accessToken: string,
   config: FederationConfig
 ): Promise<AWSCredentials> {
-  const { region } = config
+  const { RoleArn, region } = config
 
   try {
     const client = new STS({region: region})
     const { Credentials } = await client.assumeRoleWithWebIdentity({
+      RoleArn,
       WebIdentityToken: accessToken,
-      RoleArn: "arn:aws:iam::377140853070:role/DanSTSAssumeRoleTesting",
-      RoleSessionName: "stash-client" // TODO: This should possibly be the user ID (sub from the access token)
+      // TODO: This should possibly be the user ID (sub from the access token)
+      RoleSessionName: "stash-client"
     })
 
     if (Credentials) {
