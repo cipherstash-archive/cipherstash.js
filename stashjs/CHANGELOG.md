@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- No longer uses AWS Cognito to exchange tokens (uses STS AssumeIdentityWithWebToken now instead)
+- No longer uses AWS Cognito to exchange tokens (uses STS AssumeRoleWithWebIdentity now instead)
 
 ## [0.2.32]
 
