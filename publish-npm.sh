@@ -11,4 +11,11 @@ set -e # exit when a command fails
 set -u # exit when script tries to use undeclared variables
 set -x # trace what gets executed (useful for debugging)
 
-pnpm publish -r
+while true; do
+    read -r -p "Did you update the CHANGELOG?" yn
+    case $yn in
+        [Yy]* ) pnpm publish -r; break;;
+        [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
