@@ -12,7 +12,7 @@ set -u # exit when script tries to use undeclared variables
 set -x # trace what gets executed (useful for debugging)
 
 while true; do
-    read -p "Did you update the CHANGELOG?" yn
+    read -r -p "Did you update the CHANGELOG?" yn
     case $yn in
         [Yy]* ) pnpm publish -r; break;;
         [Nn]* ) exit;;
