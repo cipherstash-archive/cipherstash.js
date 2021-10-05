@@ -6,6 +6,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Authentication now possible via stored token using stash-cli
+
+### Changed
+
+- No longer uses AWS Cognito to exchange tokens (uses STS AssumeRoleWithWebIdentity now instead)
+
+## [0.2.32]
+
+### Added
+
+- Streaming inserts
+
+## [0.2.31]
+
+### Changed
+
+- Credentials now sent via gRPC header
+- Removed RequestContext from gRPC protocol definitions
+
+## [0.2.30]
+
+### Fixed
+
+- Authentication and token federation improvements and minor fixes
+
 ## [0.2.29]
 
 ### Changed
