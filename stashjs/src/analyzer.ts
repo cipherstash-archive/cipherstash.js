@@ -31,6 +31,8 @@ export function buildRecordAnalyzer<
   const mappingAnalzers = Object.entries(schema.mappings).map(([indexName, mapping]) => {
     const meta = schema.meta[indexName]!
 
+    // FIXME: handle missing data in records
+
     if (isExactMapping<R, FieldOfType<R, ExactMappingFieldType>>(mapping)) {
       const fieldExtractor = buildFieldExtractor(mapping.field)
       return (record: R) => ({
@@ -52,7 +54,7 @@ export function buildRecordAnalyzer<
       const pipeline = buildTextProcessingPipeline(mapping.options)
       return (record: R) => ({
         indexId: meta.$indexId,
-        encodedTerms: indexMatch(pipeline(fieldExtractors.map(fe => fe(record))))
+        encodedTerms: indexMatch(pipeline(fieldExtractors.map(fe => fe(record)).filter(t => !!t)))
       })
     }
 
@@ -81,7 +83,11 @@ export function buildRecordAnalyzer<
     recordId: record.id,
     indexEntries: mappingAnalzers.map(
       analyzer => analyzer(record)).reduce((acc, { indexId, encodedTerms }) => {
-        return Object.assign(acc, { [indexId]: encodedTerms })
+        if (encodedTerms.length > 0) {
+          return Object.assign(acc, { [indexId]: encodedTerms })
+        } else {
+          return acc
+        }
       }, {})
   }) as AnalyzedRecord<R, M, MM>
 }
@@ -166,11 +172,11 @@ function flattenCondition<
 
 const indexExact: <T extends ExactMappingFieldType>(term: T) => Array<bigint>
   = term =>
-    [ encodeEquatable(term).equatable ]
+    term ? [ encodeEquatable(term).equatable ] : []
 
 const indexRange: <T extends RangeMappingFieldType>(term: T) => Array<bigint>
   = term =>
-    [ encodeOrderable(term).orderable ]
+    term ? [ encodeOrderable(term).orderable ] : []
 
 const indexMatch: (terms: Array<MatchMappingFieldType>) => Array<bigint> = terms => {
   return terms.map(t => encodeEquatable(t).equatable)
