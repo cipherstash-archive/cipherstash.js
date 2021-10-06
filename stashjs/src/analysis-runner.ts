@@ -21,7 +21,7 @@ export type WorkerMessage = {
 }
 
 export type AnalysisConfig = {
-  awsCredentials: AWSCredentials,
+  awsCredentials?: AWSCredentials,
   cmk: string,
   schema: CollectionSchema<any, any, any>,
 }
