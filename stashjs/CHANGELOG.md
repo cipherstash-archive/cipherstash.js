@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Export symbols from stashjs that were accidentally omitted
+
 ## [0.2.34]
 
 ### Fixed

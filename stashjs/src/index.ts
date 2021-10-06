@@ -1,7 +1,27 @@
-export { AuthStrategyName, AuthenticationConfig, StashConfig } from './stash-config'
+export {
+  AuthStrategyName,
+  AuthenticationConfig,
+  FederationConfig,
+  StashConfig
+} from './stash-config'
+
 export { Stash } from "./stash"
-export { Collection } from "./collection"
-export { CollectionSchema } from "./collection-schema"
+
+export {
+  Aggregate,
+  AggregateResult,
+  AggregationOptions,
+  Collection,
+  Ordering,
+  OrderingOptions,
+  QueryOptions,
+  QueryResult,
+} from "./collection"
+
+export {
+  CollectionSchema,
+  QueryBuilderCallback
+} from "./collection-schema"
 
 export {
   DynamicMatchMapping,
