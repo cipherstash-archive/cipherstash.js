@@ -21,11 +21,13 @@ if (!isMainThread) {
     const analyzedRecord = analyzer(record)
     const vectors = convertAnalyzedRecordToVectors(analyzedRecord, config.schema.meta)
     const cipherSuite = makeCipherSuite(cachingMaterialsManager)
-    // TODO: we will need to do token refreshing logic here
-    AWS.config.credentials = {
-      accessKeyId: config.awsCredentials.accessKeyId,
-      secretAccessKey: config.awsCredentials.secretAccessKey,
-      sessionToken: config.awsCredentials.sessionToken
+    if (config.awsCredentials) {
+      // TODO: we will need to do token refreshing logic here
+      AWS.config.credentials = {
+        accessKeyId: config.awsCredentials.accessKeyId,
+        secretAccessKey: config.awsCredentials.secretAccessKey,
+        sessionToken: config.awsCredentials.sessionToken
+      }
     }
     const encryptedSource = (await cipherSuite.encrypt(record)).result
     const result = {

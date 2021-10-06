@@ -12,7 +12,7 @@ export class ViaClientCredentials implements AuthStrategy {
     private idpHost: string,
     private clientCredentials: ClientCredentials,
     private dataServiceId: string,
-    private federationConfig: FederationConfig
+    private federationConfig?: FederationConfig
   ) {}
 
   public async initialise(): Promise<void> {
@@ -66,7 +66,7 @@ export class ViaClientCredentials implements AuthStrategy {
         this.state = {
           name: "authenticated",
           oauthInfo,
-          awsCredentials: await federateToken(oauthInfo.accessToken, this.federationConfig)
+          awsCredentials: this.federationConfig ? await federateToken(oauthInfo.accessToken, this.federationConfig) : undefined
         }
       }
     } catch (err) {
@@ -86,7 +86,7 @@ export class ViaClientCredentials implements AuthStrategy {
         this.clientCredentials.clientSecret
       )
       try {
-        const awsCredentials = await federateToken(oauthInfo.accessToken, this.federationConfig)
+        const awsCredentials = this.federationConfig ? await federateToken(oauthInfo.accessToken, this.federationConfig) : undefined
         this.state = {
           name: "authenticated",
           oauthInfo,

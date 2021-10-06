@@ -19,7 +19,7 @@ export class StreamWriter<
     private schema: CollectionSchema<R, M, MM>,
     private collectionId: Buffer,
     private authToken: string,
-    private awsCredentials: AWSCredentials
+    private awsCredentials?: AWSCredentials
   ) {
     this.analysisRunner = new AnalysisRunner({
       awsCredentials: this.awsCredentials,
