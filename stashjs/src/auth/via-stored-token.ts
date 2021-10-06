@@ -12,7 +12,7 @@ export class ViaStoredToken implements AuthStrategy {
   constructor(
     private clientId: string,
     private idpHost: string,
-    private federationConfig: FederationConfig
+    private federationConfig?: FederationConfig
   ) { }
 
   public async initialise(): Promise<void> {
@@ -26,7 +26,7 @@ export class ViaStoredToken implements AuthStrategy {
             refreshToken: config.refreshToken,
             expiry: config.expiry
           },
-          awsCredentials: await federateToken(config.accessToken, this.federationConfig)
+          awsCredentials: this.federationConfig ? await federateToken(config.accessToken, this.federationConfig) : undefined
         }
       } else {
         this.state = {
@@ -85,8 +85,8 @@ export class ViaStoredToken implements AuthStrategy {
     try {
       const oauthInfo = await stashOauth.performTokenRefresh(this.idpHost, refreshToken, this.clientId)
       await tokenStore.save(oauthInfo)
-      const awsCredentials = await federateToken(oauthInfo.accessToken, this.federationConfig)
-      this.state ={
+      const awsCredentials = this.federationConfig ? await federateToken(oauthInfo.accessToken, this.federationConfig) : undefined
+      this.state = {
         name: "authenticated",
         oauthInfo,
         awsCredentials

@@ -21,7 +21,7 @@ export type FederationConfig = {
 export type StashConfig = {
   readonly idpHost: string,
   readonly authenticationConfig: AuthenticationConfig,
-  readonly federationConfig: FederationConfig,
+  readonly federationConfig?: FederationConfig,
   readonly serviceFqdn: string,
   readonly cmk: string,
   readonly clusterId: string
@@ -37,11 +37,11 @@ export function loadConfigFromEnv(): StashConfig {
         clientId: getVar('CS_CLIENT_ID'),
         clientSecret: getVar('CS_SECRET'),
       },
-      federationConfig: {
+      federationConfig: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
         // TODO: Make this able to be overridden via an env var
         RoleArn: "arn:aws:iam::377140853070:role/DanSTSAssumeRoleTesting",
         region: 'ap-southeast-2'
-      },
+      } : undefined,
       serviceFqdn: getVar('CS_SERVICE_FQDN'),
       cmk: getVar('CS_DEV_CMK'),
       clusterId: getClusterId()
@@ -52,11 +52,11 @@ export function loadConfigFromEnv(): StashConfig {
         kind: "stored-access-token",
         clientId: getVar('CS_CLIENT_ID')
       },
-      federationConfig: {
+      federationConfig: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
         // TODO: Make this able to be overridden via an env var
         RoleArn: "arn:aws:iam::377140853070:role/DanSTSAssumeRoleTesting",
         region: 'ap-southeast-2'
-      },
+      } : undefined,
       serviceFqdn: getVar('CS_SERVICE_FQDN'),
       cmk: getVar('CS_DEV_CMK'),
       clusterId: getClusterId()

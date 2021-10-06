@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Export symbols from stashjs that were accidentally omitted
 
+### Added
+
+- New env var CS_AWS_FEDERATE (defaults to ON, when OFF AWS client ID & secret must be provided in env)
+
 ## [0.2.34]
 
 ### Fixed
