@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.34]
+
+### Fixed
+
+- Ignore undefined field values during analysis instead of throwing exception
+
+## [0.2.33]
+
 ### Added
 
 - Authentication now possible via stored token using stash-cli
