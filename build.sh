@@ -22,8 +22,8 @@ subproject_build() {
 }
 
 subproject_test() {
-  shellcheck "${0}"
   find "$(dirname "${0}")" -name '*.sh' -exec shellcheck {} +
+  find "$(dirname "${0}")" -name '*.sh' -exec shfmt -ci -i 2 -d {} +
   pnpm test --filter @cipherstash/*
 }
 
