@@ -72,5 +72,3 @@ case $subcommand in
     exit 1
     ;;
 esac
-
-
