@@ -12,10 +12,13 @@ set -u # exit when script tries to use undeclared variables
 set -x # trace what gets executed (useful for debugging)
 
 while true; do
-    read -r -p "Did you update the CHANGELOG? " yn
-    case $yn in
-        [Yy]* ) pnpm publish -r --access public; break;;
-        [Nn]* ) exit;;
-        * ) echo "Please answer yes or no.";;
-    esac
+  read -r -p "Did you update the CHANGELOG? " yn
+  case $yn in
+    [Yy]*)
+      pnpm publish -r --access public
+      break
+      ;;
+    [Nn]*) exit ;;
+    *) echo "Please answer yes or no." ;;
+  esac
 done
