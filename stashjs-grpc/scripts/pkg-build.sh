@@ -20,4 +20,3 @@ proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js \
 ./scripts/pack-api.sh
 pnpx tsc
 cp -RL grpc dist
-
