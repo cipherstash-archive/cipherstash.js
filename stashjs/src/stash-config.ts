@@ -11,17 +11,10 @@ export type IdentityProvider =
       clientSecret: string
     }
 
-export type KmsKeySource =
-  | {
-    kind: "FromConsoleAPI"
-    cmk: string
-    namingSalt: string
-  }
-  | {
-    kind: "Custom"
-    cmk: string
-    namingSalt: string
-  }
+export type KmsKeySource = {
+  cmk: string
+  namingKey: string
+}
 
 export type AwsCredentialsSource =
   | {
@@ -64,9 +57,8 @@ export function loadConfigFromEnv(): StashConfig {
     keyManagement: {
       kind: "AWS-KMS",
       key: {
-        kind: "Custom",
         cmk: getVar('CS_DEV_CMK'),
-        namingSalt: getVar('CS_NAMING_SALT')
+        namingKey: getVar('CS_NAMING_SALT')
       },
       awsCredentials: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
         kind: "Federated",

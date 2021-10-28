@@ -23,7 +23,7 @@ export class StreamWriter<
   ) {
     this.analysisRunner = new AnalysisRunner({
       awsCredentials: this.awsCredentials,
-      cmk: this.stash.sourceDataCMK,
+      cmk: this.stash.config.keyManagement.key.cmk,
       schema: this.schema
     })
    }
