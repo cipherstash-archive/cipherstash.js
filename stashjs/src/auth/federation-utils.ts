@@ -1,5 +1,4 @@
 import AWS from "aws-sdk"
-import { FederationConfig } from '../stash-config'
 import { AWSCredentials } from "./aws-credentials"
 import { STS } from "@aws-sdk/client-sts"
 
@@ -14,14 +13,13 @@ import { STS } from "@aws-sdk/client-sts"
   */
 export async function federateToken(
   accessToken: string,
-  config: FederationConfig
+  config: { roleArn: string, region: string }
 ): Promise<AWSCredentials> {
-  const { RoleArn, region } = config
 
   try {
-    const client = new STS({region: region})
+    const client = new STS({region: config.region})
     const { Credentials: credentials } = await client.assumeRoleWithWebIdentity({
-      RoleArn,
+      RoleArn: config.roleArn,
       WebIdentityToken: accessToken,
       // TODO: This should possibly be the user ID (sub from the access token)
       RoleSessionName: "stash-client"

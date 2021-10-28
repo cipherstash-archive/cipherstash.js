@@ -7,8 +7,10 @@ import stringifyObject from 'stringify-object'
  * Makes a collection ref (anonymised string)
  * from the given collection name.
  */
-export async function makeRef(collectionName: string, clusterId: string): Promise<Buffer> {
-  const { clusterKey } = await getSecret(`cs-cluster-secret-${clusterId}`)
+export async function makeRef(collectionName: string, serviceFqdn: string): Promise<Buffer> {
+  // In local dev CS_SERVICE_FQDN has a port suffix, so strip it.
+  const cleanedFqdn = serviceFqdn.replace(/:[0-9]+$/, '')
+  const { clusterKey } = await getSecret(`cs-cluster-secret-${cleanedFqdn}`)
   const clusterKeyBin = Buffer.from(clusterKey, "base64")
 
   const hmac = crypto.createHmac('sha256', clusterKeyBin)

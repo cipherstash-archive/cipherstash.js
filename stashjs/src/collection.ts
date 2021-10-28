@@ -53,7 +53,7 @@ export class Collection<
             reject(err)
           } else {
             if (res?.source) {
-              resolve(convertGetReplyToUserRecord(res, this.stash.cipherSuite))
+              resolve(convertGetReplyToUserRecord(res, this.stash.sourceDataCipherSuite))
             } else {
               reject("Unexpectedly received empty response from data-service")
             }
@@ -78,7 +78,7 @@ export class Collection<
             reject(err)
           } else {
             if (res?.documents) {
-              resolve(convertGetAllReplyToUserRecords(res, this.stash.cipherSuite))
+              resolve(convertGetAllReplyToUserRecords(res, this.stash.sourceDataCipherSuite))
             } else {
               reject("Unexpectedly received empty response from data-service")
             }
@@ -121,7 +121,7 @@ export class Collection<
             vectors,
             source: {
               id: idStringToBuffer(doc.id as string),
-              source: (await this.stash.cipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
+              source: (await this.stash.sourceDataCipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
             },
           }, grpcMetadata(authToken), (err, _res) => {
             if (err) {
@@ -209,7 +209,7 @@ export class Collection<
 
             resolve({
               took: (timerEnd - timerStart) / 1000,
-              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
+              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.sourceDataCipherSuite),
               aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
                 name: agg.name! as Aggregate,
                 value: BigInt(agg.value!.toString())
@@ -236,7 +236,7 @@ export class Collection<
 
             resolve({
               took: (timerEnd - timerStart) / 1000,
-              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.cipherSuite),
+              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.sourceDataCipherSuite),
               aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
                 name: agg.name! as Aggregate,
                 value: BigInt(agg.value!.toString())
@@ -312,4 +312,8 @@ export type QueryOptions<
   offset?: number,
   limit?: number
   skipResults?: boolean
+}
+
+export type CollectionMetadata = {
+  name: string
 }

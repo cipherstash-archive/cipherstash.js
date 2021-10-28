@@ -1,8 +1,5 @@
 export {
-  AuthStrategyName,
-  AuthenticationConfig,
-  FederationConfig,
-  StashConfig
+  StashConfig,
 } from './stash-config'
 
 export { Stash } from "./stash"
@@ -12,6 +9,7 @@ export {
   AggregateResult,
   AggregationOptions,
   Collection,
+  CollectionMetadata,
   Ordering,
   OrderingOptions,
   QueryOptions,
@@ -86,5 +84,7 @@ export {
 } from './auth/oauth-utils'
 
 export {
-  tokenStore
-} from './auth/token-store'
+  configStore,
+  defaults,
+  WorkspaceConfigAndAuthInfo,
+} from './auth/config-store'
