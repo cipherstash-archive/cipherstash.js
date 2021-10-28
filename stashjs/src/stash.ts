@@ -1,6 +1,6 @@
 import { V1 } from '@cipherstash/stashjs-grpc'
 
-import { CipherSuite, makeCipherSuite } from './crypto/cipher'
+import { CipherSuite, makeCipherSuite, MakeRefFn } from './crypto/cipher'
 import { CollectionSchema } from './collection-schema'
 import { AuthStrategy } from './auth/auth-strategy'
 import { ViaClientCredentials } from './auth/via-client-credentials'
@@ -8,12 +8,15 @@ import { ViaStoredToken } from './auth/via-stored-token'
 import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
 
 import { Collection } from './collection'
-import { idBufferToString, idStringToBuffer, makeRef, refBufferToString } from './utils'
+import { idBufferToString, idStringToBuffer, refBufferToString } from './utils'
 import { loadConfigFromEnv, StashConfig } from './stash-config'
 
 import { grpcMetadata } from './auth/grpc-metadata'
 import { CollectionMetadata, configStore } from '.'
 import { isWorkspaceConfigAndAuthInfo, WorkspaceConfigAndAuthInfo } from './auth/config-store'
+
+import { makeRefGenerator } from './crypto/cipher'
+import { KMS } from '@aws-sdk/client-kms'
 
 export type LoadConfigOptions = Readonly<{
   workspaceId?: string
@@ -32,11 +35,11 @@ export class Stash {
 
   private constructor(
     public readonly stub: V1.APIClient,
-    public readonly serviceFqdn: string,
     public readonly authStrategy: AuthStrategy,
-    public readonly sourceDataCMK: string,
+    public readonly config: StashConfig,
+    private readonly makeRef: MakeRefFn
   ) {
-    this.sourceDataCipherSuite = makeCipherSuite(sourceDataCMK)
+    this.sourceDataCipherSuite = makeCipherSuite(config.keyManagement.key.cmk)
   }
 
   public static async loadConfig(opts?: LoadConfigOptions): Promise<WorkspaceConfigAndAuthInfo> {
@@ -60,9 +63,12 @@ export class Stash {
         await authStrategy.initialise()
         return new Stash(
           V1.connect(config.workspaceConfig.serviceFqdn),
-          config.workspaceConfig.serviceFqdn,
           authStrategy,
-          config.workspaceConfig.keyManagement.key.cmk
+          config.workspaceConfig,
+          await makeRefGenerator(
+            new KMS({ region: config.workspaceConfig.keyManagement.awsCredentials.region }),
+            config.workspaceConfig.keyManagement.key.namingKey
+          )
         )
       } catch (err) {
         return Promise.reject(err)
@@ -73,9 +79,12 @@ export class Stash {
         await authStrategy.initialise()
         return new Stash(
           V1.connect(config.serviceFqdn),
-          config.serviceFqdn,
           authStrategy,
-          config.keyManagement.key.cmk
+          config,
+          await makeRefGenerator(
+            new KMS({ region: config.keyManagement.awsCredentials.region}),
+            config.keyManagement.key.namingKey
+          )
         )
       } catch (err) {
         return Promise.reject(err)
@@ -97,7 +106,7 @@ export class Stash {
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
         const request: V1.CreateRequestInput = {
-          ref: await makeRef(schema.name, this.serviceFqdn),
+          ref: this.makeRef(schema.name),
           metadata: await this.encryptCollectionMetadata({ name: schema.name }),
           indexes: await this.encryptMappings(schema)
         }
@@ -122,7 +131,7 @@ export class Stash {
   ): Promise<Collection<R, M, MM>> {
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
-        const ref = await makeRef(definition.name, this.serviceFqdn)
+        const ref = this.makeRef(definition.name)
         this.stub.collectionInfo({
           ref
         }, grpcMetadata(authToken), async (err: any, res: any) => {
@@ -141,7 +150,7 @@ export class Stash {
   ): Promise<void> {
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
-        const ref = await makeRef(collectionName, this.serviceFqdn)
+        const ref = this.makeRef(collectionName)
         this.stub.deleteCollection({
           ref
         }, grpcMetadata(authToken), async (err: any, _res: any) => {

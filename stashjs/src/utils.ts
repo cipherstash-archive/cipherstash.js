@@ -1,22 +1,5 @@
-import * as crypto from 'crypto'
-import { getSecret } from './secrets'
 import { v4 as uuidv4, parse as parseUUID, stringify as stringifyUUID } from 'uuid'
 import stringifyObject from 'stringify-object'
-
-/**
- * Makes a collection ref (anonymised string)
- * from the given collection name.
- */
-export async function makeRef(collectionName: string, serviceFqdn: string): Promise<Buffer> {
-  // In local dev CS_SERVICE_FQDN has a port suffix, so strip it.
-  const cleanedFqdn = serviceFqdn.replace(/:[0-9]+$/, '')
-  const { clusterKey } = await getSecret(`cs-cluster-secret-${cleanedFqdn}`)
-  const clusterKeyBin = Buffer.from(clusterKey, "base64")
-
-  const hmac = crypto.createHmac('sha256', clusterKeyBin)
-  hmac.update(collectionName)
-  return hmac.digest()
-}
 
 export function idStringToBuffer(id: string): Buffer {
   // Throws `TypeError` if id is not a valid UUID
