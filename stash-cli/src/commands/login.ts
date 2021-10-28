@@ -1,13 +1,7 @@
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import { tokenStore, stashOauth, describeError } from '@cipherstash/stashjs'
+import { configStore, stashOauth, describeError, WorkspaceConfigAndAuthInfo  } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
-
-// This is the client ID configured in Auth0. It is not a secret
-// and it is only used for initiating device code authentication.
-const STASH_CLI_CLIENT_ID = 'tz5daCHFQLJRshlk9xr2Tl1G2nVJP5nv'
-
-const IDP = 'cipherstash-dev.au.auth0.com'
 
 const command: GluegunCommand = {
   name: 'login',
@@ -15,19 +9,30 @@ const command: GluegunCommand = {
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
 
-    const audience = parameters.first
-    const workspace: string | undefined = parameters.second
+    const workspace: string | undefined = parameters.options.workspace || await configStore.getDefaultWorkspaceId()
 
-    if (!audience) {
-      print.error('Error: an audience must be provided')
+    if (!workspace) {
+      print.error('Error: no workspace was provided and a no default workspace is set')
+      const workspaceIds = await configStore.listWorkspaceIds()
+      if (workspaceIds.length > 0) {
+        print.info(`stash-cli knows about the following workspaces: ${workspaceIds.join(", ")}`)
+        print.info(`Either run 'stash config --default-workspace <workspace-id>' to set your default workspace, or`)
+        print.info(`run 'stash login --workspace <workspace-id>' to sign in to a specific workspace`)
+      } else {
+        print.info(`run 'stash init --workspace <workspace-id>' sign into a workspace for the first time`)
+      }
       process.exit(1)
     }
 
+    const config: WorkspaceConfigAndAuthInfo = workspace
+      ? await configStore.loadWorkspaceConfigAndAuthInfo(workspace)
+      : await configStore.loadDefaultWorkspaceConfigAndAuthInfo()
+
     try {
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
-        IDP,
-        STASH_CLI_CLIENT_ID,
-        audience,
+        config.workspaceConfig.identityProvider.host,
+        config.workspaceConfig.identityProvider.clientId,
+        config.workspaceConfig.serviceFqdn,
         workspace
       )
 
@@ -43,17 +48,17 @@ const command: GluegunCommand = {
       }
 
       const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
-        IDP,
-        STASH_CLI_CLIENT_ID,
+        config.workspaceConfig.identityProvider.host,
+        config.workspaceConfig.identityProvider.clientId,
         pollingInfo.deviceCode,
         pollingInfo.interval
       )
 
       print.info("Login Successful")
 
-      await tokenStore.save(authInfo)
+      await configStore.saveWorkspaceAuthInfo(workspace, authInfo)
 
-      print.info(`Auth-token saved to ${tokenStore.configDir()}`)
+      print.info(`Auth-token saved to ${configStore.configDir(workspace)}`)
     } catch (error) {
       print.error(`Could not login. Message from server: "${describeError(error)}"`)
     }

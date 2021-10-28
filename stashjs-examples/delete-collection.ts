@@ -2,11 +2,7 @@ import { Stash  } from "@cipherstash/stashjs"
 
 async function deleteCollection() {
   try {
-    const configFromEnv = Stash.loadConfigFromEnv()
-    const stash = await Stash.connect({
-      ...configFromEnv,
-      authenticationConfig: { kind: "stored-access-token", clientId: configFromEnv.authenticationConfig.clientId }
-    })
+    const stash = await Stash.connect(await Stash.loadConfig())
     await stash.deleteCollection("movies")
     console.log(`Collection "movies" deleted`)
   } catch (err) {
