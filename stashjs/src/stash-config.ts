@@ -58,7 +58,7 @@ export function loadConfigFromEnv(): StashConfig {
       kind: "AWS-KMS",
       key: {
         cmk: getVar('CS_DEV_CMK'),
-        namingKey: getVar('CS_NAMING_SALT')
+        namingKey: getVar('CS_NAMING_KEY')
       },
       awsCredentials: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
         kind: "Federated",
