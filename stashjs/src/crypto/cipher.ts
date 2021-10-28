@@ -20,7 +20,7 @@ type ThenArg<T> = T extends PromiseLike<infer U> ? U : never
 //
 // TODO: submit patch to export the EncryptOutput type (or figure out why it's
 // not exported).  Also publish the info on how to work around it (see below)
-type EncryptOutput = ThenArg<ReturnType<ReturnType<typeof buildClient>['encrypt']>>
+export type EncryptOutput = ThenArg<ReturnType<ReturnType<typeof buildClient>['encrypt']>>
 
 export const cacheCapacity = 1000
 

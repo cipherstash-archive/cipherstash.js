@@ -12,6 +12,12 @@ import { idBufferToString, idStringToBuffer, makeRef, refBufferToString } from '
 import { loadConfigFromEnv, StashConfig } from './stash-config'
 
 import { grpcMetadata } from './auth/grpc-metadata'
+import { CollectionMetadata, configStore } from '.'
+import { isWorkspaceConfigAndAuthInfo, WorkspaceConfigAndAuthInfo } from './auth/config-store'
+
+export type LoadConfigOptions = Readonly<{
+  workspaceId?: string
+}>
 
 /**
  * Represents an authenticated session to a CipherStash instance.
@@ -22,47 +28,58 @@ import { grpcMetadata } from './auth/grpc-metadata'
  * directory.
  */
 export class Stash {
-  readonly cipherSuite: CipherSuite
+  readonly sourceDataCipherSuite: CipherSuite
 
   private constructor(
     public readonly stub: V1.APIClient,
-    public readonly clusterId: string,
+    public readonly serviceFqdn: string,
     public readonly authStrategy: AuthStrategy,
-    public readonly cmk: string
+    public readonly sourceDataCMK: string,
   ) {
-    this.cipherSuite = makeCipherSuite(cmk)
-    this.clusterId = clusterId
-    this.cmk = cmk
+    this.sourceDataCipherSuite = makeCipherSuite(sourceDataCMK)
+  }
+
+  public static async loadConfig(opts?: LoadConfigOptions): Promise<WorkspaceConfigAndAuthInfo> {
+    const config = opts?.workspaceId
+      ? await configStore.loadWorkspaceConfigAndAuthInfo(opts.workspaceId)
+      : await configStore.loadDefaultWorkspaceConfigAndAuthInfo()
+
+    return config
   }
 
   public static loadConfigFromEnv(): StashConfig {
     return loadConfigFromEnv()
   }
 
-  public static async connect(config: StashConfig): Promise<Stash> {
-    try {
-      const authStrategy = Stash.makeAuthStrategy(config)
-      await authStrategy.initialise()
-      return new Stash(V1.connect(config.serviceFqdn), config.clusterId, authStrategy, config.cmk)
-    } catch (err) {
-      return Promise.reject(err)
-    }
-  }
-
-  private static makeAuthStrategy(config: StashConfig): AuthStrategy {
-    switch (config.authenticationConfig.kind) {
-      case "client-credentials": return new ViaClientCredentials(
-        config.idpHost,
-        config.authenticationConfig,
-        config.clusterId,
-        config.federationConfig
-      )
-
-      case "stored-access-token": return new ViaStoredToken(
-        config.authenticationConfig.clientId,
-        config.idpHost,
-        config.federationConfig,
-      )
+  public static async connect(config: WorkspaceConfigAndAuthInfo): Promise<Stash>
+  public static async connect(config: StashConfig): Promise<Stash>
+  public static async connect(config: StashConfig | WorkspaceConfigAndAuthInfo): Promise<Stash> {
+    if (isWorkspaceConfigAndAuthInfo(config)) {
+      try {
+        const authStrategy = new ViaStoredToken(config)
+        await authStrategy.initialise()
+        return new Stash(
+          V1.connect(config.workspaceConfig.serviceFqdn),
+          config.workspaceConfig.serviceFqdn,
+          authStrategy,
+          config.workspaceConfig.keyManagement.key.cmk
+        )
+      } catch (err) {
+        return Promise.reject(err)
+      }
+    } else {
+      try {
+        const authStrategy = new ViaClientCredentials(config)
+        await authStrategy.initialise()
+        return new Stash(
+          V1.connect(config.serviceFqdn),
+          config.serviceFqdn,
+          authStrategy,
+          config.keyManagement.key.cmk
+        )
+      } catch (err) {
+        return Promise.reject(err)
+      }
     }
   }
 
@@ -80,15 +97,16 @@ export class Stash {
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
         const request: V1.CreateRequestInput = {
-          ref: await makeRef(schema.name, this.clusterId),
+          ref: await makeRef(schema.name, this.serviceFqdn),
+          metadata: await this.encryptCollectionMetadata({ name: schema.name }),
           indexes: await this.encryptMappings(schema)
         }
 
-        this.stub.createCollection(request, grpcMetadata(authToken), async (err, res) => {
+        this.stub.createCollection(request, grpcMetadata(authToken), async (err: any, res: any) => {
           if (err) {
             reject(err)
           } else {
-            this.unpackCollection<R, M, MM>(schema.name, res!).then(resolve, reject)
+            this.unpackCollection<R, M, MM>(res!).then(resolve, reject)
           }
         })
       })
@@ -104,14 +122,14 @@ export class Stash {
   ): Promise<Collection<R, M, MM>> {
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
-        const ref = await makeRef(definition.name, this.clusterId)
+        const ref = await makeRef(definition.name, this.serviceFqdn)
         this.stub.collectionInfo({
           ref
-        }, grpcMetadata(authToken), async (err, res) => {
+        }, grpcMetadata(authToken), async (err: any, res: any) => {
           if (err) {
             reject(err)
           } else {
-            this.unpackCollection<R, M, MM>(definition.name, res!).then(resolve, reject)
+            this.unpackCollection<R, M, MM>(res!).then(resolve, reject)
           }
         })
       })
@@ -123,10 +141,10 @@ export class Stash {
   ): Promise<void> {
     return this.authStrategy.authenticatedRequest((authToken: string) =>
       new Promise(async (resolve, reject) => {
-        const ref = await makeRef(collectionName, this.clusterId)
+        const ref = await makeRef(collectionName, this.serviceFqdn)
         this.stub.deleteCollection({
           ref
-        }, grpcMetadata(authToken), async (err, _res) => {
+        }, grpcMetadata(authToken), async (err: any, _res: any) => {
           if (err) {
             reject(err)
           } else {
@@ -142,16 +160,15 @@ export class Stash {
     M extends Mappings<R>,
     MM extends MappingsMeta<M>
   >(
-    collectionName: string,
     infoReply: V1.InfoReplyOutput
   ): Promise<Collection<R, M, MM>> {
-    const { id, indexes: encryptedMappings } = infoReply
+    const { id, indexes: encryptedMappings, metadata } = infoReply
+    const collectionMeta = await this.decryptCollectionMetadata(metadata)
     const storedMappings = await this.decryptMappings(encryptedMappings!)
 
     // TODO verify the collection has the mappings that the user expects - they should be deep equal
-
     const mappings: M = Object.fromEntries(storedMappings.map(sm => [sm.meta.$indexName, sm.mapping]))
-    const meta: MM = Object.fromEntries(storedMappings.map(sm => {
+    const mappingsMeta: MM = Object.fromEntries(storedMappings.map(sm => {
       return [sm.meta.$indexName, {
         ...sm.meta,
         $prf: Buffer.from(sm.meta.$prf, 'hex'),
@@ -164,7 +181,7 @@ export class Stash {
         this,
         idBufferToString(id!),
         refBufferToString(infoReply.ref!),
-        new CollectionSchema(collectionName, mappings, meta)
+        new CollectionSchema(collectionMeta.name, mappings, mappingsMeta)
       )
     )
   }
@@ -174,7 +191,7 @@ export class Stash {
   ): Promise<Array<StoredMapping>> {
 
     const storedMappings = await Promise.all(encryptedMappings.map(async ({ settings, id: indexId }) => {
-      const { mapping, meta } = await this.cipherSuite.decrypt(settings!)
+      const { mapping, meta } = await this.sourceDataCipherSuite.decrypt(settings!)
       return {
         mapping,
         meta: {
@@ -207,7 +224,7 @@ export class Stash {
         }
       }
 
-      const { result } = await this.cipherSuite.encrypt(storedMapping)
+      const { result } = await this.sourceDataCipherSuite.encrypt(storedMapping)
       return {
         id: idStringToBuffer(storedMapping.meta.$indexId),
         settings: result
@@ -215,6 +232,15 @@ export class Stash {
     }))
 
     return encryptedIndexes
+  }
+
+  private async encryptCollectionMetadata(metadata: CollectionMetadata): Promise<Buffer> {
+    const { result } = await this.sourceDataCipherSuite.encrypt(metadata)
+    return result
+  }
+
+  private async decryptCollectionMetadata(buffer: Buffer): Promise<CollectionMetadata> {
+    return await this.sourceDataCipherSuite.decrypt(buffer)
   }
 }
 

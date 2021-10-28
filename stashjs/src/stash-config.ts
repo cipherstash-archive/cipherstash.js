@@ -1,67 +1,84 @@
-export type AuthStrategyName =
-    | "client-credentials"
-    | "stored-access-token"
+export type IdentityProvider =
+  | {
+      kind: "Auth0-DeviceCode"
+      host: string
+      clientId: string
+    }
+  | {
+      kind: "Auth0-Machine2Machine"
+      host: string
+      clientId: string
+      clientSecret: string
+    }
 
-export type AuthenticationConfig =
- | {
-    readonly kind: "client-credentials",
-    readonly clientSecret: string,
-    readonly clientId: string,
- }
- | {
-    readonly kind: "stored-access-token",
-    readonly clientId: string
- }
+export type KmsKeySource =
+  | {
+    kind: "FromConsoleAPI"
+    cmk: string
+    namingSalt: string
+  }
+  | {
+    kind: "Custom"
+    cmk: string
+    namingSalt: string
+  }
 
-export type FederationConfig = {
-  readonly RoleArn: string,
-  readonly region: string,
+export type AwsCredentialsSource =
+  | {
+    kind: "Federated"
+    roleArn: string
+    region: string
+  }
+  | {
+    kind: "Custom"
+    accessKeyId: string
+    secretAccessKey: string
+    region: string
+  }
+
+export type KeyManagement = {
+  kind: "AWS-KMS",
+  key: KmsKeySource
+  awsCredentials: AwsCredentialsSource
 }
 
 export type StashConfig = {
-  readonly idpHost: string,
-  readonly authenticationConfig: AuthenticationConfig,
-  readonly federationConfig?: FederationConfig,
-  readonly serviceFqdn: string,
-  readonly cmk: string,
-  readonly clusterId: string
+  serviceFqdn: string
+  console?: {
+    host: string
+    port?: number
+  }
+  identityProvider: IdentityProvider
+  keyManagement: KeyManagement
 }
 
 export function loadConfigFromEnv(): StashConfig {
-  const authStrategy: AuthStrategyName = getVar("CS_AUTH_STRATEGY", "client-credentials") as AuthStrategyName
-  switch (authStrategy) {
-    case "client-credentials": return {
-      idpHost: getVar('CS_IDP_HOST'),
-      authenticationConfig: {
-        kind: "client-credentials",
-        clientId: getVar('CS_CLIENT_ID'),
-        clientSecret: getVar('CS_SECRET'),
+  return {
+    serviceFqdn: getVar('CS_SERVICE_FQDN'),
+    identityProvider: {
+      kind: "Auth0-Machine2Machine",
+      host: getVar('CS_IDP_HOST'),
+      clientId: getVar('CS_CLIENT_ID'),
+      clientSecret: getVar('CS_SECRET')
+    },
+    keyManagement: {
+      kind: "AWS-KMS",
+      key: {
+        kind: "Custom",
+        cmk: getVar('CS_DEV_CMK'),
+        namingSalt: getVar('CS_NAMING_SALT')
       },
-      federationConfig: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
-        // TODO: Make this able to be overridden via an env var
-        RoleArn: "arn:aws:iam::377140853070:role/DanSTSAssumeRoleTesting",
+      awsCredentials: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
+        kind: "Federated",
+        roleArn: `arn:aws:iam::${getVar("CS_FEDERATION_AWS_ACCOUNT_ID", "616923951253")}:role/cs-federated-cmk-access`,
         region: 'ap-southeast-2'
-      } : undefined,
-      serviceFqdn: getVar('CS_SERVICE_FQDN'),
-      cmk: getVar('CS_DEV_CMK'),
-      clusterId: getClusterId()
-    }
-    case "stored-access-token": return {
-      idpHost: getVar('CS_IDP_HOST'),
-      authenticationConfig: {
-        kind: "stored-access-token",
-        clientId: getVar('CS_CLIENT_ID')
-      },
-      federationConfig: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
-        // TODO: Make this able to be overridden via an env var
-        RoleArn: "arn:aws:iam::377140853070:role/DanSTSAssumeRoleTesting",
-        region: 'ap-southeast-2'
-      } : undefined,
-      serviceFqdn: getVar('CS_SERVICE_FQDN'),
-      cmk: getVar('CS_DEV_CMK'),
-      clusterId: getClusterId()
-    }
-    default: throw new Error(`Unknown authentication strategy "${authStrategy}"`)
+      } : {
+        kind: "Custom",
+        accessKeyId: getVar("AWS_ACCESS_KEY_ID"),
+        secretAccessKey: getVar("AWS_SECRET_ACCESS_KEY"),
+        region: getVar("AWS_DEFAULT_REGION")
+      }
+    },
   }
 }
 
@@ -73,23 +90,7 @@ function getVar(envVar: string, fallback?: string): string {
     if (fallback) {
       return fallback
     } else {
-      throw Error(`"missing configuration: ${envVar}`)
+      throw new Error(`"missing configuration: ${envVar}`)
     }
   }
-}
-
-function getClusterId(): string {
-  let fqdn = getVar('CS_SERVICE_FQDN')
-
-  // Remove port
-  if (fqdn.indexOf(':') > -1) {
-    fqdn = fqdn.split(':')[0]!
-  }
-
-  // Grab left-most subdomain
-  if (fqdn.indexOf('.') > -1) {
-    fqdn = fqdn.split('.')[0]!
-  }
-
-  return fqdn
 }

@@ -2,39 +2,41 @@ import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy";
 import { AuthenticationState } from './authentication-state'
 import { federateToken } from "./federation-utils"
 import { stashOauth } from './oauth-utils'
-import { FederationConfig } from "../stash-config"
 import { describeError } from "../utils"
-import { tokenStore } from './token-store'
+import { configStore, WorkspaceConfigAndAuthInfo } from './config-store'
+
 
 export class ViaStoredToken implements AuthStrategy {
   private state: AuthenticationState = { name: "unauthenticated"}
 
-  constructor(
-    private clientId: string,
-    private idpHost: string,
-    private federationConfig?: FederationConfig
-  ) { }
+  constructor(private config: WorkspaceConfigAndAuthInfo) {}
 
   public async initialise(): Promise<void> {
+    const config = this.config.workspaceConfig
     try {
-      const config = await tokenStore.load()
-      if (!this.isExpired(config.expiry)) {
+      if (!this.isExpired(this.config.authInfo.expiry)) {
         this.state = {
           name: "authenticated",
           oauthInfo: {
-            accessToken: config.accessToken,
-            refreshToken: config.refreshToken,
-            expiry: config.expiry
+            accessToken: this.config.authInfo.accessToken,
+            refreshToken: this.config.authInfo.refreshToken,
+            expiry: this.config.authInfo.expiry
           },
-          awsCredentials: this.federationConfig ? await federateToken(config.accessToken, this.federationConfig) : undefined
+          awsCredentials: config.keyManagement.awsCredentials.kind === "Federated"
+            ? await federateToken(this.config.authInfo.accessToken, config.keyManagement.awsCredentials)
+            : {
+              accessKeyId: config.keyManagement.awsCredentials.accessKeyId,
+              secretAccessKey: config.keyManagement.awsCredentials.accessKeyId
+            }
+
         }
       } else {
         this.state = {
           name: "authentication-expired",
           oauthInfo: {
-            accessToken: config.accessToken,
-            refreshToken: config.refreshToken,
-            expiry: config.expiry
+            accessToken: this.config.authInfo.accessToken,
+            refreshToken: this.config.authInfo.refreshToken,
+            expiry: this.config.authInfo.expiry
           },
         }
       }
@@ -83,9 +85,18 @@ export class ViaStoredToken implements AuthStrategy {
 
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
-      const oauthInfo = await stashOauth.performTokenRefresh(this.idpHost, refreshToken, this.clientId)
-      await tokenStore.save(oauthInfo)
-      const awsCredentials = this.federationConfig ? await federateToken(oauthInfo.accessToken, this.federationConfig) : undefined
+      const config = this.config.workspaceConfig
+      const idpHost = config.identityProvider.host
+      const clientId = config.identityProvider.clientId
+      const oauthInfo = await stashOauth.performTokenRefresh(idpHost, refreshToken, clientId)
+      await configStore.saveWorkspaceAuthInfo(this.config.workspaceId, oauthInfo)
+      const awsCredentials = config.keyManagement.awsCredentials.kind === "Federated"
+        ? await federateToken(this.config.authInfo.accessToken, config.keyManagement.awsCredentials)
+        : {
+          accessKeyId: config.keyManagement.awsCredentials.accessKeyId,
+          secretAccessKey: config.keyManagement.awsCredentials.accessKeyId
+        }
+
       this.state = {
         name: "authenticated",
         oauthInfo,

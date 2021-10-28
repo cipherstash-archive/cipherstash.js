@@ -1,6 +1,6 @@
 import https from 'https'
-import querystring from 'querystring'
 import axios, { AxiosInstance } from 'axios'
+import querystring from 'querystring'
 import jws from 'jws'
 import { describeError } from '../utils'
 
@@ -84,10 +84,10 @@ class StashOauth {
     idpHost: string,
     clientId: string,
     audience: string,
-    workspace: string | undefined
+    workspace?: string // When signing into the console for the first time we will not even know the workspace
   ): Promise<DeviceCodePollingInfo> {
     const scope = !!workspace ?
-      `offline_access ${SCOPES} ${workspace}` :
+      `offline_access ${SCOPES} ws:${workspace}` :
       `offline_access ${SCOPES}`
 
     const response: any = await makeOauthClient(idpHost).post("/oauth/device/code", {

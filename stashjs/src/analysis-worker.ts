@@ -26,7 +26,7 @@ if (!isMainThread) {
       AWS.config.credentials = {
         accessKeyId: config.awsCredentials.accessKeyId,
         secretAccessKey: config.awsCredentials.secretAccessKey,
-        sessionToken: config.awsCredentials.sessionToken
+        // sessionToken: config.awsCredentials.sessionToken
       }
     }
     const encryptedSource = (await cipherSuite.encrypt(record)).result
