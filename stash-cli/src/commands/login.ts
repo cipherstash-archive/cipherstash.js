@@ -1,6 +1,6 @@
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import { configStore, stashOauth, describeError, WorkspaceConfigAndAuthInfo  } from '@cipherstash/stashjs'
+import { configStore, stashOauth, describeError } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
@@ -9,11 +9,11 @@ const command: GluegunCommand = {
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
 
-    const workspace: string | undefined = parameters.options.workspace || await configStore.getDefaultWorkspaceId()
+    const workspace: string | undefined = parameters.options.workspace || await configStore.loadDefaultProfileName()
 
     if (!workspace) {
       print.error('Error: no workspace was provided and a no default workspace is set')
-      const workspaceIds = await configStore.listWorkspaceIds()
+      const workspaceIds = await configStore.loadProfileNames()
       if (workspaceIds.length > 0) {
         print.info(`stash-cli knows about the following workspaces: ${workspaceIds.join(", ")}`)
         print.info(`Either run 'stash config --default-workspace <workspace-id>' to set your default workspace, or`)
@@ -24,15 +24,15 @@ const command: GluegunCommand = {
       process.exit(1)
     }
 
-    const config: WorkspaceConfigAndAuthInfo = workspace
-      ? await configStore.loadWorkspaceConfigAndAuthInfo(workspace)
-      : await configStore.loadDefaultWorkspaceConfigAndAuthInfo()
+    const profile = workspace
+      ? await configStore.loadProfile(workspace)
+      : await configStore.loadDefaultProfile()
 
     try {
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
-        config.workspaceConfig.identityProvider.host,
-        config.workspaceConfig.identityProvider.clientId,
-        config.workspaceConfig.serviceFqdn,
+        profile.identityProvider.host,
+        profile.identityProvider.clientId,
+        profile.service.host,
         workspace
       )
 
@@ -48,15 +48,15 @@ const command: GluegunCommand = {
       }
 
       const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
-        config.workspaceConfig.identityProvider.host,
-        config.workspaceConfig.identityProvider.clientId,
+        profile.identityProvider.host,
+        profile.identityProvider.clientId,
         pollingInfo.deviceCode,
         pollingInfo.interval
       )
 
       print.info("Login Successful")
 
-      await configStore.saveWorkspaceAuthInfo(workspace, authInfo)
+      await configStore.saveProfileAuthInfo(workspace, authInfo)
 
       print.info(`Auth-token saved to ${configStore.configDir(workspace)}`)
     } catch (error) {
