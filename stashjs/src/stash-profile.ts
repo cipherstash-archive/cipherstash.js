@@ -35,19 +35,22 @@ export type KeyManagement = {
   awsCredentials: AwsCredentialsSource
 }
 
-export type StashConfig = {
-  serviceFqdn: string
-  console?: {
+export type StashProfile = {
+  service: {
     host: string
     port?: number
-  }
+    workspace: string
+  },
   identityProvider: IdentityProvider
   keyManagement: KeyManagement
 }
 
-export function loadConfigFromEnv(): StashConfig {
+export function loadConfigFromEnv(): StashProfile {
   return {
-    serviceFqdn: getVar('CS_SERVICE_FQDN'),
+    service: {
+      workspace: getVar('CS_WORKSPACE'),
+      host: getVar('CS_SERVICE_FQDN')
+    },
     identityProvider: {
       kind: "Auth0-Machine2Machine",
       host: getVar('CS_IDP_HOST'),
