@@ -3,23 +3,22 @@ import { V1 } from '@cipherstash/stashjs-grpc'
 import { CipherSuite, makeCipherSuite, MakeRefFn } from './crypto/cipher'
 import { CollectionSchema } from './collection-schema'
 import { AuthStrategy } from './auth/auth-strategy'
-import { ViaClientCredentials } from './auth/via-client-credentials'
-import { ViaStoredToken } from './auth/via-stored-token'
+import { Auth0Machine2Machine } from './auth/auth0-machine-2-machine'
+import { Auth0DeviceToken } from './auth/auth0-device-token'
 import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
 
 import { Collection } from './collection'
 import { idBufferToString, idStringToBuffer, refBufferToString } from './utils'
-import { loadConfigFromEnv, StashConfig } from './stash-config'
+import { loadConfigFromEnv, StashProfile } from './stash-profile'
 
 import { grpcMetadata } from './auth/grpc-metadata'
 import { CollectionMetadata, configStore } from '.'
-import { isWorkspaceConfigAndAuthInfo, WorkspaceConfigAndAuthInfo } from './auth/config-store'
 
 import { makeRefGenerator } from './crypto/cipher'
 import { KMS } from '@aws-sdk/client-kms'
 
 export type LoadConfigOptions = Readonly<{
-  workspaceId?: string
+  profileName?: string
 }>
 
 /**
@@ -36,60 +35,36 @@ export class Stash {
   private constructor(
     public readonly stub: V1.APIClient,
     public readonly authStrategy: AuthStrategy,
-    public readonly config: StashConfig,
+    public readonly config: StashProfile,
     private readonly makeRef: MakeRefFn
   ) {
     this.sourceDataCipherSuite = makeCipherSuite(config.keyManagement.key.cmk)
   }
 
-  public static async loadConfig(opts?: LoadConfigOptions): Promise<WorkspaceConfigAndAuthInfo> {
-    const config = opts?.workspaceId
-      ? await configStore.loadWorkspaceConfigAndAuthInfo(opts.workspaceId)
-      : await configStore.loadDefaultWorkspaceConfigAndAuthInfo()
+  public static async loadConfig(opts?: LoadConfigOptions): Promise<StashProfile> {
+    const profile = opts?.profileName
+      ? await configStore.loadProfile(opts.profileName)
+      : await configStore.loadDefaultProfile()
 
-    return config
+    return profile
   }
 
-  public static loadConfigFromEnv(): StashConfig {
+  public static loadConfigFromEnv(): StashProfile {
     return loadConfigFromEnv()
   }
 
-  public static async connect(config: WorkspaceConfigAndAuthInfo): Promise<Stash>
-  public static async connect(config: StashConfig): Promise<Stash>
-  public static async connect(config: StashConfig | WorkspaceConfigAndAuthInfo): Promise<Stash> {
-    if (isWorkspaceConfigAndAuthInfo(config)) {
-      try {
-        const authStrategy = new ViaStoredToken(config)
-        await authStrategy.initialise()
-        return new Stash(
-          V1.connect(config.workspaceConfig.serviceFqdn),
-          authStrategy,
-          config.workspaceConfig,
-          await makeRefGenerator(
-            new KMS({ region: config.workspaceConfig.keyManagement.awsCredentials.region }),
-            config.workspaceConfig.keyManagement.key.namingKey
-          )
-        )
-      } catch (err) {
-        return Promise.reject(err)
-      }
-    } else {
-      try {
-        const authStrategy = new ViaClientCredentials(config)
-        await authStrategy.initialise()
-        return new Stash(
-          V1.connect(config.serviceFqdn),
-          authStrategy,
-          config,
-          await makeRefGenerator(
-            new KMS({ region: config.keyManagement.awsCredentials.region}),
-            config.keyManagement.key.namingKey
-          )
-        )
-      } catch (err) {
-        return Promise.reject(err)
-      }
-    }
+  public static async connect(profile: StashProfile): Promise<Stash> {
+    const authStrategy = await Stash.makeAuthStrategy(profile)
+    await authStrategy.initialise()
+    return new Stash(
+      V1.connect(profile.service.host),
+      authStrategy,
+      profile,
+      await makeRefGenerator(
+        new KMS({ region: profile.keyManagement.awsCredentials.region }),
+        profile.keyManagement.key.namingKey
+      )
+    )
   }
 
   public close(): void {
@@ -250,6 +225,13 @@ export class Stash {
 
   private async decryptCollectionMetadata(buffer: Buffer): Promise<CollectionMetadata> {
     return await this.sourceDataCipherSuite.decrypt(buffer)
+  }
+
+  private static async makeAuthStrategy(profile: StashProfile): Promise<AuthStrategy> {
+    switch (profile.identityProvider.kind) {
+      case "Auth0-DeviceCode": return new Auth0DeviceToken(profile, await configStore.loadProfileAuthInfo(profile.service.workspace))
+      case "Auth0-Machine2Machine": return new Auth0Machine2Machine(profile)
+    }
   }
 }
 

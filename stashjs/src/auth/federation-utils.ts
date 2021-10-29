@@ -1,5 +1,5 @@
 import AWS from "aws-sdk"
-import { AWSCredentials } from "./aws-credentials"
+import { FederatedAwsCredentials } from "./aws-credentials"
 import { STS } from "@aws-sdk/client-sts"
 
 /*
@@ -14,7 +14,7 @@ import { STS } from "@aws-sdk/client-sts"
 export async function federateToken(
   accessToken: string,
   config: { roleArn: string, region: string }
-): Promise<AWSCredentials> {
+): Promise<FederatedAwsCredentials> {
 
   try {
     const client = new STS({region: config.region})
@@ -31,11 +31,15 @@ export async function federateToken(
         SecretAccessKey: secretAccessKey,
         SessionToken: sessionToken
       } = credentials
-      // TODO: Track expiry - federated STS tokens should be re-fetched before they expire
 
       const AWScreds = new AWS.Credentials(accessKeyId!, secretAccessKey!, sessionToken!)
       AWS.config.credentials = AWScreds
-      return AWScreds
+      return {
+        kind: "Federated",
+        accessKeyId: accessKeyId!,
+        secretAccessKey: secretAccessKey!,
+        sessionToken: sessionToken!
+      }
     } else {
       return Promise.reject(new Error("STS Token Exchange failed"))
     }
