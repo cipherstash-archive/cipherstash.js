@@ -2,7 +2,7 @@ import * as https from 'https'
 import axios, { AxiosInstance } from 'axios'
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import { configStore, defaults, stashOauth, describeError, StashConfig } from '@cipherstash/stashjs'
+import { configStore, defaults, stashOauth, describeError, StashProfile } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
@@ -11,7 +11,8 @@ const command: GluegunCommand = {
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
 
-    const serviceFqdn: string = parameters.options.serviceFqdn || defaults.serviceFqdn
+    const serviceHost: string = parameters.options.serviceHost || defaults.service.host
+    const servicePort: number = parameters.options.servicePort || 443
 
     const identityProviderHost: string = parameters.options.identityProviderHost || defaults.identityProvider.host
     const identityProviderClientId: string = parameters.options.identityProviderClientId || defaults.identityProvider.clientId
@@ -19,8 +20,8 @@ const command: GluegunCommand = {
     const keyManagementAwsCredentialsRoleArn: string = parameters.options.keyManagementAwsCredentialsRoleArn || defaults.keyManagement.awsCredentials.roleArn
     const keyManagementAwsCredentialsRegion: string = parameters.options.keyManagementAwsCredentialsRegion || defaults.keyManagement.awsCredentials.region
 
-    const consoleApiHost: string = parameters.options.consoleApiHost || defaults.console.host
-    const consoleApiPort: number = parameters.options.consoleApiPort || defaults.console.port
+    const consoleApiHost: string = parameters.options.consoleApiHost || "console.cipherstash.com"
+    const consoleApiPort: number = parameters.options.consoleApiPort || 443
 
     const workspace: string | undefined = parameters.options.workspace
 
@@ -33,7 +34,7 @@ const command: GluegunCommand = {
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
         identityProviderHost,
         identityProviderClientId,
-        serviceFqdn,
+        serviceHost,
         workspace
       )
 
@@ -56,7 +57,7 @@ const command: GluegunCommand = {
       )
 
       await configStore.ensureConfigDirExists()
-      await configStore.saveWorkspaceAuthInfo(workspace, authInfo)
+      await configStore.saveProfileAuthInfo(workspace, authInfo)
       print.info("Login Successful")
 
       const response = await makeHttpsClient(
@@ -68,11 +69,11 @@ const command: GluegunCommand = {
         }
       })
 
-      const workspaceConfig: StashConfig = {
-        serviceFqdn,
-        console: {
-          host: consoleApiHost,
-          port: consoleApiPort,
+      const workspaceConfig: StashProfile = {
+        service: {
+          workspace,
+          host: serviceHost,
+          port: servicePort
         },
         identityProvider: {
           kind: "Auth0-DeviceCode",
@@ -93,7 +94,7 @@ const command: GluegunCommand = {
         }
       }
 
-      await configStore.saveWorkspaceConfig(workspace, workspaceConfig)
+      await configStore.saveProfile(workspace, workspaceConfig)
 
       print.info(`Workspace configuration and authentication details have been saved in dir ${configStore.configDir(workspace)}`)
     } catch (error) {
