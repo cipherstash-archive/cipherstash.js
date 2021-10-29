@@ -4,7 +4,7 @@ import { CollectionSchema } from "."
 import { AnalysisRunner, AnalysisResult } from "./analysis-runner"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { Stash } from "./stash"
-import { AWSCredentials } from "./auth/aws-credentials"
+import { AwsCredentials } from "./auth/aws-credentials"
 
 export class StreamWriter<
   R extends StashRecord,
@@ -19,7 +19,7 @@ export class StreamWriter<
     private schema: CollectionSchema<R, M, MM>,
     private collectionId: Buffer,
     private authToken: string,
-    private awsCredentials?: AWSCredentials
+    private awsCredentials: AwsCredentials
   ) {
     this.analysisRunner = new AnalysisRunner({
       awsCredentials: this.awsCredentials,

@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import { StashConfig } from '../stash-config'
+import { StashProfile } from '../stash-profile'
 import { describeError } from '../utils'
 import { OauthAuthenticationInfo } from './oauth-utils'
 import * as lockfile from 'lockfile'
@@ -9,21 +9,8 @@ export type GlobalConfig = {
   defaultWorkspace?: string
 }
 
-export type WorkspaceConfigAndAuthInfo = {
-  workspaceId: string
-  workspaceConfig: StashConfig
-  authInfo: OauthAuthenticationInfo
-}
-
-export function isWorkspaceConfigAndAuthInfo(obj: any): obj is WorkspaceConfigAndAuthInfo {
-  return obj.workspaceConfig && obj.authInfo
-}
-
-export type DefaultWorkspaceConfig = Omit<StashConfig, 'keyManagement'> & {
-  console: {
-    host: string
-    port: number
-  },
+export type DefaultWorkspaceConfig = Omit<StashProfile, 'keyManagement' | 'service'> & {
+  service: { host: string }
   identityProvider: { kind: "Auth0-DeviceCode" }
   keyManagement: {
     kind: "AWS-KMS"
@@ -33,10 +20,8 @@ export type DefaultWorkspaceConfig = Omit<StashConfig, 'keyManagement'> & {
 }
 
 export const defaults: DefaultWorkspaceConfig = {
-  serviceFqdn: "ap-southeast-2.aws.stashdata.net",
-  console: {
-    host: "console.cipherstash.com",
-    port: 443,
+  service: {
+    host: "ap-southeast-2.aws.stashdata.net",
   },
   identityProvider: {
     kind: 'Auth0-DeviceCode',
@@ -60,8 +45,8 @@ export const defaults: DefaultWorkspaceConfig = {
  * Service interface for reading and editing the CipherStash configuration
  * directory ($HOME/.cipherstash).
  *
- * - Supports storing configuration for multiple workspaces.
- * - Supports the notion of a default workspace.
+ * - Supports storing configuration for multiple profiles.
+ * - Supports the notion of a default profile.
  * - Sets default configuration for the Free Tier.
  */
 export interface ConfigStore {
@@ -72,56 +57,52 @@ export interface ConfigStore {
   readonly ensureConfigDirExists: () => Promise<void>
 
   /**
-   * Lists the IDs of configured workspaces.
+   * Lists the IDs of configured profiles.
    */
-  readonly listWorkspaceIds: () => Promise<Array<string>>
+  readonly loadProfileNames: () => Promise<Array<string>>
 
   /**
-   * Gets the ID of the configured default workspace.
-   * Resolves with `undefined` if there is no configured default workspace.
+   * Gets the ID of the configured default profile.
+   * Resolves with `undefined` if there is no configured default profile.
    */
-  readonly getDefaultWorkspaceId: () => Promise<string | undefined>
+  readonly loadDefaultProfileName: () => Promise<string>
 
   /**
-   * Sets the ID of the default workspace.
-   * Rejects if the supplied `workspaceId` has no configuration.
+   * Gets the ID of the configured default profile.
+   * Resolves with `undefined` if there is no configured default profile.
    */
-  readonly setDefaultWorkspaceId: (workspaceId: string) => Promise<void>
+  readonly loadDefaultProfile: () => Promise<StashProfile>
 
   /**
-   * Loads both the default workspace config and its authentication info.
+   * Sets the ID of the default profile.
+   * Rejects if the supplied `profileName` has no configuration.
    */
-  readonly loadDefaultWorkspaceConfigAndAuthInfo: () => Promise<WorkspaceConfigAndAuthInfo>
+  readonly saveDefaultProfile: (profileName: string) => Promise<void>
 
   /**
-   * Loads both the workspace config and its authentication info.
+   * Saves the profile config.
    */
-  readonly loadWorkspaceConfigAndAuthInfo: (workspaceId: string) => Promise<WorkspaceConfigAndAuthInfo>
+  readonly saveProfile: (profileName: string, config: StashProfile) => Promise<void>
 
   /**
-   * Saves the workspace config.
+   * Loads the profile config.
    */
-  readonly saveWorkspaceConfig: (workspaceId: string, config: StashConfig) => Promise<void>
+  readonly loadProfile: (profileName: string) => Promise<StashProfile>
 
   /**
-   * Loads the workspace config.
+   * Loads the authentication info for the profile.
    */
-  readonly loadWorkspaceConfig: (workspaceId: string) => Promise<StashConfig>
+  readonly loadProfileAuthInfo: (profileName: string) => Promise<OauthAuthenticationInfo>
 
   /**
-   * Loads the authentication info for the workspace.
+   * Saves the authentication info for the profile.
    */
-  readonly loadWorkspaceAuthInfo: (workspaceId: string) => Promise<OauthAuthenticationInfo>
+  readonly saveProfileAuthInfo: (profileName: string, authInfo: OauthAuthenticationInfo) => Promise<void>
 
   /**
-   * Saves the authentication info for the workspace.
+   * Returns the configuration directory for a given profile.
    */
-  readonly saveWorkspaceAuthInfo: (workspaceId: string, authInfo: OauthAuthenticationInfo) => Promise<void>
-
-  /**
-   * Returns the configuration directory for a given workspace.
-   */
-  configDir(workspaceId: string): string
+  configDir(profileName: string): string
 }
 
 const dir = `${process.env['HOME']}/.cipherstash`
@@ -132,129 +113,118 @@ class Store implements ConfigStore {
     return fs.promises.mkdir(dir, { recursive: true }).then(() => Promise.resolve(void 0))
   }
 
-  public async listWorkspaceIds() {
+  public async loadProfileNames() {
     try {
       const entries = await fs.promises.readdir(dir)
-      return entries
-        .filter(e => fs.lstatSync(e).isDirectory() && e.match(/^ws-.*$/))
-        .map(w => w.replace(/^ws\-/, ''))
+      return entries.filter(e => fs.lstatSync(e).isDirectory())
     } catch (error) {
       return []
     }
   }
 
-  public async getDefaultWorkspaceId() {
+  public async loadDefaultProfileName() {
     try {
       if (fs.existsSync(this.configFilePath())) {
         const fileContentBuffer = await fs.promises.readFile(this.configFilePath())
         const content: any = JSON.parse(fileContentBuffer.toString('utf-8'))
-        const defaultWorkspace: string | undefined = content['defaultWorkspace']
-        if (defaultWorkspace) {
-          if (fs.existsSync([dir, `ws-${defaultWorkspace}`].join('/'))) {
-            return defaultWorkspace
+        const defaultProfile: string | undefined = content['defaultProfile']
+        if (defaultProfile) {
+          if (fs.existsSync([dir, defaultProfile].join('/'))) {
+            return defaultProfile
           } else {
-            return Promise.reject(`The default workspace ${defaultWorkspace} configured in ${this.configFilePath()} does not exist in ${dir}`)
+            return Promise.reject(`The default profile ${defaultProfile} configured in ${this.configFilePath()} does not exist in ${dir}`)
           }
         }
       }
-      return undefined
+      return Promise.reject("No default profile has been configured")
     } catch (error) {
       return Promise.reject(error)
     }
   }
 
-  public async setDefaultWorkspaceId(workspaceId: string): Promise<void> {
+  public async saveDefaultProfile(profileName: string): Promise<void> {
     try {
-      const workspaces = await this.listWorkspaceIds()
-      if (workspaces.includes(workspaceId)) {
+      const profiles = await this.loadProfileNames()
+      if (profiles.includes(profileName)) {
         // NOTE: if configuration becomes any more elaborate than a single field then we should read, then merge.
-        await fs.promises.writeFile(this.configFilePath(), stringify({ defaultWorkspace: workspaceId }))
+        await fs.promises.writeFile(this.configFilePath(), stringify({ defaultWorkspace: profileName }))
       } else {
-        return Promise.reject(`${workspaceId} is an unknown workspace. Maybe try 'stash login ${workspaceId}' first?`)
+        return Promise.reject(`${profileName} is an unknown profile. Maybe try 'stash login ${profileName}' first?`)
       }
     } catch (error) {
       return Promise.reject(error)
     }
   }
 
-  public async loadWorkspaceConfigAndAuthInfo(workspaceId: string): Promise<WorkspaceConfigAndAuthInfo> {
+  public async loadDefaultProfile(): Promise<StashProfile> {
     try {
-      return {
-        workspaceId,
-        workspaceConfig: await this.loadWorkspaceConfig(workspaceId),
-        authInfo: await this.loadWorkspaceAuthInfo(workspaceId)
+      const defaultProfileName = await this.loadDefaultProfileName()
+      if (!defaultProfileName) {
+        return Promise.reject("No default profile has been configured")
       }
+      return this.loadProfile(defaultProfileName)
     } catch (error) {
       return Promise.reject(error)
     }
   }
 
-  public async loadDefaultWorkspaceConfigAndAuthInfo(): Promise<WorkspaceConfigAndAuthInfo> {
+  public async loadProfileAuthInfo(profileName: string): Promise<OauthAuthenticationInfo> {
     try {
-      const defaultWorkspace = await this.getDefaultWorkspaceId()
-      if (defaultWorkspace) {
-        return this.loadWorkspaceConfigAndAuthInfo(defaultWorkspace)
-      } else {
-        return Promise.reject("No default workspace has been configured")
-      }
-    } catch (error) {
-      return Promise.reject(error)
-    }
-  }
-
-  public async loadWorkspaceAuthInfo(workspaceId: string): Promise<OauthAuthenticationInfo> {
-    try {
-      const fileContentBuffer = await fs.promises.readFile(this.authTokenFilePath(workspaceId))
+      const fileContentBuffer = await fs.promises.readFile(this.authTokenFilePath(profileName))
       return JSON.parse(fileContentBuffer.toString('utf-8'))
     } catch (error) {
       return Promise.reject(`Failed to load config file: ${describeError(error)}`)
     }
   }
 
-  public async saveWorkspaceAuthInfo(workspaceId: string, authInfo: OauthAuthenticationInfo): Promise<void> {
+  public async saveProfileAuthInfo(profileName: string, authInfo: OauthAuthenticationInfo): Promise<void> {
     try {
-      await fs.promises.mkdir(this.configDir(workspaceId), { recursive: true })
-      await fs.promises.writeFile(this.authTokenFilePath(workspaceId), stringify(authInfo))
+      await fs.promises.mkdir(this.configDir(profileName), { recursive: true })
+      await fs.promises.writeFile(this.authTokenFilePath(profileName), stringify(authInfo))
       return Promise.resolve(void 0)
     } catch (error) {
       return Promise.reject(`Failed to save config file: ${describeError(error)}`)
     }
   }
 
-  public async loadWorkspaceConfig(workspaceId: string): Promise<StashConfig> {
+  public async loadProfile(profileName: string): Promise<StashProfile> {
     try {
-      const fileContentBuffer = await fs.promises.readFile(this.supplementaryConfigFilePath(workspaceId))
+      const fileContentBuffer = await fs.promises.readFile(this.supplementaryConfigFilePath(profileName))
       return JSON.parse(fileContentBuffer.toString('utf-8'))
     } catch (error) {
       return Promise.reject(`Failed to load config file: ${describeError(error)}`)
     }
   }
 
-  public async saveWorkspaceConfig(workspaceId: string, config: StashConfig): Promise<void> {
+  public async saveProfile(profileName: string, config: StashProfile): Promise<void> {
     try {
-      const configWithDefaults: StashConfig = merge(defaults, config)
+      const configWithDefaults: StashProfile = merge(defaults, config)
       await fs.promises.mkdir(dir, { recursive: true })
-      await fs.promises.writeFile(this.supplementaryConfigFilePath(workspaceId), stringify(configWithDefaults))
+      await fs.promises.writeFile(this.supplementaryConfigFilePath(profileName), stringify(configWithDefaults))
       return Promise.resolve(void 0)
     } catch (error) {
       return Promise.reject(`Failed to save config file: ${describeError(error)}`)
     }
   }
 
-  public configDir(workspaceId: string) {
-    return [dir, workspaceId].join('/')
+  public configDir(profileName: string) {
+    return [dir, sanitiseProfileName(profileName)].join('/')
   }
 
   private configFilePath(): string {
     return `${dir}/config.json`
   }
-  private authTokenFilePath(workspaceId: string): string {
-    return `${this.configDir(workspaceId)}/auth-token.json`
+  private authTokenFilePath(profileName: string): string {
+    return `${this.configDir(profileName)}/auth-token.json`
   }
 
-  private supplementaryConfigFilePath(workspaceId: string): string {
-    return `${this.configDir(workspaceId)}/workspace-config.json`
+  private supplementaryConfigFilePath(profileName: string): string {
+    return `${this.configDir(profileName)}/profile-config.json`
   }
+}
+
+function sanitiseProfileName(profileName: string): string {
+  return profileName.trim().replace(/s+/, '-').toLowerCase()
 }
 
 /**
@@ -275,45 +245,41 @@ class StoreWithWriteLock implements ConfigStore {
     return this.store.ensureConfigDirExists()
   }
 
-  public listWorkspaceIds(): Promise<string[]> {
-    return this.lock(() => this.store.listWorkspaceIds())
+  public loadProfileNames(): Promise<string[]> {
+    return this.lock(() => this.store.loadProfileNames())
   }
 
-  public getDefaultWorkspaceId(): Promise<string | undefined> {
-    return this.lock(() => this.store.getDefaultWorkspaceId())
+  public loadDefaultProfileName(): Promise<string> {
+    return this.lock(() => this.store.loadDefaultProfileName())
   }
 
-  public setDefaultWorkspaceId(workspaceId: string): Promise<void> {
-    return this.lock(() => this.store.setDefaultWorkspaceId(workspaceId))
+  public loadDefaultProfile(): Promise<StashProfile> {
+    return this.lock(() => this.store.loadDefaultProfile())
   }
 
-  public loadWorkspaceConfigAndAuthInfo(workspaceId: string): Promise<WorkspaceConfigAndAuthInfo> {
-    return this.lock(() => this.store.loadWorkspaceConfigAndAuthInfo(workspaceId))
+  public saveDefaultProfile(profileName: string): Promise<void> {
+    return this.lock(() => this.store.saveDefaultProfile(profileName))
   }
 
-  public loadDefaultWorkspaceConfigAndAuthInfo(): Promise<WorkspaceConfigAndAuthInfo> {
-    return this.lock(() => this.store.loadDefaultWorkspaceConfigAndAuthInfo())
+  public loadProfileAuthInfo(profileName: string): Promise<OauthAuthenticationInfo> {
+    return this.lock(() => this.store.loadProfileAuthInfo(profileName))
   }
 
-  public loadWorkspaceAuthInfo(workspaceId: string): Promise<OauthAuthenticationInfo> {
-    return this.lock(() => this.store.loadWorkspaceAuthInfo(workspaceId))
+  public saveProfileAuthInfo(profileName: string, authInfo: OauthAuthenticationInfo): Promise<void> {
+    return this.lock(() => this.store.saveProfileAuthInfo(profileName, authInfo))
   }
 
-  public saveWorkspaceAuthInfo(workspaceId: string, authInfo: OauthAuthenticationInfo): Promise<void> {
-    return this.lock(() => this.store.saveWorkspaceAuthInfo(workspaceId, authInfo))
+  public loadProfile(profileName: string): Promise<StashProfile> {
+    return this.lock(() => this.store.loadProfile(profileName))
   }
 
-  public loadWorkspaceConfig(workspaceId: string): Promise<StashConfig> {
-    return this.lock(() => this.store.loadWorkspaceConfig(workspaceId))
+  public saveProfile(profileName: string, config: StashProfile): Promise<void> {
+    return this.lock(() => this.store.saveProfile(profileName, config))
   }
 
-  public saveWorkspaceConfig(workspaceId: string, config: StashConfig): Promise<void> {
-    return this.lock(() => this.store.saveWorkspaceConfig(workspaceId, config))
-  }
-
-  public configDir(workspaceId: string): string {
+  public configDir(profileName: string): string {
     // No lock is required for this operation.
-    return this.store.configDir(workspaceId)
+    return this.store.configDir(profileName)
   }
 
   private async lock<T>(callback: () => Promise<T>): Promise<T> {

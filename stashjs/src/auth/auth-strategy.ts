@@ -1,7 +1,7 @@
-import { AWSCredentials } from "./aws-credentials";
+import { AwsCredentials } from "./aws-credentials";
 
 export type AuthenticationDetailsCallback<R> =
-  (authToken: string, awsCredentials?: AWSCredentials) => Promise<R>
+  (authToken: string, awsCredentials: AwsCredentials) => Promise<R>
 
 export interface AuthStrategy {
   /**

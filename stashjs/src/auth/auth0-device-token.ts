@@ -1,32 +1,37 @@
 import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy";
 import { AuthenticationState } from './authentication-state'
 import { federateToken } from "./federation-utils"
-import { stashOauth } from './oauth-utils'
+import { OauthAuthenticationInfo, stashOauth } from './oauth-utils'
 import { describeError } from "../utils"
-import { configStore, WorkspaceConfigAndAuthInfo } from './config-store'
+import { configStore } from './config-store'
+import { StashProfile } from "../stash-profile";
+import { AwsCredentials } from "./aws-credentials";
 
 
-export class ViaStoredToken implements AuthStrategy {
-  private state: AuthenticationState = { name: "unauthenticated"}
+export class Auth0DeviceToken implements AuthStrategy {
+  private state: AuthenticationState = { name: "unauthenticated" }
 
-  constructor(private config: WorkspaceConfigAndAuthInfo) {}
+  constructor(
+    private profile: StashProfile,
+    private authInfo: OauthAuthenticationInfo
+    ) {}
 
   public async initialise(): Promise<void> {
-    const config = this.config.workspaceConfig
     try {
-      if (!this.isExpired(this.config.authInfo.expiry)) {
+      if (!this.isExpired(this.authInfo.expiry)) {
         this.state = {
           name: "authenticated",
           oauthInfo: {
-            accessToken: this.config.authInfo.accessToken,
-            refreshToken: this.config.authInfo.refreshToken,
-            expiry: this.config.authInfo.expiry
+            accessToken: this.authInfo.accessToken,
+            refreshToken: this.authInfo.refreshToken,
+            expiry: this.authInfo.expiry
           },
-          awsCredentials: config.keyManagement.awsCredentials.kind === "Federated"
-            ? await federateToken(this.config.authInfo.accessToken, config.keyManagement.awsCredentials)
+          awsCredentials: this.profile.keyManagement.awsCredentials.kind === "Federated"
+            ? await federateToken(this.authInfo.accessToken, this.profile.keyManagement.awsCredentials)
             : {
-              accessKeyId: config.keyManagement.awsCredentials.accessKeyId,
-              secretAccessKey: config.keyManagement.awsCredentials.accessKeyId
+              kind: "Explicit",
+              accessKeyId: this.profile.keyManagement.awsCredentials.accessKeyId,
+              secretAccessKey: this.profile.keyManagement.awsCredentials.secretAccessKey
             }
 
         }
@@ -34,9 +39,9 @@ export class ViaStoredToken implements AuthStrategy {
         this.state = {
           name: "authentication-expired",
           oauthInfo: {
-            accessToken: this.config.authInfo.accessToken,
-            refreshToken: this.config.authInfo.refreshToken,
-            expiry: this.config.authInfo.expiry
+            accessToken: this.authInfo.accessToken,
+            refreshToken: this.authInfo.refreshToken,
+            expiry: this.authInfo.expiry
           },
         }
       }
@@ -85,16 +90,16 @@ export class ViaStoredToken implements AuthStrategy {
 
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
-      const config = this.config.workspaceConfig
-      const idpHost = config.identityProvider.host
-      const clientId = config.identityProvider.clientId
+      const idpHost = this.profile.identityProvider.host
+      const clientId = this.profile.identityProvider.clientId
       const oauthInfo = await stashOauth.performTokenRefresh(idpHost, refreshToken, clientId)
-      await configStore.saveWorkspaceAuthInfo(this.config.workspaceId, oauthInfo)
-      const awsCredentials = config.keyManagement.awsCredentials.kind === "Federated"
-        ? await federateToken(this.config.authInfo.accessToken, config.keyManagement.awsCredentials)
+      await configStore.saveProfileAuthInfo(this.profile.service.workspace, oauthInfo)
+      const awsCredentials: AwsCredentials = this.profile.keyManagement.awsCredentials.kind === "Federated"
+        ? await federateToken(this.authInfo.accessToken, this.profile.keyManagement.awsCredentials)
         : {
-          accessKeyId: config.keyManagement.awsCredentials.accessKeyId,
-          secretAccessKey: config.keyManagement.awsCredentials.accessKeyId
+          kind: "Explicit",
+          accessKeyId: this.profile.keyManagement.awsCredentials.accessKeyId,
+          secretAccessKey: this.profile.keyManagement.awsCredentials.secretAccessKey
         }
 
       this.state = {

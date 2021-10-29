@@ -2,13 +2,16 @@ import { stashOauth } from './oauth-utils'
 import { AuthenticationState } from './authentication-state'
 import { AuthenticationDetailsCallback, AuthStrategy } from './auth-strategy'
 import { federateToken } from './federation-utils'
-import { StashConfig } from '../stash-config'
+import { StashProfile } from '../stash-profile'
 import { describeError } from '../utils'
+import { AwsCredentials } from './aws-credentials'
 
-export class ViaClientCredentials implements AuthStrategy {
+export class Auth0Machine2Machine implements AuthStrategy {
   private state: AuthenticationState = { name: "unauthenticated" }
 
-  constructor(private config: StashConfig) { }
+  constructor(
+    private profile: StashProfile
+  ) {}
 
   public async initialise(): Promise<void> {
     await this.authenticate()
@@ -57,20 +60,21 @@ export class ViaClientCredentials implements AuthStrategy {
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
       const oauthInfo = await stashOauth.performTokenRefresh(
-        this.config.identityProvider.host,
+        this.profile.identityProvider.host,
         refreshToken,
-        this.config.identityProvider.clientId
+        this.profile.identityProvider.clientId
       )
 
       if (this.state.name == "authenticated") {
         this.state = {
           name: "authenticated",
           oauthInfo,
-          awsCredentials: this.config.keyManagement.awsCredentials.kind === "Federated"
-            ? await federateToken(oauthInfo.accessToken, this.config.keyManagement.awsCredentials)
+          awsCredentials: this.profile.keyManagement.awsCredentials.kind === "Federated"
+            ? await federateToken(oauthInfo.accessToken, this.profile.keyManagement.awsCredentials)
             : {
-              accessKeyId: this.config.keyManagement.awsCredentials.accessKeyId,
-              secretAccessKey: this.config.keyManagement.awsCredentials.accessKeyId
+              kind: "Explicit",
+              accessKeyId: this.profile.keyManagement.awsCredentials.accessKeyId,
+              secretAccessKey: this.profile.keyManagement.awsCredentials.accessKeyId
             }
         }
       }
@@ -83,24 +87,24 @@ export class ViaClientCredentials implements AuthStrategy {
   }
 
   private async authenticate(): Promise<void> {
-    if (this.config.identityProvider.kind !== "Auth0-Machine2Machine") {
+    if (this.profile.identityProvider.kind !== "Auth0-Machine2Machine") {
       throw new Error("Expected 'identityProvider.kind' to be 'Auth0-Machine2Machine'")
     }
     try {
       const oauthInfo = await stashOauth.authenticateViaClientCredentials(
-        this.config.identityProvider.host,
-        this.config.serviceFqdn,
-        this.config.identityProvider.clientId,
-        this.config.identityProvider.clientSecret
+        this.profile.identityProvider.host,
+        this.profile.service.host,
+        this.profile.identityProvider.clientId,
+        this.profile.identityProvider.clientSecret
       )
       try {
-        const awsCredentials = this.config.keyManagement.awsCredentials.kind === "Federated"
-          ? await federateToken(oauthInfo.accessToken, this.config.keyManagement.awsCredentials)
+        const awsCredentials: AwsCredentials = this.profile.keyManagement.awsCredentials.kind === "Federated"
+          ? await federateToken(oauthInfo.accessToken, this.profile.keyManagement.awsCredentials)
           : {
-            accessKeyId: this.config.keyManagement.awsCredentials.accessKeyId,
-            secretAccessKey: this.config.keyManagement.awsCredentials.accessKeyId
+            kind: "Explicit",
+            accessKeyId: this.profile.keyManagement.awsCredentials.accessKeyId,
+            secretAccessKey: this.profile.keyManagement.awsCredentials.secretAccessKey
           }
-
 
         this.state = {
           name: "authenticated",

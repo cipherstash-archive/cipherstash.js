@@ -1,6 +1,6 @@
 export {
-  StashConfig,
-} from './stash-config'
+  StashProfile,
+} from './stash-profile'
 
 export { Stash } from "./stash"
 
@@ -85,6 +85,5 @@ export {
 
 export {
   configStore,
-  defaults,
-  WorkspaceConfigAndAuthInfo,
+  defaults
 } from './auth/config-store'
