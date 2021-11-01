@@ -9,13 +9,12 @@ export type GlobalConfig = {
   defaultWorkspace?: string
 }
 
-export type DefaultWorkspaceConfig = Omit<StashProfile, 'keyManagement' | 'service'> & {
+export type DefaultWorkspaceConfig = Omit<StashProfile, 'keyManagement' | 'service' | 'key' > & {
   service: { host: string }
   identityProvider: { kind: "Auth0-DeviceCode" }
   keyManagement: {
     kind: "AWS-KMS"
     awsCredentials: { kind: "Federated", roleArn: string, region: string }
-    key: { kind: "FromConsoleAPI" }
   }
 }
 
@@ -34,9 +33,6 @@ export const defaults: DefaultWorkspaceConfig = {
       kind: "Federated",
       roleArn: `arn:aws:iam::616923951253:role/cs-federated-cmk-access`,
       region: 'ap-southeast-2'
-    },
-    key: {
-      kind: "FromConsoleAPI",
     }
   },
 }
