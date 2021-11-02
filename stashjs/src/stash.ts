@@ -53,7 +53,8 @@ export class Stash {
     return loadConfigFromEnv()
   }
 
-  public static async connect(profile: StashProfile): Promise<Stash> {
+  public static async connect(profile?: StashProfile): Promise<Stash> {
+    profile ||= await Stash.loadConfig()
     const authStrategy = await Stash.makeAuthStrategy(profile)
     await authStrategy.initialise()
     return new Stash(
