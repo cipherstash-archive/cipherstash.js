@@ -12,7 +12,7 @@ const command: GluegunCommand = {
     const workspace: string | undefined = parameters.options.workspace || await configStore.loadDefaultProfileName()
 
     if (!workspace) {
-      print.error('Error: no workspace was provided and a no default workspace is set')
+      print.error('Error: no workspace was provided and default workspace is set')
       const workspaceIds = await configStore.loadProfileNames()
       if (workspaceIds.length > 0) {
         print.info(`stash-cli knows about the following workspaces: ${workspaceIds.join(", ")}`)
