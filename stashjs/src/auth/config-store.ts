@@ -59,13 +59,11 @@ export interface ConfigStore {
 
   /**
    * Gets the ID of the configured default profile.
-   * Resolves with `undefined` if there is no configured default profile.
    */
   readonly loadDefaultProfileName: () => Promise<string>
 
   /**
    * Gets the ID of the configured default profile.
-   * Resolves with `undefined` if there is no configured default profile.
    */
   readonly loadDefaultProfile: () => Promise<StashProfile>
 
