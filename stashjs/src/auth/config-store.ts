@@ -218,7 +218,15 @@ class Store implements ConfigStore {
 }
 
 function sanitiseProfileName(profileName: string): string {
-  return profileName.trim().replace(/s+/, '-').toLowerCase()
+  // Remove leading and trailing whitespace, replace internal whitespace,
+  // periods and path separators with dashes.
+  return profileName
+    .trim()
+    .replace(/s+/, '-')
+    .replace("/", "-")
+    .replace("\\", "-")
+    .replace(".", "-")
+    .toLowerCase()
 }
 
 /**
