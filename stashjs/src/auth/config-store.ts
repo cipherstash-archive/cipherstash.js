@@ -31,7 +31,7 @@ export const defaults: DefaultWorkspaceConfig = {
     kind: "AWS-KMS",
     awsCredentials: {
       kind: "Federated",
-      roleArn: `arn:aws:iam::616923951253:role/cs-federated-cmk-access`,
+      roleArn: `arn:aws:iam::356036487853:role/cs-federated-cmk-access`,
       region: 'ap-southeast-2'
     }
   },
