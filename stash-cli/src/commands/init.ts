@@ -45,7 +45,7 @@ const command: GluegunCommand = {
       // running under SSH then the browser will open on the remote host - which
       // is not what we want.  Instead the user can simply click the
       // verification link that gets printed.
-      if (!isRunningUnderSsh()) {
+      if (!isInteractive()) {
         await open(pollingInfo.verificationUri)
       }
 
@@ -106,7 +106,7 @@ const command: GluegunCommand = {
 export default command
 
 
-function isRunningUnderSsh(): boolean {
+function isInteractive(): boolean {
   return process.env['SSH_CLIENT'] !== undefined || process.env['SSH_TTY'] !== undefined
 }
 
