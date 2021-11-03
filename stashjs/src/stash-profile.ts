@@ -19,7 +19,7 @@ export type KmsKeySource = {
 export type AwsCredentialsSource =
   | {
     kind: "Federated"
-    roleArn: string
+    accountId: string
     region: string
   }
   | {
@@ -65,8 +65,8 @@ export function loadConfigFromEnv(): StashProfile {
       },
       awsCredentials: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
         kind: "Federated",
-        roleArn: `arn:aws:iam::${getVar("CS_FEDERATION_AWS_ACCOUNT_ID", "616923951253")}:role/cs-federated-cmk-access`,
-        region: 'ap-southeast-2'
+        accountId: getVar("CS_FEDERATION_AWS_ACCOUNT_ID", "616923951253"),
+        region: getVar("CS_FEDERATION_AWS_REGION", "ap-southeast-2")
       } : {
         kind: "Custom",
         accessKeyId: getVar("AWS_ACCESS_KEY_ID"),
