@@ -9,16 +9,19 @@ export type GlobalConfig = {
   defaultWorkspace?: string
 }
 
-export type DefaultWorkspaceConfig = Omit<StashProfile, 'keyManagement' | 'service' | 'key' > & {
+export type TemplateString = { tag: "Template", template: string }
+
+export type DefaultProfileTemplate = Omit<StashProfile, 'keyManagement' | 'service' | 'key' > & {
   service: { host: string }
   identityProvider: { kind: "Auth0-DeviceCode" }
   keyManagement: {
     kind: "AWS-KMS"
-    awsCredentials: { kind: "Federated", roleArn: string, region: string }
+    // awsCredentials: { kind: "Federated", roleArn: string, region: string }
+    awsCredentials: { kind: "Federated", roleArn: TemplateString, region: string }
   }
 }
 
-export const defaults: DefaultWorkspaceConfig = {
+export const defaults: DefaultProfileTemplate = {
   service: {
     host: "ap-southeast-2.aws.stashdata.net",
   },
@@ -31,7 +34,7 @@ export const defaults: DefaultWorkspaceConfig = {
     kind: "AWS-KMS",
     awsCredentials: {
       kind: "Federated",
-      roleArn: `arn:aws:iam::356036487853:role/cs-federated-cmk-access`,
+      roleArn: "arn:aws:iam::356036487853:role/cs-federated-cmk-access",
       region: 'ap-southeast-2'
     }
   },
