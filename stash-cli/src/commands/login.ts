@@ -9,17 +9,31 @@ const command: GluegunCommand = {
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
 
-    const workspace: string | undefined = parameters.options.workspace || await configStore.loadDefaultProfileName()
+    const workspace: string | undefined =
+      parameters.options.workspace ||
+      (await configStore.loadDefaultProfileName())
 
     if (!workspace) {
-      print.error('Error: no workspace was provided and default workspace is set')
+      print.error(
+        'Error: no workspace was provided and default workspace is set'
+      )
       const workspaceIds = await configStore.loadProfileNames()
       if (workspaceIds.length > 0) {
-        print.info(`stash-cli knows about the following workspaces: ${workspaceIds.join(", ")}`)
-        print.info(`Either run 'stash config --default-workspace <workspace-id>' to set your default workspace, or`)
-        print.info(`run 'stash login --workspace <workspace-id>' to sign in to a specific workspace`)
+        print.info(
+          `stash-cli knows about the following workspaces: ${workspaceIds.join(
+            ', '
+          )}`
+        )
+        print.info(
+          `Either run 'stash config --default-workspace <workspace-id>' to set your default workspace, or`
+        )
+        print.info(
+          `run 'stash login --workspace <workspace-id>' to sign in to a specific workspace`
+        )
       } else {
-        print.info(`run 'stash init --workspace <workspace-id>' sign into a workspace for the first time`)
+        print.info(
+          `run 'stash init --workspace <workspace-id>' sign into a workspace for the first time`
+        )
       }
       process.exit(1)
     }
@@ -43,8 +57,10 @@ const command: GluegunCommand = {
         profile.service.workspace
       )
 
-      print.info(`Visit ${pollingInfo.verificationUri} to complete authentication`)
-      print.info("Waiting for authentication...")
+      print.info(
+        `Visit ${pollingInfo.verificationUri} to complete authentication`
+      )
+      print.info('Waiting for authentication...')
 
       // Only open the browser when running this command locally.  If we are
       // running under SSH then the browser will open on the remote host - which
@@ -61,19 +77,24 @@ const command: GluegunCommand = {
         pollingInfo.interval
       )
 
-      print.info("Login Successful")
+      print.info('Login Successful')
 
       await configStore.saveProfileAuthInfo(workspace, authInfo)
 
       print.info(`Auth-token saved to ${configStore.configDir(workspace)}`)
     } catch (error) {
-      print.error(`Could not login. Message from server: "${describeError(error)}"`)
+      print.error(
+        `Could not login. Message from server: "${describeError(error)}"`
+      )
     }
-  },
+  }
 }
 
 module.exports = command
 
 function isInteractive(): boolean {
-  return process.env['SSH_CLIENT'] !== undefined || process.env['SSH_TTY'] !== undefined
+  return (
+    process.env['SSH_CLIENT'] !== undefined ||
+    process.env['SSH_TTY'] !== undefined
+  )
 }

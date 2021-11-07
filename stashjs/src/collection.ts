@@ -43,17 +43,17 @@ export class Collection<
 
   public async get(id: string | Buffer): Promise<R & HasID | null> {
     const docId = id instanceof Buffer ? id : idStringToBuffer(id)
-    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.stash.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         this.stash.stub.get({
           collectionId: idStringToBuffer(this.id),
           id: docId
-        }, grpcMetadata(authToken), (err, res) => {
+        }, grpcMetadata(authToken), async (err, res) => {
           if (err) {
             reject(err)
           } else {
             if (res?.source) {
-              resolve(convertGetReplyToUserRecord(res, this.stash.sourceDataCipherSuite))
+              resolve(convertGetReplyToUserRecord(res, await this.stash.sourceDataCipherSuite()))
             } else {
               reject("Unexpectedly received empty response from data-service")
             }
@@ -68,17 +68,17 @@ export class Collection<
       return (id instanceof Buffer) ? id : idStringToBuffer(id)
     })
 
-    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.stash.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         this.stash.stub.getAll({
           collectionId: idStringToBuffer(this.id),
           ids: docIds
-        }, grpcMetadata(authToken), (err, res) => {
+        }, grpcMetadata(authToken), async (err, res) => {
           if (err) {
             reject(err)
           } else {
             if (res?.documents) {
-              resolve(convertGetAllReplyToUserRecords(res, this.stash.sourceDataCipherSuite))
+              resolve(convertGetAllReplyToUserRecords(res, await this.stash.sourceDataCipherSuite()))
             } else {
               reject("Unexpectedly received empty response from data-service")
             }
@@ -98,7 +98,7 @@ export class Collection<
   }
 
   public async put(doc: R): Promise<string> {
-    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.stash.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         try {
           /* Note: this will use an ID if one is provided in the doc
@@ -121,7 +121,7 @@ export class Collection<
             vectors,
             source: {
               id: idStringToBuffer(doc.id as string),
-              source: (await this.stash.sourceDataCipherSuite.encrypt(doc)).result // TODO: Ensure the new ID is in the doc
+              source: (await (await this.stash.sourceDataCipherSuite()).encrypt(doc)).result // TODO: Ensure the new ID is in the doc
             },
           }, grpcMetadata(authToken), (err, _res) => {
             if (err) {
@@ -155,7 +155,7 @@ export class Collection<
 
   public async delete(id: string | Buffer): Promise<null> {
     const docId = id instanceof Buffer ? id : idStringToBuffer(id)
-    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.stash.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         this.stash.stub.delete({
           collectionId: idStringToBuffer(this.id),
@@ -173,21 +173,18 @@ export class Collection<
 
   // TODO: do not leak GRPC types from this public API. Define a new type and convert it.
   public async putStream(records: AsyncIterator<R>): Promise<V1.StreamingPutReply> {
-    return this.stash.authStrategy.authenticatedRequest(async (authToken, awsCredentials) => {
-      const streamWriter: StreamWriter<R, M, MM> = new StreamWriter(
-        this.stash,
-        this.schema,
-        idStringToBuffer(this.id),
-        authToken,
-        awsCredentials
-      )
-      return streamWriter.writeAll(records)
-    })
+    const streamWriter: StreamWriter<R, M, MM> = new StreamWriter(
+      this.stash,
+      this.schema,
+      idStringToBuffer(this.id),
+      this.stash.authStrategy
+    )
+    return streamWriter.writeAll(records)
   }
 
   async queryWithConstraints(callback: (where: QueryBuilder<R, M>) => Query<R, M>, queryOptions?: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
     const options = queryOptions ? queryOptions : {}
-    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.stash.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         // TODO: Can this use schema.buildQuery ?
         const query = this.analyzeQuery(callback(this.schema.makeQueryBuilder()))
@@ -209,7 +206,7 @@ export class Collection<
 
             resolve({
               took: (timerEnd - timerStart) / 1000,
-              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.sourceDataCipherSuite),
+              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, await this.stash.sourceDataCipherSuite()),
               aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
                 name: agg.name! as Aggregate,
                 value: BigInt(agg.value!.toString())
@@ -222,7 +219,7 @@ export class Collection<
   }
 
   async queryWithoutConstraints(options: QueryOptions<R, M>): Promise<QueryResult<R & HasID>> {
-    return this.stash.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.stash.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         // Time the execution
         const timerStart = (new Date()).getTime()
@@ -236,7 +233,7 @@ export class Collection<
 
             resolve({
               took: (timerEnd - timerStart) / 1000,
-              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, this.stash.sourceDataCipherSuite),
+              documents: await convertQueryReplyToUserRecords<R & HasID>(res!, await this.stash.sourceDataCipherSuite()),
               aggregates: res!.aggregates ? res!.aggregates.map(agg => ({
                 name: agg.name! as Aggregate,
                 value: BigInt(agg.value!.toString())

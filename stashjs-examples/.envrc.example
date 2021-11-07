@@ -1,10 +1,10 @@
 export CS_AUTH_STRATEGY=stored-access-token
 export CS_SERVICE_FQDN=dev-local:50001
-export CS_CLIENT_ID=tz5daCHFQLJRshlk9xr2Tl1G2nVJP5nv
-# CS_SECRET is not beeded when performing device-token auth
-# export CS_SECRET=VkNcnAClbYg-kFJJhkYT2HDxTfCkElm99r4UQcyI8xya7mTmE9uEzw27Cqft-RVA
-export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
 export CS_IDP_HOST=cipherstash-dev.au.auth0.com
+export CS_IDP_CLIENT_ID=tz5daCHFQLJRshlk9xr2Tl1G2nVJP5nv
+# CS_IDP_CLIENT_SECRET is not beeded when performing device-token auth
+# export CS_IDP_CLIENT_SECRET=VkNcnAClbYg-kFJJhkYT2HDxTfCkElm99r4UQcyI8xya7mTmE9uEzw27Cqft-RVA
+export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
 export CS_FEDERATED_IDENTITY_ID=ap-southeast-2:0a777a90-e3ef-4282-b44d-c53e85f1500b
 export AWS_DEFAULT_REGION=ap-southeast-2
 export CS_DEV_CMK=arn:aws:kms:ap-southeast-2:377140853070:key/80c0f67d-e02a-4b59-a314-80a07ef0d4a2

@@ -16,8 +16,7 @@ export type DefaultProfileTemplate = Omit<StashProfile, 'keyManagement' | 'servi
   identityProvider: { kind: "Auth0-DeviceCode" }
   keyManagement: {
     kind: "AWS-KMS"
-    // awsCredentials: { kind: "Federated", roleArn: string, region: string }
-    awsCredentials: { kind: "Federated", roleArn: TemplateString, region: string }
+    awsCredentials: { kind: "Federated", roleArn: string, region: string }
   }
 }
 
@@ -225,7 +224,7 @@ function sanitiseProfileName(profileName: string): string {
   // periods and path separators with dashes.
   return profileName
     .trim()
-    .replace(/s+/, '-')
+    .replace(/\s/, '-')
     .replace("/", "-")
     .replace("\\", "-")
     .replace(".", "-")
