@@ -1,11 +1,10 @@
 import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy";
 import { AuthenticationState } from './authentication-state'
-import { federateToken } from "./federation-utils"
 import { OauthAuthenticationInfo, stashOauth } from './oauth-utils'
 import { describeError } from "../utils"
 import { configStore } from './config-store'
 import { StashProfile } from "../stash-profile";
-import { AwsCredentials } from "./aws-credentials";
+import { awsConfig } from "../aws";
 
 
 export class Auth0DeviceToken implements AuthStrategy {
@@ -26,23 +25,7 @@ export class Auth0DeviceToken implements AuthStrategy {
             refreshToken: this.authInfo.refreshToken,
             expiry: this.authInfo.expiry
           },
-          awsCredentials: this.profile.keyManagement.awsCredentials.kind === "Federated"
-            ? await federateToken(this.authInfo.accessToken, this.profile.keyManagement.awsCredentials)
-            : {
-              kind: "Explicit",
-              accessKeyId: this.profile.keyManagement.awsCredentials.accessKeyId,
-              secretAccessKey: this.profile.keyManagement.awsCredentials.secretAccessKey
-            }
-
-        }
-      } else {
-        this.state = {
-          name: "authentication-expired",
-          oauthInfo: {
-            accessToken: this.authInfo.accessToken,
-            refreshToken: this.authInfo.refreshToken,
-            expiry: this.authInfo.expiry
-          },
+          awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, this.authInfo.accessToken)
         }
       }
       this.scheduleTokenRefresh()
@@ -54,7 +37,7 @@ export class Auth0DeviceToken implements AuthStrategy {
   public async authenticatedRequest<R>(callback: AuthenticationDetailsCallback<R>): Promise<R> {
     if (this.state.name == "authenticated") {
       try {
-        return await callback(this.state.oauthInfo.accessToken, this.state.awsCredentials)
+        return await callback({authToken: this.state.oauthInfo.accessToken, awsConfig: this.state.awsConfig})
       } catch (err) {
         return Promise.reject(`API call failed: ${describeError(err)}`)
       }
@@ -94,18 +77,11 @@ export class Auth0DeviceToken implements AuthStrategy {
       const clientId = this.profile.identityProvider.clientId
       const oauthInfo = await stashOauth.performTokenRefresh(idpHost, refreshToken, clientId)
       await configStore.saveProfileAuthInfo(this.profile.service.workspace, oauthInfo)
-      const awsCredentials: AwsCredentials = this.profile.keyManagement.awsCredentials.kind === "Federated"
-        ? await federateToken(this.authInfo.accessToken, this.profile.keyManagement.awsCredentials)
-        : {
-          kind: "Explicit",
-          accessKeyId: this.profile.keyManagement.awsCredentials.accessKeyId,
-          secretAccessKey: this.profile.keyManagement.awsCredentials.secretAccessKey
-        }
 
       this.state = {
         name: "authenticated",
         oauthInfo,
-        awsCredentials
+        awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, oauthInfo.accessToken)
       }
     } catch (err) {
       this.state = {

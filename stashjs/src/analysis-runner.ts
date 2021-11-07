@@ -6,7 +6,7 @@ import { join } from 'path'
 import { Worker } from "worker_threads"
 import { EventEmitter } from "events"
 import { AsyncQueue } from "./async-queue";
-import { AwsCredentials } from './auth/aws-credentials'
+import { AuthStrategy } from './auth/auth-strategy'
 require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
 
 export type AnalysisResult = {
@@ -21,9 +21,9 @@ export type WorkerMessage = {
 }
 
 export type AnalysisConfig = {
-  awsCredentials: AwsCredentials,
-  cmk: string,
-  schema: CollectionSchema<any, any, any>,
+  authStrategy: AuthStrategy
+  cmk: string
+  schema: CollectionSchema<any, any, any>
 }
 
 export class AnalysisRunner {

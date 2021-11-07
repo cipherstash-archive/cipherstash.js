@@ -1,35 +1,40 @@
-export type IdentityProvider =
-  | {
-      kind: "Auth0-DeviceCode"
-      host: string
-      clientId: string
-    }
-  | {
-      kind: "Auth0-Machine2Machine"
-      host: string
-      clientId: string
-      clientSecret: string
-    }
+export type Auth0DeviceCode = {
+  kind: "Auth0-DeviceCode"
+  host: string
+  clientId: string
+}
+
+export type Auth0Machine2Machine = {
+  kind: "Auth0-Machine2Machine"
+  host: string
+  clientId: string
+  clientSecret: string
+}
+
+export type IdentityProvider = Auth0DeviceCode | Auth0Machine2Machine
 
 export type KmsKeySource = {
   cmk: string
   namingKey: string
+  region: string
 }
 
-export type AwsCredentialsSource =
-  | {
-    kind: "Federated"
-    accountId: string
-    region: string
-  }
-  | {
-    kind: "Custom"
-    accessKeyId: string
-    secretAccessKey: string
-    region: string
-  }
+export type FederatedAwsCredentialsSource = {
+  kind: "Federated"
+  roleArn: string
+  region: string
+}
 
-export type KeyManagement = {
+export type ExplicitAwsCredentialsSource = {
+  kind: "Explicit"
+  accessKeyId: string
+  secretAccessKey: string
+  region: string
+}
+
+export type AwsCredentialsSource = FederatedAwsCredentialsSource | ExplicitAwsCredentialsSource
+
+export type KMSKey = {
   kind: "AWS-KMS",
   key: KmsKeySource
   awsCredentials: AwsCredentialsSource
@@ -42,7 +47,7 @@ export type StashProfile = {
     workspace: string
   },
   identityProvider: IdentityProvider
-  keyManagement: KeyManagement
+  keyManagement: KMSKey
 }
 
 export function loadConfigFromEnv(): StashProfile {
@@ -54,24 +59,25 @@ export function loadConfigFromEnv(): StashProfile {
     identityProvider: {
       kind: "Auth0-Machine2Machine",
       host: getVar('CS_IDP_HOST'),
-      clientId: getVar('CS_CLIENT_ID'),
-      clientSecret: getVar('CS_SECRET')
+      clientId: getVar('CS_IDP_CLIENT_ID'),
+      clientSecret: getVar('CS_IDP_CLIENT_SECRET')
     },
     keyManagement: {
       kind: "AWS-KMS",
       key: {
         cmk: getVar('CS_DEV_CMK'),
-        namingKey: getVar('CS_NAMING_KEY')
+        namingKey: getVar('CS_NAMING_KEY'),
+        region: getVar('AWS_REGION')
       },
-      awsCredentials: getVar("CS_AWS_FEDERATE", "on") === "on" ? {
+      awsCredentials: /^(y|yes|t|true|on|1)$/.test(getVar("CS_AWS_FEDERATION", "on")) ? {
         kind: "Federated",
-        accountId: getVar("CS_FEDERATION_AWS_ACCOUNT_ID", "616923951253"),
-        region: getVar("CS_FEDERATION_AWS_REGION", "ap-southeast-2")
+        roleArn: getVar("CS_AWS_FEDERATION_ROLE_ARN"),
+        region: getVar('AWS_REGION')
       } : {
-        kind: "Custom",
+        kind: "Explicit",
         accessKeyId: getVar("AWS_ACCESS_KEY_ID"),
         secretAccessKey: getVar("AWS_SECRET_ACCESS_KEY"),
-        region: getVar("AWS_DEFAULT_REGION")
+        region: getVar('AWS_REGION')
       }
     },
   }

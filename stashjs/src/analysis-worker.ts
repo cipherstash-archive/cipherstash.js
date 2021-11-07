@@ -1,5 +1,4 @@
 import { parentPort, workerData, isMainThread } from "worker_threads"
-import AWS from "aws-sdk"
 import { NodeCachingMaterialsManager } from '@aws-crypto/client-node'
 import { makeCipherSuite, makeNodeCachingMaterialsManager } from "./crypto/cipher"
 import { CollectionSchema } from "./collection-schema"
@@ -15,20 +14,12 @@ if (!isMainThread) {
 
   async function performAnalyis(config: AnalysisConfig, record: StashRecord): Promise<AnalysisResult> {
     if (!cachingMaterialsManager) {
-      cachingMaterialsManager = makeNodeCachingMaterialsManager(config.cmk)
+      cachingMaterialsManager = await makeNodeCachingMaterialsManager(config.cmk, config.authStrategy)
     }
     const analyzer = getRecordAnalyzer(config.schema)
     const analyzedRecord = analyzer(record)
     const vectors = convertAnalyzedRecordToVectors(analyzedRecord, config.schema.meta)
     const cipherSuite = makeCipherSuite(cachingMaterialsManager)
-    if (config.awsCredentials) {
-      // TODO: we will need to do token refreshing logic here
-      AWS.config.credentials = {
-        accessKeyId: config.awsCredentials.accessKeyId,
-        secretAccessKey: config.awsCredentials.secretAccessKey,
-        // sessionToken: config.awsCredentials.sessionToken
-      }
-    }
     const encryptedSource = (await cipherSuite.encrypt(record)).result
     const result = {
       docId: record.id ? idStringToBuffer(record.id) : makeId(),

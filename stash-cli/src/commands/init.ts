@@ -2,7 +2,13 @@ import * as https from 'https'
 import axios, { AxiosInstance } from 'axios'
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import { configStore, defaults, stashOauth, describeError, StashProfile } from '@cipherstash/stashjs'
+import {
+  configStore,
+  defaults,
+  stashOauth,
+  describeError,
+  StashProfile
+} from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
@@ -11,16 +17,18 @@ const command: GluegunCommand = {
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
 
-    const serviceHost: string = parameters.options.serviceHost || defaults.service.host
+    const serviceHost: string =
+      parameters.options.serviceHost || defaults.service.host
     const servicePort: number = parameters.options.servicePort || 443
 
-    const identityProviderHost: string = parameters.options.identityProviderHost || defaults.identityProvider.host
-    const identityProviderClientId: string = parameters.options.identityProviderClientId || defaults.identityProvider.clientId
+    const identityProviderHost: string =
+      parameters.options.identityProviderHost || defaults.identityProvider.host
+    const identityProviderClientId: string =
+      parameters.options.identityProviderClientId ||
+      defaults.identityProvider.clientId
 
-    const keyManagementAwsCredentialsRoleArn: string = parameters.options.keyManagementAwsCredentialsRoleArn || defaults.keyManagement.awsCredentials.roleArn
-    const keyManagementAwsCredentialsRegion: string = parameters.options.keyManagementAwsCredentialsRegion || defaults.keyManagement.awsCredentials.region
-
-    const consoleApiHost: string = parameters.options.consoleApiHost || "console.cipherstash.com"
+    const consoleApiHost: string =
+      parameters.options.consoleApiHost || 'console.cipherstash.com'
     const consoleApiPort: number = parameters.options.consoleApiPort || 443
 
     const workspace: string | undefined = parameters.options.workspace
@@ -38,8 +46,10 @@ const command: GluegunCommand = {
         workspace
       )
 
-      print.info(`Visit ${pollingInfo.verificationUri} to complete authentication`)
-      print.info("Waiting for authentication...")
+      print.info(
+        `Visit ${pollingInfo.verificationUri} to complete authentication`
+      )
+      print.info('Waiting for authentication...')
 
       // Only open the browser when running this command locally.  If we are
       // running under SSH then the browser will open on the remote host - which
@@ -58,7 +68,7 @@ const command: GluegunCommand = {
 
       await configStore.ensureConfigDirExists()
       await configStore.saveProfileAuthInfo(workspace, authInfo)
-      print.info("Login Successful")
+      print.info('Login Successful')
 
       const response = await makeHttpsClient(
         consoleApiHost,
@@ -76,38 +86,47 @@ const command: GluegunCommand = {
           port: servicePort
         },
         identityProvider: {
-          kind: "Auth0-DeviceCode",
+          kind: 'Auth0-DeviceCode',
           host: identityProviderHost,
           clientId: identityProviderClientId
         },
         keyManagement: {
-          kind: "AWS-KMS",
+          kind: 'AWS-KMS',
           awsCredentials: {
-            kind: "Federated",
-            roleArn: keyManagementAwsCredentialsRoleArn,
-            region: keyManagementAwsCredentialsRegion
+            kind: 'Federated',
+            region: response.data.keyRegion,
+            roleArn: response.data.keyRoleArn
           },
           key: {
             cmk: response.data.keyId,
-            namingKey: response.data.namingKey
+            namingKey: response.data.namingKey,
+            region: response.data.keyRegion
           }
         }
       }
 
       await configStore.saveProfile(workspace, workspaceConfig)
 
-      print.info(`Workspace configuration and authentication details have been saved in dir ${configStore.configDir(workspace)}`)
+      print.info(
+        `Workspace configuration and authentication details have been saved in dir ${configStore.configDir(
+          workspace
+        )}`
+      )
     } catch (error) {
-      print.error(`Could not login. Message from server: "${describeError(error)}"`)
+      print.error(
+        `Could not login. Message from server: "${describeError(error)}"`
+      )
     }
-  },
+  }
 }
 
 export default command
 
-
 function isInteractive(): boolean {
-  return process.env['SSH_CLIENT'] !== undefined || process.env['SSH_TTY'] !== undefined
+  return (
+    process.env['SSH_CLIENT'] !== undefined ||
+    process.env['SSH_TTY'] !== undefined
+  )
 }
 
 function makeHttpsClient(host: string, port: number): AxiosInstance {
@@ -116,12 +135,12 @@ function makeHttpsClient(host: string, port: number): AxiosInstance {
       baseURL: `https://${host}`,
       timeout: 5000,
       headers: {
-        'Accept': 'application/vnd.github.v3+json',
+        Accept: 'application/vnd.github.v3+json'
       },
       httpsAgent: new https.Agent({
         port,
         rejectUnauthorized: true,
-        minVersion: "TLSv1.3"
+        minVersion: 'TLSv1.3'
       })
     })
   } else {
@@ -131,7 +150,7 @@ function makeHttpsClient(host: string, port: number): AxiosInstance {
       baseURL: `http://${host}:${port}`,
       timeout: 5000,
       headers: {
-        'Accept': 'application/vnd.github.v3+json',
+        Accept: 'application/vnd.github.v3+json'
       }
     })
   }
