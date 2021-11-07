@@ -17,9 +17,9 @@ Full documentation is available at [docs.cipherstash.com](https://docs.ciphersta
 ```
 export CS_AUTH_STRATEGY=stored-access-token
 export CS_SERVICE_FQDN=dev-local:50001
-export CS_CLIENT_ID=tz5daCHFQLJRshlk9xr2Tl1G2nVJP5nv
-export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
 export CS_IDP_HOST=cipherstash-dev.au.auth0.com
+export CS_IDP_CLIENT_ID=tz5daCHFQLJRshlk9xr2Tl1G2nVJP5nv
+export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
 export AWS_DEFAULT_REGION=ap-southeast-2
 
 # Ask another CipherStash engineer for the following values:

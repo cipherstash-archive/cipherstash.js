@@ -4,7 +4,7 @@ import { CollectionSchema } from "."
 import { AnalysisRunner, AnalysisResult } from "./analysis-runner"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { Stash } from "./stash"
-import { AwsCredentials } from "./auth/aws-credentials"
+import { AuthStrategy } from "./auth/auth-strategy"
 
 export class StreamWriter<
   R extends StashRecord,
@@ -18,11 +18,10 @@ export class StreamWriter<
     private stash: Stash,
     private schema: CollectionSchema<R, M, MM>,
     private collectionId: Buffer,
-    private authToken: string,
-    private awsCredentials: AwsCredentials
+    private authStrategy: AuthStrategy
   ) {
     this.analysisRunner = new AnalysisRunner({
-      awsCredentials: this.awsCredentials,
+      authStrategy: this.authStrategy,
       cmk: this.stash.config.keyManagement.key.cmk,
       schema: this.schema
     })
@@ -42,23 +41,25 @@ export class StreamWriter<
   }
 
   private async writeStream(analysisResults: AsyncIterator<AnalysisResult>): Promise<V1.StreamingPutReply> {
-    return new Promise(async (resolve, reject) => {
-      const metaData = new Metadata()
-      metaData.set('authorization', `Bearer ${this.authToken}`)
-      const stream = this.stash.stub.putStream(metaData, (err, result) => {
-        if (err) {
-          reject(err)
-        } else {
-          resolve(result!)
+    return this.authStrategy.authenticatedRequest<V1.StreamingPutReply>(async ({authToken: authToken}): Promise<V1.StreamingPutReply> => {
+      return new Promise(async (resolve, reject) => {
+        const metaData = new Metadata()
+        metaData.set('authorization', `Bearer ${authToken}`)
+        const stream = await this.stash.stub.putStream(metaData, (err, result) => {
+          if (err) {
+            reject(err)
+          } else {
+            resolve(result!)
+          }
+        })
+        await this.writeStreamingPutBegin(stream, this.collectionId)
+        let result = await analysisResults.next()
+        while (!result.done) {
+          await this.writeOneStreamingPutRequest(stream, result.value)
+          result = await analysisResults.next()
         }
+        stream.end()
       })
-      await this.writeStreamingPutBegin(stream, this.collectionId)
-      let result = await analysisResults.next()
-      while (!result.done) {
-        await this.writeOneStreamingPutRequest(stream, result.value)
-        result = await analysisResults.next()
-      }
-      stream.end()
     })
   }
 

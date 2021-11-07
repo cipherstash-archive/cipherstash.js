@@ -1,6 +1,6 @@
 import { V1 } from '@cipherstash/stashjs-grpc'
 
-import { CipherSuite, makeCipherSuite, MakeRefFn } from './crypto/cipher'
+import { CipherSuite, makeCipherSuite, makeNodeCachingMaterialsManager, MakeRefFn } from './crypto/cipher'
 import { CollectionSchema } from './collection-schema'
 import { AuthStrategy } from './auth/auth-strategy'
 import { Auth0Machine2Machine } from './auth/auth0-machine-2-machine'
@@ -16,6 +16,7 @@ import { CollectionMetadata, configStore } from '.'
 
 import { makeRefGenerator } from './crypto/cipher'
 import { KMS } from '@aws-sdk/client-kms'
+import { awsConfig } from './aws'
 
 export type LoadConfigOptions = Readonly<{
   profileName?: string
@@ -30,16 +31,12 @@ export type LoadConfigOptions = Readonly<{
  * directory.
  */
 export class Stash {
-  readonly sourceDataCipherSuite: CipherSuite
-
   private constructor(
     public readonly stub: V1.APIClient,
     public readonly authStrategy: AuthStrategy,
     public readonly config: StashProfile,
     private readonly makeRef: MakeRefFn
-  ) {
-    this.sourceDataCipherSuite = makeCipherSuite(config.keyManagement.key.cmk)
-  }
+  ) {}
 
   public static async loadConfig(opts?: LoadConfigOptions): Promise<StashProfile> {
     const profile = opts?.profileName
@@ -55,17 +52,25 @@ export class Stash {
 
   public static async connect(profile?: StashProfile): Promise<Stash> {
     profile ||= await Stash.loadConfig()
+    const cprofile = profile
     const authStrategy = await Stash.makeAuthStrategy(profile)
     await authStrategy.initialise()
+    const kms = authStrategy.authenticatedRequest<KMS>(({authToken: authToken}) => {
+      return awsConfig(cprofile.keyManagement.awsCredentials, authToken)
+        .then(cfg => new KMS(cfg))
+        .catch(err => Promise.reject(err))
+    })
+
     return new Stash(
-      V1.connect(profile.service.host),
+      V1.connect(profile.service.host, profile.service.port),
       authStrategy,
       profile,
-      await makeRefGenerator(
-        new KMS({ region: profile.keyManagement.awsCredentials.region }),
-        profile.keyManagement.key.namingKey
-      )
+      await makeRefGenerator(await kms, profile.keyManagement.key.namingKey)
     )
+  }
+
+  public async sourceDataCipherSuite(): Promise<CipherSuite> {
+    return makeCipherSuite(await makeNodeCachingMaterialsManager(this.config.keyManagement.key.cmk, this.authStrategy))
   }
 
   public close(): void {
@@ -79,7 +84,7 @@ export class Stash {
   >(
     schema: CollectionSchema<R, M, MM>
   ): Promise<Collection<R, M, MM>> {
-    return this.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         const request: V1.CreateRequestInput = {
           ref: this.makeRef(schema.name),
@@ -105,7 +110,7 @@ export class Stash {
   >(
     definition: CollectionSchema<R, M, MM>
   ): Promise<Collection<R, M, MM>> {
-    return this.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         const ref = this.makeRef(definition.name)
         this.stub.collectionInfo({
@@ -124,7 +129,7 @@ export class Stash {
   public deleteCollection(
     collectionName: string
   ): Promise<void> {
-    return this.authStrategy.authenticatedRequest((authToken: string) =>
+    return this.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
         const ref = this.makeRef(collectionName)
         this.stub.deleteCollection({
@@ -176,7 +181,7 @@ export class Stash {
   ): Promise<Array<StoredMapping>> {
 
     const storedMappings = await Promise.all(encryptedMappings.map(async ({ settings, id: indexId }) => {
-      const { mapping, meta } = await this.sourceDataCipherSuite.decrypt(settings!)
+      const { mapping, meta } = await (await this.sourceDataCipherSuite()).decrypt(settings!)
       return {
         mapping,
         meta: {
@@ -209,7 +214,7 @@ export class Stash {
         }
       }
 
-      const { result } = await this.sourceDataCipherSuite.encrypt(storedMapping)
+      const { result } = await (await this.sourceDataCipherSuite()).encrypt(storedMapping)
       return {
         id: idStringToBuffer(storedMapping.meta.$indexId),
         settings: result
@@ -220,12 +225,12 @@ export class Stash {
   }
 
   private async encryptCollectionMetadata(metadata: CollectionMetadata): Promise<Buffer> {
-    const { result } = await this.sourceDataCipherSuite.encrypt(metadata)
+    const { result } = await (await this.sourceDataCipherSuite()).encrypt(metadata)
     return result
   }
 
   private async decryptCollectionMetadata(buffer: Buffer): Promise<CollectionMetadata> {
-    return await this.sourceDataCipherSuite.decrypt(buffer)
+    return await (await this.sourceDataCipherSuite()).decrypt(buffer)
   }
 
   private static async makeAuthStrategy(profile: StashProfile): Promise<AuthStrategy> {

@@ -1,10 +1,9 @@
 import { stashOauth } from './oauth-utils'
 import { AuthenticationState } from './authentication-state'
 import { AuthenticationDetailsCallback, AuthStrategy } from './auth-strategy'
-import { federateToken } from './federation-utils'
 import { StashProfile } from '../stash-profile'
 import { describeError } from '../utils'
-import { AwsCredentials } from './aws-credentials'
+import { awsConfig } from '../aws'
 
 export class Auth0Machine2Machine implements AuthStrategy {
   private state: AuthenticationState = { name: "unauthenticated" }
@@ -25,7 +24,7 @@ export class Auth0Machine2Machine implements AuthStrategy {
 
     if (this.state.name == "authenticated") {
       try {
-        return await callback(this.state.oauthInfo.accessToken, this.state.awsCredentials)
+        return await callback({authToken: this.state.oauthInfo.accessToken, awsConfig: this.state.awsConfig})
       } catch (err) {
         return Promise.reject(`API call failed: ${describeError(err)}`)
       }
@@ -69,13 +68,7 @@ export class Auth0Machine2Machine implements AuthStrategy {
         this.state = {
           name: "authenticated",
           oauthInfo,
-          awsCredentials: this.profile.keyManagement.awsCredentials.kind === "Federated"
-            ? await federateToken(oauthInfo.accessToken, this.profile.keyManagement.awsCredentials)
-            : {
-              kind: "Explicit",
-              accessKeyId: this.profile.keyManagement.awsCredentials.accessKeyId,
-              secretAccessKey: this.profile.keyManagement.awsCredentials.accessKeyId
-            }
+          awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, oauthInfo.accessToken)
         }
       }
     } catch (err) {
@@ -98,18 +91,10 @@ export class Auth0Machine2Machine implements AuthStrategy {
         this.profile.identityProvider.clientSecret
       )
       try {
-        const awsCredentials: AwsCredentials = this.profile.keyManagement.awsCredentials.kind === "Federated"
-          ? await federateToken(oauthInfo.accessToken, this.profile.keyManagement.awsCredentials)
-          : {
-            kind: "Explicit",
-            accessKeyId: this.profile.keyManagement.awsCredentials.accessKeyId,
-            secretAccessKey: this.profile.keyManagement.awsCredentials.secretAccessKey
-          }
-
         this.state = {
           name: "authenticated",
           oauthInfo,
-          awsCredentials
+          awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, oauthInfo.accessToken)
         }
       } catch (error) {
         this.state = { name: "authentication-failed", error: `Token federation failure: ${describeError(error)}` }
