@@ -288,25 +288,31 @@ class StoreWithWriteLock implements ConfigStore {
 
   private async lock<T>(callback: () => Promise<T>): Promise<T> {
     return await new Promise<T>((resolve, reject) => {
-      lockfile.lock(this.configLockFile, async (err) => {
-        if (err) {
-          reject(err)
-          return
-        }
-
+      lockfile.lock(this.configLockFile, { retries: 1000, retryWait: 5 }, async (err) => {
         try {
-          resolve(await callback())
+          if (err) {
+            reject(err)
+          } else {
+            resolve(await callback())
+          }
         } catch (err) {
           reject(err)
         } finally {
-          lockfile.unlock(this.configLockFile, (err) => {
-            if (err) {
-              console.error(`An error occurred when trying to unlock the config store at ${dir}`)
-              console.error(`To remedy the problem, you might need to delete the lockfile at ${this.configLockFile}`)
-              console.error(err)
-              process.exit(1)
-            }
-          })
+          if (!err) {
+            await new Promise<void>((resolve, reject) => {
+              lockfile.unlock(this.configLockFile, (err) => {
+                if (err) {
+                  reject(err)
+                  console.error(`An error occurred when trying to unlock the config store at ${dir}`)
+                  console.error(`To remedy the problem, you might need to delete the lockfile at ${this.configLockFile}`)
+                  console.error(err)
+                  process.exit(1)
+                } else {
+                  resolve()
+                }
+              })
+            })
+          }
         }
       })
     })
