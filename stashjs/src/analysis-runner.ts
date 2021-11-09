@@ -6,7 +6,7 @@ import { join } from 'path'
 import { Worker } from "worker_threads"
 import { EventEmitter } from "events"
 import { AsyncQueue } from "./async-queue";
-import { AuthStrategy } from './auth/auth-strategy'
+import { StashProfile } from "./stash-profile";
 require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
 
 export type AnalysisResult = {
@@ -21,8 +21,7 @@ export type WorkerMessage = {
 }
 
 export type AnalysisConfig = {
-  authStrategy: AuthStrategy
-  cmk: string
+  profile: StashProfile
   schema: CollectionSchema<any, any, any>
 }
 
