@@ -3,9 +3,8 @@ import { V1 } from '@cipherstash/stashjs-grpc'
 import { CipherSuite, makeCipherSuite, makeNodeCachingMaterialsManager, MakeRefFn } from './crypto/cipher'
 import { CollectionSchema } from './collection-schema'
 import { AuthStrategy } from './auth/auth-strategy'
-import { Auth0Machine2Machine } from './auth/auth0-machine-2-machine'
-import { Auth0DeviceToken } from './auth/auth0-device-token'
 import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
+import { makeAuthStrategy } from './auth/make-auth-strategy'
 
 import { Collection } from './collection'
 import { idBufferToString, idStringToBuffer, refBufferToString } from './utils'
@@ -53,19 +52,21 @@ export class Stash {
   public static async connect(profile?: StashProfile): Promise<Stash> {
     profile ||= await Stash.loadConfig()
     const cprofile = profile
-    const authStrategy = await Stash.makeAuthStrategy(profile)
+    const authStrategy = await makeAuthStrategy(profile)
     await authStrategy.initialise()
-    const kms = authStrategy.authenticatedRequest<KMS>(({authToken: authToken}) => {
+    const kms = await authStrategy.authenticatedRequest<KMS>(({authToken: authToken}) => {
       return awsConfig(cprofile.keyManagement.awsCredentials, authToken)
         .then(cfg => new KMS(cfg))
         .catch(err => Promise.reject(err))
     })
 
+    console.log({ profile })
+
     return new Stash(
       V1.connect(profile.service.host, profile.service.port),
       authStrategy,
       profile,
-      await makeRefGenerator(await kms, profile.keyManagement.key.namingKey)
+      await makeRefGenerator(kms, profile.keyManagement.key.namingKey)
     )
   }
 
@@ -84,18 +85,24 @@ export class Stash {
   >(
     schema: CollectionSchema<R, M, MM>
   ): Promise<Collection<R, M, MM>> {
+    console.log({ createCollection: 1 })
     return this.authStrategy.authenticatedRequest(({authToken: authToken}) =>
       new Promise(async (resolve, reject) => {
+        console.log({ createCollection: 2 })
         const request: V1.CreateRequestInput = {
           ref: this.makeRef(schema.name),
           metadata: await this.encryptCollectionMetadata({ name: schema.name }),
           indexes: await this.encryptMappings(schema)
         }
+        console.log({ createCollection: 3 })
 
         this.stub.createCollection(request, grpcMetadata(authToken), async (err: any, res: any) => {
+          console.log({ createCollection: 4 })
           if (err) {
+            console.log({ createCollection: 5, err })
             reject(err)
           } else {
+            console.log({ createCollection: 6 })
             this.unpackCollection<R, M, MM>(res!).then(resolve, reject)
           }
         })
@@ -231,13 +238,6 @@ export class Stash {
 
   private async decryptCollectionMetadata(buffer: Buffer): Promise<CollectionMetadata> {
     return await (await this.sourceDataCipherSuite()).decrypt(buffer)
-  }
-
-  private static async makeAuthStrategy(profile: StashProfile): Promise<AuthStrategy> {
-    switch (profile.identityProvider.kind) {
-      case "Auth0-DeviceCode": return new Auth0DeviceToken(profile, await configStore.loadProfileAuthInfo(profile.service.workspace))
-      case "Auth0-Machine2Machine": return new Auth0Machine2Machine(profile)
-    }
   }
 }
 

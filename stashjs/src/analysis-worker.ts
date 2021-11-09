@@ -7,6 +7,7 @@ import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { idStringToBuffer, makeId } from "./utils"
+import { makeAuthStrategy } from './auth/make-auth-strategy'
 
 if (!isMainThread) {
   const recordAnalyzerCache: { [collectionName: string]: any } = {}
@@ -14,7 +15,12 @@ if (!isMainThread) {
 
   async function performAnalyis(config: AnalysisConfig, record: StashRecord): Promise<AnalysisResult> {
     if (!cachingMaterialsManager) {
-      cachingMaterialsManager = await makeNodeCachingMaterialsManager(config.cmk, config.authStrategy)
+      const authStrategy = await makeAuthStrategy(config.profile)
+      await authStrategy.initialise()
+      cachingMaterialsManager = await makeNodeCachingMaterialsManager(
+        config.profile.keyManagement.key.cmk,
+        authStrategy
+      )
     }
     const analyzer = getRecordAnalyzer(config.schema)
     const analyzedRecord = analyzer(record)
