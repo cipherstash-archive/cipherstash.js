@@ -6,9 +6,8 @@ import { AwsCredentialsSource } from './stash-profile'
 // nooooooo, they're all client-specific, so we've got to build our own.
 // LIKE ANIMALS.
 export type AWSClientConfig = {
-  // FIXME: these fields should not be optional
-  credentials?: Credentials,
-  region?: string
+  credentials: Credentials,
+  region: string
 }
 
 
