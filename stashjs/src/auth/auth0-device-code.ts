@@ -3,17 +3,23 @@ import { AuthenticationState } from './authentication-state'
 import { OauthAuthenticationInfo, stashOauth } from './oauth-utils'
 import { describeError } from "../utils"
 import { configStore } from './config-store'
-import { StashProfile } from "../stash-profile";
+import { Auth0DeviceCode as Auth0DeviceCodeType, StashProfile } from "../stash-profile";
 import { awsConfig } from "../aws";
 
 
-export class Auth0DeviceToken implements AuthStrategy {
+export class Auth0DeviceCode implements AuthStrategy {
   private state: AuthenticationState = { name: "unauthenticated" }
+  private idp: Auth0DeviceCodeType
 
   constructor(
     private profile: StashProfile,
     private authInfo: OauthAuthenticationInfo
-    ) {}
+    ) {
+    if (profile.identityProvider.kind !== "Auth0-DeviceCode") {
+      throw `Invalid identityProvider in profile passed Auth0DeviceCode (expected 'Auth0-DeviceCode', got '${profile.identityProvider.kind}')`
+    }
+    this.idp = profile.identityProvider
+  }
 
   public async initialise(): Promise<void> {
     try {
@@ -88,8 +94,8 @@ export class Auth0DeviceToken implements AuthStrategy {
 
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
-      const idpHost = this.profile.identityProvider.host
-      const clientId = this.profile.identityProvider.clientId
+      const idpHost = this.idp.host
+      const clientId = this.idp.clientId
       const oauthInfo = await stashOauth.performTokenRefresh(idpHost, refreshToken, clientId)
       await configStore.saveProfileAuthInfo(this.profile.service.workspace, oauthInfo)
 
