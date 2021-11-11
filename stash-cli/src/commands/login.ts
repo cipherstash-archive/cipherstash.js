@@ -33,7 +33,7 @@ const command: GluegunCommand = {
         profile.identityProvider.host,
         profile.identityProvider.clientId,
         profile.service.host,
-        workspace
+        profile.service.workspace
       )
 
       print.info(`Visit ${pollingInfo.verificationUri} to complete authentication`)
