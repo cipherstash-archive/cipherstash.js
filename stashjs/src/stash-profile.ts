@@ -1,3 +1,8 @@
+export type Auth0AccessToken = {
+  kind: "Auth0-AccessToken"
+  accessToken: string
+}
+
 export type Auth0DeviceCode = {
   kind: "Auth0-DeviceCode"
   host: string
@@ -11,7 +16,7 @@ export type Auth0Machine2Machine = {
   clientSecret: string
 }
 
-export type IdentityProvider = Auth0DeviceCode | Auth0Machine2Machine
+export type IdentityProvider = Auth0AccessToken | Auth0DeviceCode | Auth0Machine2Machine
 
 export type KmsKeySource = {
   cmk: string
@@ -56,11 +61,14 @@ export function loadConfigFromEnv(): StashProfile {
       workspace: getVar('CS_WORKSPACE'),
       host: getVar('CS_SERVICE_FQDN')
     },
-    identityProvider: {
+    identityProvider: getVar("CS_AUTH0_ACCESS_TOKEN", "") === "" ? {
       kind: "Auth0-Machine2Machine",
       host: getVar('CS_IDP_HOST'),
       clientId: getVar('CS_IDP_CLIENT_ID'),
       clientSecret: getVar('CS_IDP_CLIENT_SECRET')
+    } : {
+      kind: "Auth0-AccessToken",
+      accessToken: getVar('CS_AUTH0_ACCESS_TOKEN')
     },
     keyManagement: {
       kind: "AWS-KMS",
