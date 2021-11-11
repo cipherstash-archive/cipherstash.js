@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Introduce new configuration profile storage
+- Handle refreshing of federated AWS credentials
+- Stash.connect() without arguments will now load configuration from the default profile
 
 ## [0.2.35]
 
