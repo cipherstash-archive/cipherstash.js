@@ -40,11 +40,11 @@ export class StreamWriter<
   }
 
   private async writeStream(analysisResults: AsyncIterator<AnalysisResult>): Promise<V1.StreamingPutReply> {
-    return this.authStrategy.authenticatedRequest<V1.StreamingPutReply>(async ({authToken: authToken}): Promise<V1.StreamingPutReply> => {
+    return this.authStrategy.withAuthentication<V1.StreamingPutReply>(({ authToken }) => {
       return new Promise(async (resolve, reject) => {
         const metaData = new Metadata()
-        metaData.set('authorization', `Bearer ${authToken}`)
-        const stream = await this.stash.stub.putStream(metaData, (err, result) => {
+        metaData.set('authorization', `Bearer ${ authToken }`)
+        const stream = this.stash.stub.putStream(metaData, (err, result) => {
           if (err) {
             reject(err)
           } else {
