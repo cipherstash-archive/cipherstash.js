@@ -28,6 +28,13 @@ const command: GluegunCommand = {
       ? await configStore.loadProfile(workspace)
       : await configStore.loadDefaultProfile()
 
+    if (profile.identityProvider.kind !== 'Auth0-DeviceCode') {
+      print.error(
+        `Error: unexpected kind of identity provider (got '${profile.identityProvider.kind}', expected 'Auth0-DeviceCode')`
+      )
+      process.exit(1)
+    }
+
     try {
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
         profile.identityProvider.host,
