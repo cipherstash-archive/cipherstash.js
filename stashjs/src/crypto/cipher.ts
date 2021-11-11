@@ -10,7 +10,7 @@ import { getClient } from '@aws-crypto/client-node'
 import { KMS as KMSv3 } from "@aws-sdk/client-kms"
 import * as crypto from 'crypto'
 import { deserialize, serialize } from '../serializer'
-import { AuthStrategy } from '../auth/auth-strategy'
+import { AWSClientConfig } from '../aws'
 
 // TODO: Read https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#key-commitment
 
@@ -53,17 +53,14 @@ export type CipherSuite = {
   decrypt: <T>(ciphertext: Buffer) => Promise<T>
 }
 
-export async function makeNodeCachingMaterialsManager(generatorKeyId: string, authStrategy: AuthStrategy): Promise<NodeCachingMaterialsManager> {
-  return authStrategy.authenticatedRequest<NodeCachingMaterialsManager>(({awsConfig: cfg}) => {
-    const clientProvider = getClient(KMSv2, cfg)
-    return Promise.resolve(new NodeCachingMaterialsManager({
-      backingMaterials: new KmsKeyringNode({ generatorKeyId, clientProvider }),
-      cache: getLocalCryptographicMaterialsCache(cacheCapacity),
-      maxAge,
-      maxBytesEncrypted,
-      partition,
-      maxMessagesEncrypted,
-    }))
+export function makeNodeCachingMaterialsManager(generatorKeyId: string, awsConfig: AWSClientConfig): NodeCachingMaterialsManager {
+  return new NodeCachingMaterialsManager({
+    backingMaterials: new KmsKeyringNode({ generatorKeyId, clientProvider: getClient(KMSv2, awsConfig) }),
+    cache: getLocalCryptographicMaterialsCache(cacheCapacity),
+    maxAge,
+    maxBytesEncrypted,
+    partition,
+    maxMessagesEncrypted,
   })
 }
 

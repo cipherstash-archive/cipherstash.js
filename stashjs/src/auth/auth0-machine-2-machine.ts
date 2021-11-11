@@ -17,7 +17,22 @@ export class Auth0Machine2Machine implements AuthStrategy {
     this.scheduleTokenRefresh()
   }
 
-  public async authenticatedRequest<R>(callback: AuthenticationDetailsCallback<R>): Promise<R> {
+  public isFresh(): boolean {
+    if (this.state.name !== "authenticated") {
+      return false
+    }
+
+    const now = (new Date()).getTime()
+
+    const awsConfigExpiration = this.state.awsConfig.credentials!.expiration
+    // If we don't have an expiration it means we are not federating and the creds do not expire.
+    const awsCredsAreFresh = !awsConfigExpiration || awsConfigExpiration.getTime() > now
+    const auth0CredsAreFresh = this.state.oauthInfo.expiry > now
+
+    return awsCredsAreFresh && auth0CredsAreFresh
+  }
+
+  public async withAuthentication<R>(callback: AuthenticationDetailsCallback<R>): Promise<R> {
     if (this.state.name != "authenticated") {
       await this.authenticate()
     }

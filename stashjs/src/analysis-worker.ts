@@ -1,6 +1,5 @@
 import { parentPort, workerData, isMainThread } from "worker_threads"
-import { NodeCachingMaterialsManager } from '@aws-crypto/client-node'
-import { makeCipherSuite, makeNodeCachingMaterialsManager } from "./crypto/cipher"
+import { CipherSuite, makeCipherSuite, makeNodeCachingMaterialsManager } from "./crypto/cipher"
 import { CollectionSchema } from "./collection-schema"
 import { AnalysisConfig, AnalysisResult } from "./analysis-runner"
 import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
@@ -8,25 +7,29 @@ import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { idStringToBuffer, makeId } from "./utils"
 import { makeAuthStrategy } from './auth/make-auth-strategy'
+import { Memo, withFreshCredentials } from "./auth/auth-strategy"
 
 if (!isMainThread) {
   const recordAnalyzerCache: { [collectionName: string]: any } = {}
-  let cachingMaterialsManager: NodeCachingMaterialsManager
+  let cipherSuiteMemo: Memo<CipherSuite>
 
   async function performAnalyis(config: AnalysisConfig, record: StashRecord): Promise<AnalysisResult> {
-    if (!cachingMaterialsManager) {
+    if (!cipherSuiteMemo) {
       const authStrategy = await makeAuthStrategy(config.profile)
       await authStrategy.initialise()
-      cachingMaterialsManager = await makeNodeCachingMaterialsManager(
-        config.profile.keyManagement.key.cmk,
-        authStrategy
-      )
+      cipherSuiteMemo = withFreshCredentials<CipherSuite>(authStrategy, ({ awsConfig }) => {
+        return Promise.resolve(makeCipherSuite(
+          makeNodeCachingMaterialsManager(
+            config.profile.keyManagement.key.cmk,
+            awsConfig
+          )
+        ))
+      })
     }
     const analyzer = getRecordAnalyzer(config.schema)
     const analyzedRecord = analyzer(record)
     const vectors = convertAnalyzedRecordToVectors(analyzedRecord, config.schema.meta)
-    const cipherSuite = makeCipherSuite(cachingMaterialsManager)
-    const encryptedSource = (await cipherSuite.encrypt(record)).result
+    const encryptedSource = (await (await cipherSuiteMemo.freshValue()).encrypt(record)).result
     const result = {
       docId: record.id ? idStringToBuffer(record.id) : makeId(),
       vectors,
