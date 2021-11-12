@@ -4,7 +4,7 @@ import { AWSClientConfig, awsConfig } from "../aws";
 
 export class Auth0AccessToken implements AuthStrategy {
   private accessToken: string
-  private awsConfig: AWSClientConfig = {}
+  private awsConfig: AWSClientConfig = {credentials: {accessKeyId: "", secretAccessKey: ""}, region: ""}
 
   constructor(
     private profile: StashProfile
