@@ -24,7 +24,7 @@
   "dependencies": {
     "@cipherstash/stashjs": "workspace:*",
     "@types/faker": "^5.5.7",
-    "csv-parse": "^4.16.0",
+    "csv-parse": "^5.0.1",
     "faker": "^5.5.3",
     "node-repl-await": "^0.1.2",
     "timer-node": "^5.0.5",
