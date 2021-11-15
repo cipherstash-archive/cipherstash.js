@@ -10,7 +10,7 @@ set -x # trace what gets executed (useful for debugging)
 trap "echo SOMETHING WENT WRONG - please read the logs above and see if it helps you figure out what is wrong - and also ask an engineer help" ERR
 
 rm -fr ./grpc ./dist ./generated
-mkdir -p ./grpc ./dist ./generated
+mkdir -p ./grpc ./dist ./generated/stash/GRPC
 cp -R ../../../data-service/priv/grpc/* ./grpc
 
 proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js \
@@ -19,4 +19,4 @@ proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js \
 
 ./scripts/pack-api.sh
 pnpx tsc
-cp -RL grpc dist
+cp -RL grpc dist/generated/stash/GRPC
