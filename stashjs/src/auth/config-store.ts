@@ -210,6 +210,7 @@ class Store implements ConfigStore {
   private configFilePath(): string {
     return `${dir}/config.json`
   }
+
   private authTokenFilePath(profileName: string): string {
     return `${this.configDir(profileName)}/auth-token.json`
   }
