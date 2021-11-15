@@ -130,6 +130,25 @@ export class Stash {
     )
   }
 
+  public async listCollections(): Promise<Array<string>> {
+    return this.authStrategy.withAuthentication(({authToken}) =>
+      new Promise(async (resolve, reject) => {
+        this.stub.collectionList({}, grpcMetadata(authToken), async (err: any, res?: V1.ListReply) => {
+          if (err) {
+            reject(err)
+          } else if (res) {
+            const collectionMetas: Array<CollectionMetadata> = await Promise.all(res.collections.map(async (info: V1.InfoReplyOutput) =>
+              (await this.sourceDataCipherSuiteMemo.freshValue()).decrypt<CollectionMetadata>(info.metadata)
+            ))
+            resolve(collectionMetas.map(c => c.name))
+          } else {
+            reject("Undefined response")
+          }
+        })
+      })
+    )
+  }
+
   public deleteCollection(
     collectionName: string
   ): Promise<void> {
