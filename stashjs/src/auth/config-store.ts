@@ -239,7 +239,7 @@ function sanitiseProfileName(profileName: string): string {
  * This is necessary to ensure that concurrent reads and writes to the config
  * store do not cause corruption.
  */
-class StoreWithWriteLock implements ConfigStore {
+class StoreWithReadWriteLock implements ConfigStore {
 
   private configLockFile: string = [dir, 'config.lock'].join('/')
 
@@ -324,4 +324,4 @@ function stringify(obj: any): string {
   return JSON.stringify(obj, null, 2)
 }
 
-export const configStore = new StoreWithWriteLock(new Store())
+export const configStore = new StoreWithReadWriteLock(new Store())
