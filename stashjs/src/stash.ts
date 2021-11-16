@@ -112,14 +112,14 @@ export class Stash {
     M extends Mappings<R>,
     MM extends MappingsMeta<M>
   >(
-    definition: CollectionSchema<R, M, MM>
+    schemaOrName: CollectionSchema<R, M, MM> | string
   ): Promise<Collection<R, M, MM>> {
     return this.authStrategy.withAuthentication(({ authToken }) =>
       new Promise(async (resolve, reject) => {
-        const ref = this.makeRef(definition.name)
+        const name = schemaOrName instanceof CollectionSchema ? schemaOrName.name : schemaOrName
         this.stub.collectionInfo({
-          ref
-        }, grpcMetadata(authToken), async (err: any, res: any) => {
+          ref: this.makeRef(name)
+        }, grpcMetadata(authToken), async (err: any, res) => {
           if (err) {
             reject(err)
           } else {

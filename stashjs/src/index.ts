@@ -39,6 +39,11 @@ export {
   RangeMapping,
   RangeMappingFieldType,
   StashRecord,
+  isDynamicMatchMapping,
+  isExactMapping,
+  isFieldDynamicMatchMapping,
+  isMatchMapping,
+  isRangeMapping,
 } from "./dsl/mappings-dsl"
 
 export {
