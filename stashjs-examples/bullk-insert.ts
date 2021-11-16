@@ -1,6 +1,6 @@
 import { Stash } from "@cipherstash/stashjs"
 import { movieSchema } from "./example-schema"
-import parse from 'csv-parse'
+import { parse } from 'csv-parse'
 import fs from 'fs'
 
 async function bulkInsert() {
