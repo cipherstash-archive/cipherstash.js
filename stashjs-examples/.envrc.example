@@ -1,1 +1,6 @@
 export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
+
+# Options for enabling extra debugging
+# export CS_DEBUG=yes
+# export GRPC_TRACE=call_stream
+# export GRPC_VERBOSITY=DEBUG
