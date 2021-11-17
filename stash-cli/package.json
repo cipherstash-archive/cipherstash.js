@@ -27,7 +27,7 @@
   "license": "MIT",
   "dependencies": {
     "@cipherstash/stashjs": "workspace:*",
-    "axios": "^0.21.1",
+    "axios": "^0.24.0",
     "gluegun": "latest",
     "open": "^8.2.1",
     "yarn": "^1.22.11"
