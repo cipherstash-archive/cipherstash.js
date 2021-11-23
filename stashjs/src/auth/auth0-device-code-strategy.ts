@@ -1,38 +1,30 @@
 import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy";
 import { AuthenticationState } from './authentication-state'
-import { OauthAuthenticationInfo, stashOauth } from './oauth-utils'
+import { stashOauth } from './oauth-utils'
 import { describeError } from "../utils"
 import { configStore } from './config-store'
-import { Auth0DeviceCode as Auth0DeviceCodeType, StashProfile } from "../stash-profile";
+import { Auth0DeviceCode, StashProfile } from "../stash-profile";
 import { awsConfig } from "../aws";
 
+export type StashProfileAuth0DeviceCode = Omit<StashProfile, 'identityProvider'> & { identityProvider: Auth0DeviceCode }
 
-export class Auth0DeviceCode implements AuthStrategy {
+export class Auth0DeviceCodeStrategy implements AuthStrategy {
   private state: AuthenticationState = { name: "unauthenticated" }
-  private idp: Auth0DeviceCodeType
 
-  constructor(
-    private profile: StashProfile,
-    private authInfo: OauthAuthenticationInfo
-    ) {
-    if (profile.identityProvider.kind !== "Auth0-DeviceCode") {
-      throw `Invalid identityProvider in profile passed Auth0DeviceCode (expected 'Auth0-DeviceCode', got '${profile.identityProvider.kind}')`
-    }
-    this.idp = profile.identityProvider
-  }
+  constructor(private profile: StashProfileAuth0DeviceCode) {}
 
   public async initialise(): Promise<void> {
+    const oauthInfo = await configStore.loadProfileAuthInfo(this.profile.service.workspace)
     try {
-      if (!this.isExpired(this.authInfo.expiry)) {
+      if (!this.isExpired(oauthInfo.expiry)) {
         this.state = {
           name: "authenticated",
-          oauthInfo: {
-            accessToken: this.authInfo.accessToken,
-            refreshToken: this.authInfo.refreshToken,
-            expiry: this.authInfo.expiry
-          },
-          awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, this.authInfo.accessToken)
+          oauthInfo,
+          awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, oauthInfo.accessToken)
         }
+      } else {
+        // Try to perform an immediate refresh
+        // If the refresh has failed, try to start over with device code auth
       }
       this.scheduleTokenRefresh()
     } catch (err) {
@@ -94,8 +86,8 @@ export class Auth0DeviceCode implements AuthStrategy {
 
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
-      const idpHost = this.idp.host
-      const clientId = this.idp.clientId
+      const idpHost = this.profile.identityProvider.host
+      const clientId = this.profile.identityProvider.clientId
       const oauthInfo = await stashOauth.performTokenRefresh(idpHost, refreshToken, clientId)
       await configStore.saveProfileAuthInfo(this.profile.service.workspace, oauthInfo)
 

@@ -46,13 +46,13 @@ export type KMSKey = {
 }
 
 export type StashProfile = {
-  service: {
-    host: string
-    port?: number
-    workspace: string
+  readonly service: {
+    readonly host: string
+    readonly port?: number
+    readonly workspace: string
   },
-  identityProvider: IdentityProvider
-  keyManagement: KMSKey
+  readonly identityProvider: IdentityProvider
+  readonly keyManagement: KMSKey
 }
 
 export function loadConfigFromEnv(): StashProfile {

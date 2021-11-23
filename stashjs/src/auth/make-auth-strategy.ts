@@ -1,14 +1,16 @@
 import { StashProfile } from '../stash-profile'
 import { AuthStrategy } from './auth-strategy'
-import { Auth0AccessToken } from './auth0-access-token'
-import { Auth0DeviceCode } from './auth0-device-code'
-import { Auth0Machine2Machine } from './auth0-machine-2-machine'
-import { configStore } from './config-store'
+import { Auth0AccessTokenStrategy } from './auth0-access-token-strategy'
+import { Auth0DeviceCodeStrategy } from './auth0-device-code-strategy'
+import { Auth0Machine2MachineStrategy } from './auth0-machine-2-machine-strategy'
 
-export async function makeAuthStrategy(profile: StashProfile): Promise<AuthStrategy> {
+export function makeAuthStrategy(profile: StashProfile): AuthStrategy {
   switch (profile.identityProvider.kind) {
-    case "Auth0-AccessToken": return new Auth0AccessToken(profile)
-    case "Auth0-DeviceCode": return new Auth0DeviceCode(profile, await configStore.loadProfileAuthInfo(profile.service.workspace))
-    case "Auth0-Machine2Machine": return new Auth0Machine2Machine(profile)
+    // NOTE: the { ...profile, identityProvider: profile.identityProvider }
+    // idiom may seem pointless but it has the effect of narrowing the type and
+    // we don't need to cast.
+    case "Auth0-AccessToken": return new Auth0AccessTokenStrategy({ ...profile, identityProvider: profile.identityProvider })
+    case "Auth0-DeviceCode": return new Auth0DeviceCodeStrategy({ ...profile, identityProvider: profile.identityProvider })
+    case "Auth0-Machine2Machine": return new Auth0Machine2MachineStrategy({ ...profile, identityProvider: profile.identityProvider })
   }
 }
