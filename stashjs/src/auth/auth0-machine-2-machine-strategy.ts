@@ -1,22 +1,16 @@
 import { stashOauth } from './oauth-utils'
 import { AuthenticationState } from './authentication-state'
 import { AuthenticationDetailsCallback, AuthStrategy } from './auth-strategy'
-import { Auth0Machine2Machine as Auth0Machine2MachineType, StashProfile } from '../stash-profile'
+import { Auth0Machine2Machine, StashProfile } from '../stash-profile'
 import { describeError } from '../utils'
 import { awsConfig } from '../aws'
 
-export class Auth0Machine2Machine implements AuthStrategy {
-  private state: AuthenticationState = { name: "unauthenticated" }
-  private idp: Auth0Machine2MachineType
+export type StashProfileAuth0Machine2Machine = Omit<StashProfile, 'identityProvider'> & { identityProvider: Auth0Machine2Machine }
 
-  constructor(
-    private profile: StashProfile
-  ) {
-    if (profile.identityProvider.kind !== "Auth0-Machine2Machine") {
-      throw `Invalid identityProvider in profile passed Auth0Machine2Machine (expected 'Auth0-Machine2Machine', got '${profile.identityProvider.kind}')`
-    }
-    this.idp = profile.identityProvider
-  }
+export class Auth0Machine2MachineStrategy implements AuthStrategy {
+  private state: AuthenticationState = { name: "unauthenticated" }
+
+  constructor(private profile: StashProfileAuth0Machine2Machine) {}
 
   public async initialise(): Promise<void> {
     await this.authenticate()
@@ -80,9 +74,9 @@ export class Auth0Machine2Machine implements AuthStrategy {
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
       const oauthInfo = await stashOauth.performTokenRefresh(
-        this.idp.host,
+        this.profile.identityProvider.host,
         refreshToken,
-        this.idp.clientId
+        this.profile.identityProvider.clientId
       )
 
       if (this.state.name == "authenticated") {
@@ -103,10 +97,10 @@ export class Auth0Machine2Machine implements AuthStrategy {
   private async authenticate(): Promise<void> {
     try {
       const oauthInfo = await stashOauth.authenticateViaClientCredentials(
-        this.idp.host,
+        this.profile.identityProvider.host,
         this.profile.service.host,
-        this.idp.clientId,
-        this.idp.clientSecret
+        this.profile.identityProvider.clientId,
+        this.profile.identityProvider.clientSecret
       )
       try {
         this.state = {
