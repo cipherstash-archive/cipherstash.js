@@ -1,23 +1,17 @@
 import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy";
-import { StashProfile } from "../stash-profile";
+import { Auth0AccessToken, StashProfile } from "../stash-profile";
 import { AWSClientConfig, awsConfig } from "../aws";
 
-export class Auth0AccessToken implements AuthStrategy {
-  private accessToken: string
+export type StashProfileAuth0AccessToken = Omit<StashProfile, 'identityProvider'> & { identityProvider: Auth0AccessToken }
+
+export class Auth0AccessTokenStrategy implements AuthStrategy {
   private awsConfig: AWSClientConfig = {credentials: {accessKeyId: "", secretAccessKey: ""}, region: ""}
 
-  constructor(
-    private profile: StashProfile
-  ) {
-    if (this.profile.identityProvider.kind !== "Auth0-AccessToken") {
-      throw `Invalid identityProvider in profile passed Auth0AccessToken (expected 'Auth0-AccessToken', got '${profile.identityProvider.kind}')`
-    }
-    this.accessToken = this.profile.identityProvider.accessToken
-  }
+  constructor(private profile: StashProfileAuth0AccessToken) {}
 
   public async initialise(): Promise<void> {
     try {
-      this.awsConfig = await awsConfig(this.profile.keyManagement.awsCredentials, this.accessToken)
+      this.awsConfig = await awsConfig(this.profile.keyManagement.awsCredentials, this.profile.identityProvider.accessToken)
       return Promise.resolve()
     } catch (err) {
       return Promise.reject(err)
@@ -32,6 +26,6 @@ export class Auth0AccessToken implements AuthStrategy {
   }
 
   public withAuthentication<R>(callback: AuthenticationDetailsCallback<R>): Promise<R> {
-    return callback({authToken: this.accessToken, awsConfig: this.awsConfig})
+    return callback({authToken: this.profile.identityProvider.accessToken, awsConfig: this.awsConfig})
   }
 }
