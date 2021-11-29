@@ -5,7 +5,7 @@ import fs from 'fs'
 
 async function bulkInsert() {
   try {
-    const stash = await Stash.connect(Stash.loadConfigFromEnv())
+    const stash = await Stash.connect()
     const movies = await stash.loadCollection(movieSchema)
     console.log(`Collection "${movies.name}" loaded`)
 

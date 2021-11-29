@@ -5,11 +5,7 @@ async function listCollections() {
     const stash = await Stash.connect()
     const collectionNames = await stash.listCollections()
     collectionNames.forEach(async name => {
-      const collection = await stash.loadCollection(name)
-      console.log(`Collection: "${name}`)
-      Object.entries(collection.schema.mappings).forEach(async ([mapping, settings]) => {
-        console.log(`\t${mapping}`)
-      })
+      console.log(`Collection: "${name}"`)
     })
   } catch (err) {
     console.error(`Could not list collections! Reason: ${describeError(err)}`)
