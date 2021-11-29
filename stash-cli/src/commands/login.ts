@@ -1,6 +1,6 @@
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import { configStore, stashOauth, describeError } from '@cipherstash/stashjs'
+import { profileStore, stashOauth, describeError, StashProfile } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
@@ -9,15 +9,13 @@ const command: GluegunCommand = {
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
 
-    const workspace: string | undefined =
-      parameters.options.workspace ||
-      (await configStore.loadDefaultProfileName())
+    const workspace: string | undefined = parameters.options.workspace || (await profileStore.loadDefaultProfile())?.name
 
     if (!workspace) {
       print.error(
         'Error: no workspace was provided and default workspace is set'
       )
-      const workspaceIds = await configStore.loadProfileNames()
+      const workspaceIds = await profileStore.loadProfileNames()
       if (workspaceIds.length > 0) {
         print.info(
           `stash-cli knows about the following workspaces: ${workspaceIds.join(
@@ -39,22 +37,22 @@ const command: GluegunCommand = {
     }
 
     const profile = workspace
-      ? await configStore.loadProfile(workspace)
-      : await configStore.loadDefaultProfile()
+      ? await profileStore.loadProfile(workspace)
+      : await profileStore.loadDefaultProfile()
 
-    if (profile.identityProvider.kind !== 'Auth0-DeviceCode') {
+    if (profile.config.identityProvider.kind !== 'Auth0-DeviceCode') {
       print.error(
-        `Error: unexpected kind of identity provider (got '${profile.identityProvider.kind}', expected 'Auth0-DeviceCode')`
+        `Error: unexpected kind of identity provider (got '${profile.config.identityProvider.kind}', expected 'Auth0-DeviceCode')`
       )
       process.exit(1)
     }
 
     try {
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
-        profile.identityProvider.host,
-        profile.identityProvider.clientId,
-        profile.service.host,
-        profile.service.workspace
+        profile.config.identityProvider.host,
+        profile.config.identityProvider.clientId,
+        profile.config.service.host,
+        profile.config.service.workspace
       )
 
       print.info(
@@ -71,17 +69,19 @@ const command: GluegunCommand = {
       }
 
       const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
-        profile.identityProvider.host,
-        profile.identityProvider.clientId,
+        profile.config.identityProvider.host,
+        profile.config.identityProvider.clientId,
         pollingInfo.deviceCode,
         pollingInfo.interval
       )
 
+      const updatedProfile: StashProfile = { ...profile, creds: authInfo }
+
       print.info('Login Successful')
 
-      await configStore.saveProfileAuthInfo(workspace, authInfo)
+      await profileStore.saveProfile(updatedProfile)
 
-      print.info(`Auth-token saved to ${configStore.configDir(workspace)}`)
+      print.info(`Auth-token saved`)
     } catch (error) {
       print.error(
         `Could not login. Message from server: "${describeError(error)}"`

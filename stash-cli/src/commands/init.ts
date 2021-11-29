@@ -3,7 +3,7 @@ import axios, { AxiosInstance } from 'axios'
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
 import {
-  configStore,
+  profileStore,
   defaults,
   stashOauth,
   describeError,
@@ -66,56 +66,50 @@ const command: GluegunCommand = {
         pollingInfo.interval
       )
 
-      await configStore.ensureConfigDirExists()
-      await configStore.saveProfileAuthInfo(workspace, authInfo)
-      print.info('Login Successful')
-
       const response = await makeHttpsClient(
         consoleApiHost,
         consoleApiPort
-      ).get(`/api/meta/workspaces/${workspace}`, {
+      ).get(`/api/meta/workspaces/${encodeURIComponent(workspace)}`, {
         headers: {
           Authorization: `Bearer ${authInfo.accessToken}`
         }
       })
 
-      const workspaceConfig: StashProfile = {
-        service: {
-          workspace,
-          host: serviceHost,
-          port: servicePort
-        },
-        identityProvider: {
-          kind: 'Auth0-DeviceCode',
-          host: identityProviderHost,
-          clientId: identityProviderClientId
-        },
-        keyManagement: {
-          kind: 'AWS-KMS',
-          awsCredentials: {
-            kind: 'Federated',
-            region: response.data.keyRegion,
-            roleArn: response.data.keyRoleArn
+      const profile: StashProfile = {
+        name: workspace,
+        config: {
+          service: {
+            workspace,
+            host: serviceHost,
+            port: servicePort
           },
-          key: {
-            cmk: response.data.keyId,
-            namingKey: response.data.namingKey,
-            region: response.data.keyRegion
+          identityProvider: {
+            kind: 'Auth0-DeviceCode',
+            host: identityProviderHost,
+            clientId: identityProviderClientId
+          },
+          keyManagement: {
+            kind: 'AWS-KMS',
+            awsCredentials: {
+              kind: 'Federated',
+              region: response.data.keyRegion,
+              roleArn: response.data.keyRoleArn
+            },
+            key: {
+              cmk: response.data.keyId,
+              namingKey: response.data.namingKey,
+              region: response.data.keyRegion
+            }
           }
-        }
+        },
+        creds: authInfo
       }
 
-      await configStore.saveProfile(workspace, workspaceConfig)
+      await profileStore.saveProfile(profile)
 
-      print.info(
-        `Workspace configuration and authentication details have been saved in dir ${configStore.configDir(
-          workspace
-        )}`
-      )
+      print.info(`Workspace configuration and authentication details have been saved in dir ~/.cipherstash`)
     } catch (error) {
-      print.error(
-        `Could not login. Message from server: "${describeError(error)}"`
-      )
+      print.error(`Could not init: ${describeError(error)}`)
     }
   }
 }
