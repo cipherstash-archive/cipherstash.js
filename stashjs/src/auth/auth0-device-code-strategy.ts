@@ -2,11 +2,15 @@ import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy";
 import { AuthenticationState } from './authentication-state'
 import { stashOauth } from './oauth-utils'
 import { describeError } from "../utils"
-import { configStore } from './config-store'
-import { Auth0DeviceCode, StashProfile } from "../stash-profile";
+import { profileStore } from './profile-store'
+import { Auth0DeviceCode, StashConfiguration } from "../stash-config";
 import { awsConfig } from "../aws";
+import { StashProfile } from "../stash-profile";
+import * as open from 'open'
 
-export type StashProfileAuth0DeviceCode = Omit<StashProfile, 'identityProvider'> & { identityProvider: Auth0DeviceCode }
+export type StashProfileAuth0DeviceCode  = StashProfile & {
+  config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0DeviceCode }
+}
 
 export class Auth0DeviceCodeStrategy implements AuthStrategy {
   private state: AuthenticationState = { name: "unauthenticated" }
@@ -14,17 +18,39 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy {
   constructor(private profile: StashProfileAuth0DeviceCode) {}
 
   public async initialise(): Promise<void> {
-    const oauthInfo = await configStore.loadProfileAuthInfo(this.profile.service.workspace)
     try {
-      if (!this.isExpired(oauthInfo.expiry)) {
+      if (!this.isExpired(this.profile.creds.expiry)) {
         this.state = {
           name: "authenticated",
-          oauthInfo,
-          awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, oauthInfo.accessToken)
+          oauthInfo: this.profile.creds,
+          awsConfig: await awsConfig(this.profile.config.keyManagement.awsCredentials, this.profile.creds.accessToken)
         }
       } else {
-        // Try to perform an immediate refresh
-        // If the refresh has failed, try to start over with device code auth
+        try {
+          // Try to perform an immediate refresh
+          await this.performTokenRefreshAndUpdateState(this.profile.creds.refreshToken)
+        } catch (err) {
+          // If the refresh has failed, try to start over with device code auth
+          const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
+            this.profile.config.identityProvider.host,
+            this.profile.config.identityProvider.clientId,
+            this.profile.config.service.host,
+            this.profile.config.service.workspace
+          )
+
+          if (!isInteractive()) {
+            open.default(pollingInfo.verificationUri)
+          }
+
+          const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
+            this.profile.config.identityProvider.host,
+            this.profile.config.identityProvider.clientId,
+            pollingInfo.deviceCode,
+            pollingInfo.interval
+          )
+
+          await profileStore.saveProfile({ ...this.profile, creds: authInfo })
+        }
       }
       this.scheduleTokenRefresh()
     } catch (err) {
@@ -86,23 +112,32 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy {
 
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
-      const idpHost = this.profile.identityProvider.host
-      const clientId = this.profile.identityProvider.clientId
+      const idpHost = this.profile.config.identityProvider.host
+      const clientId = this.profile.config.identityProvider.clientId
       const oauthInfo = await stashOauth.performTokenRefresh(idpHost, refreshToken, clientId)
-      await configStore.saveProfileAuthInfo(this.profile.service.workspace, oauthInfo)
+      await profileStore.saveProfile({ ...this.profile, creds: oauthInfo })
 
       this.state = {
         name: "authenticated",
         oauthInfo,
-        awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, oauthInfo.accessToken)
+        awsConfig: await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.accessToken)
       }
+      return Promise.resolve()
     } catch (err) {
       this.state = {
         name: "authentication-failed",
         error: describeError(err)
       }
+      return Promise.reject()
     }
   }
 }
 
 const EXPIRY_BUFFER_SECONDS = 20
+
+function isInteractive(): boolean {
+  return (
+    process.env['SSH_CLIENT'] !== undefined ||
+    process.env['SSH_TTY'] !== undefined
+  )
+}
