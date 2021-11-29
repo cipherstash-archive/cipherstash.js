@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Introduce new configuration profile storage
 - Handle refreshing of federated AWS credentials
+- Handle refreshing of device token auth credentials
 - Stash.connect() without arguments will now load configuration from the default profile
 - Export additional type guard so that they can be used in StashCLI
 - Make Stash.listCollections() also return collection metadata
