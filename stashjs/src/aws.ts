@@ -1,6 +1,6 @@
 import { AssumeRoleWithWebIdentityCommandOutput, STS } from "@aws-sdk/client-sts"
 import { Credentials } from '@aws-sdk/types'
-import { AwsCredentialsSource } from './stash-profile'
+import { AwsCredentialsSource } from './stash-config'
 
 // You'd think there'd be one of these ready-to-go in @aws-sdk/types, but
 // nooooooo, they're all client-specific, so we've got to build our own.

@@ -4,7 +4,7 @@ import querystring from 'querystring'
 import jws from 'jws'
 import { describeError } from '../utils'
 
-const SCOPES = "collection.create collection.delete collection.info document.put document.delete document.get document.query"
+const SCOPES = "collection.create collection.delete collection.info collection.list document.put document.delete document.get document.query"
 
 export type OauthAuthenticationInfo = {
   accessToken: string,
@@ -55,11 +55,11 @@ class StashOauth {
         refresh_token: refreshToken,
         client_id: clientId
       }
-      const response = await makeOauthClient(idpHost).post('/oauth/token', querystring.stringify(params))
-      if (response.status > 200 && response.status < 400) {
+      try {
+        const response = await makeOauthClient(idpHost).post('/oauth/token', querystring.stringify(params))
         return this.unpackResponse(camelcaseKeys(JSON.parse(response.data)))
-      } else {
-        return Promise.reject(`Token refresh failed - returned status ${response.status} data: ${JSON.stringify(response.data)}`)
+      } catch (err: any) {
+        return Promise.reject(`Token refresh failed - ${err?.message}`)
       }
     } catch (err) {
       return Promise.reject(`Token refresh failed: ${describeError(err)}`)

@@ -1,11 +1,13 @@
 import { stashOauth } from './oauth-utils'
 import { AuthenticationState } from './authentication-state'
 import { AuthenticationDetailsCallback, AuthStrategy } from './auth-strategy'
-import { Auth0Machine2Machine, StashProfile } from '../stash-profile'
+import { Auth0Machine2Machine, StashConfiguration } from '../stash-config'
 import { describeError } from '../utils'
 import { awsConfig } from '../aws'
 
-export type StashProfileAuth0Machine2Machine = Omit<StashProfile, 'identityProvider'> & { identityProvider: Auth0Machine2Machine }
+export type StashProfileAuth0Machine2Machine = {
+  config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0Machine2Machine }
+}
 
 export class Auth0Machine2MachineStrategy implements AuthStrategy {
   private state: AuthenticationState = { name: "unauthenticated" }
@@ -74,16 +76,16 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy {
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
     try {
       const oauthInfo = await stashOauth.performTokenRefresh(
-        this.profile.identityProvider.host,
+        this.profile.config.identityProvider.host,
         refreshToken,
-        this.profile.identityProvider.clientId
+        this.profile.config.identityProvider.clientId
       )
 
       if (this.state.name == "authenticated") {
         this.state = {
           name: "authenticated",
           oauthInfo,
-          awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, oauthInfo.accessToken)
+          awsConfig: await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.accessToken)
         }
       }
     } catch (err) {
@@ -97,16 +99,16 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy {
   private async authenticate(): Promise<void> {
     try {
       const oauthInfo = await stashOauth.authenticateViaClientCredentials(
-        this.profile.identityProvider.host,
-        this.profile.service.host,
-        this.profile.identityProvider.clientId,
-        this.profile.identityProvider.clientSecret
+        this.profile.config.identityProvider.host,
+        this.profile.config.service.host,
+        this.profile.config.identityProvider.clientId,
+        this.profile.config.identityProvider.clientSecret
       )
       try {
         this.state = {
           name: "authenticated",
           oauthInfo,
-          awsConfig: await awsConfig(this.profile.keyManagement.awsCredentials, oauthInfo.accessToken)
+          awsConfig: await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.accessToken)
         }
       } catch (error) {
         this.state = { name: "authentication-failed", error: `Token federation failure: ${describeError(error)}` }

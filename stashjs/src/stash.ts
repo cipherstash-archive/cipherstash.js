@@ -8,13 +8,14 @@ import { makeAuthStrategy } from './auth/make-auth-strategy'
 
 import { Collection } from './collection'
 import { idBufferToString, idStringToBuffer, refBufferToString } from './utils'
-import { loadConfigFromEnv, StashProfile } from './stash-profile'
+import { loadConfigFromEnv, StashConfiguration } from './stash-config'
 
 import { grpcMetadata } from './auth/grpc-metadata'
-import { CollectionMetadata, configStore } from '.'
+import { CollectionMetadata, profileStore } from '.'
 
 import { makeRefGenerator } from './crypto/cipher'
 import { KMS } from '@aws-sdk/client-kms'
+import { StashProfile } from './stash-profile'
 
 export type LoadConfigOptions = Readonly<{
   profileName?: string
@@ -34,13 +35,13 @@ export class Stash {
   private constructor(
     public readonly stub: V1.APIClient,
     public readonly authStrategy: AuthStrategy,
-    public readonly config: StashProfile,
+    public readonly profile: StashProfile,
     private readonly makeRef: MakeRefFn
   ) {
     this.sourceDataCipherSuiteMemo = withFreshCredentials<CipherSuite>(this.authStrategy, ({ awsConfig }) => {
       return Promise.resolve(makeCipherSuite(
         makeNodeCachingMaterialsManager(
-          this.config.keyManagement.key.cmk,
+          this.profile.config.keyManagement.key.cmk,
           awsConfig
         )
       ))
@@ -49,28 +50,28 @@ export class Stash {
 
   public static async loadConfig(opts?: LoadConfigOptions): Promise<StashProfile> {
     const profile = opts?.profileName
-      ? await configStore.loadProfile(opts.profileName)
-      : await configStore.loadDefaultProfile()
+      ? await profileStore.loadProfile(opts.profileName)
+      : await profileStore.loadDefaultProfile()
 
     return profile
   }
 
-  public static loadConfigFromEnv(): StashProfile {
+  public static loadConfigFromEnv(): StashConfiguration {
     return loadConfigFromEnv()
   }
 
   public static async connect(maybeProfile?: StashProfile): Promise<Stash> {
     const profile: StashProfile = maybeProfile || await Stash.loadConfig()
-    const authStrategy = await makeAuthStrategy(profile)
+    const authStrategy = makeAuthStrategy(profile)
     await authStrategy.initialise()
     return await authStrategy.withAuthentication<Stash>(async ({awsConfig}) =>
       new Stash(
-        V1.connect(profile.service.host, profile.service.port),
+        V1.connect(profile.config.service.host, profile.config.service.port),
         authStrategy,
         profile,
         await makeRefGenerator(
           new KMS(awsConfig),
-          profile.keyManagement.key.namingKey
+          profile.config.keyManagement.key.namingKey
         )
       )
     )
