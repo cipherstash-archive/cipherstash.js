@@ -4,7 +4,7 @@ import {
   Stash,
   StashProfile,
   StashRecord,
-  configStore,
+  profileStore,
   describeError,
   isDynamicMatchMapping,
   isExactMapping,
@@ -25,9 +25,9 @@ const command: GluegunCommand = {
     try {
       let profile: StashProfile;
       if (profileName) {
-        profile = await configStore.loadProfile(profileName)
+        profile = await profileStore.loadProfile(profileName)
       } else {
-        profile = await configStore.loadDefaultProfile()
+        profile = await profileStore.loadDefaultProfile()
       }
 
       const stash = await Stash.connect(profile)
