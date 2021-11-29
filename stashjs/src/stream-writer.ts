@@ -21,7 +21,7 @@ export class StreamWriter<
     private authStrategy: AuthStrategy
   ) {
     this.analysisRunner = new AnalysisRunner({
-      profile: this.stash.config,
+      profile: this.stash.profile,
       schema: this.schema
     })
    }

@@ -1,4 +1,8 @@
 export {
+  StashConfiguration,
+} from './stash-config'
+
+export {
   StashProfile,
 } from './stash-profile'
 
@@ -89,6 +93,6 @@ export {
 } from './auth/oauth-utils'
 
 export {
-  configStore,
+  profileStore,
   defaults
-} from './auth/config-store'
+} from './auth/profile-store'
