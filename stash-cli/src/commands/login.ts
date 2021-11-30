@@ -75,7 +75,7 @@ const command: GluegunCommand = {
         pollingInfo.interval
       )
 
-      const updatedProfile: StashProfile = { ...profile, creds: authInfo }
+      const updatedProfile: StashProfile = { ...profile, oauthCreds: authInfo }
 
       print.info('Login Successful')
 

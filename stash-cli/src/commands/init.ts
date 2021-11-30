@@ -102,7 +102,7 @@ const command: GluegunCommand = {
             }
           }
         },
-        creds: authInfo
+        oauthCreds: authInfo
       }
 
       await profileStore.saveProfile(profile)

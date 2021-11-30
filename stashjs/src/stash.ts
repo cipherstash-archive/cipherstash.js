@@ -8,7 +8,7 @@ import { makeAuthStrategy } from './auth/make-auth-strategy'
 
 import { Collection } from './collection'
 import { idBufferToString, idStringToBuffer, refBufferToString } from './utils'
-import { loadConfigFromEnv, StashConfiguration } from './stash-config'
+import { loadProfileFromEnv } from './stash-config'
 
 import { grpcMetadata } from './auth/grpc-metadata'
 import { CollectionMetadata, profileStore } from '.'
@@ -17,7 +17,7 @@ import { makeRefGenerator } from './crypto/cipher'
 import { KMS } from '@aws-sdk/client-kms'
 import { StashProfile } from './stash-profile'
 
-export type LoadConfigOptions = Readonly<{
+export type ProfileOptions = Readonly<{
   profileName?: string
 }>
 
@@ -48,7 +48,7 @@ export class Stash {
     })
   }
 
-  public static async loadConfig(opts?: LoadConfigOptions): Promise<StashProfile> {
+  public static async loadProfile(opts?: ProfileOptions): Promise<StashProfile> {
     const profile = opts?.profileName
       ? await profileStore.loadProfile(opts.profileName)
       : await profileStore.loadDefaultProfile()
@@ -56,12 +56,12 @@ export class Stash {
     return profile
   }
 
-  public static loadConfigFromEnv(): StashConfiguration {
-    return loadConfigFromEnv()
+  public static loadProfileFromEnv(): StashProfile {
+    return loadProfileFromEnv()
   }
 
   public static async connect(maybeProfile?: StashProfile): Promise<Stash> {
-    const profile: StashProfile = maybeProfile || await Stash.loadConfig()
+    const profile: StashProfile = maybeProfile || await Stash.loadProfile()
     const authStrategy = makeAuthStrategy(profile)
     await authStrategy.initialise()
     return await authStrategy.withAuthentication<Stash>(async ({awsConfig}) =>

@@ -1,3 +1,4 @@
+import { StashProfile } from "./stash-profile"
 
 export type Auth0AccessToken = {
   kind: "Auth0-AccessToken"
@@ -56,39 +57,42 @@ export type StashConfiguration = {
   readonly keyManagement: KMSKey
 }
 
-export function loadConfigFromEnv(): StashConfiguration {
+export function loadProfileFromEnv(): StashProfile {
   return {
-    service: {
-      workspace: getVar('CS_WORKSPACE'),
-      host: getVar('CS_SERVICE_FQDN')
-    },
-    identityProvider: getVar("CS_AUTH0_ACCESS_TOKEN", "") === "" ? {
-      kind: "Auth0-Machine2Machine",
-      host: getVar('CS_IDP_HOST'),
-      clientId: getVar('CS_IDP_CLIENT_ID'),
-      clientSecret: getVar('CS_IDP_CLIENT_SECRET')
-    } : {
-      kind: "Auth0-AccessToken",
-      accessToken: getVar('CS_AUTH0_ACCESS_TOKEN')
-    },
-    keyManagement: {
-      kind: "AWS-KMS",
-      key: {
-        cmk: getVar('CS_DEV_CMK'),
-        namingKey: getVar('CS_NAMING_KEY'),
-        region: getVar('AWS_REGION')
+    name: `${getVar('CS_SERVICE_FQDN')}-${getVar('CS_WORKSPACE')}`,
+    config: {
+      service: {
+        workspace: getVar('CS_WORKSPACE'),
+        host: getVar('CS_SERVICE_FQDN')
       },
-      awsCredentials: /^(y|yes|t|true|on|1)$/.test(getVar("CS_AWS_FEDERATION", "on")) ? {
-        kind: "Federated",
-        roleArn: getVar("CS_AWS_FEDERATION_ROLE_ARN"),
-        region: getVar('AWS_REGION')
+      identityProvider: getVar("CS_AUTH0_ACCESS_TOKEN", "") === "" ? {
+        kind: "Auth0-Machine2Machine",
+        host: getVar('CS_IDP_HOST'),
+        clientId: getVar('CS_IDP_CLIENT_ID'),
+        clientSecret: getVar('CS_IDP_CLIENT_SECRET')
       } : {
-        kind: "Explicit",
-        accessKeyId: getVar("AWS_ACCESS_KEY_ID"),
-        secretAccessKey: getVar("AWS_SECRET_ACCESS_KEY"),
-        region: getVar('AWS_REGION')
-      }
-    },
+        kind: "Auth0-AccessToken",
+        accessToken: getVar('CS_AUTH0_ACCESS_TOKEN')
+      },
+      keyManagement: {
+        kind: "AWS-KMS",
+        key: {
+          cmk: getVar('CS_DEV_CMK'),
+          namingKey: getVar('CS_NAMING_KEY'),
+          region: getVar('AWS_REGION')
+        },
+        awsCredentials: /^(y|yes|t|true|on|1)$/.test(getVar("CS_AWS_FEDERATION", "on")) ? {
+          kind: "Federated",
+          roleArn: getVar("CS_AWS_FEDERATION_ROLE_ARN"),
+          region: getVar('AWS_REGION')
+        } : {
+          kind: "Explicit",
+          accessKeyId: getVar("AWS_ACCESS_KEY_ID"),
+          secretAccessKey: getVar("AWS_SECRET_ACCESS_KEY"),
+          region: getVar('AWS_REGION')
+        }
+      },
+    }
   }
 }
 

@@ -17,7 +17,7 @@ async function *fakeMovieGenerator(count: number): AsyncIterator<Movie> {
 
 async function insertRecords() {
   try {
-    const stash = await Stash.connect(await Stash.loadConfig())
+    const stash = await Stash.connect()
     const movies = await stash.loadCollection(movieSchema)
     console.log(`Collection "${movies.name}" loaded`)
 

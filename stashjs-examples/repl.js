@@ -47,7 +47,7 @@ local.defineCommand('connect', {
   async action(name) {
     this.clearBufferedCommand();
     console.log("Starting session...")
-    stash = await Stash.connect(Stash.loadConfigFromEnv())
+    stash = await Stash.connect()
     console.log("Connected")
     this.displayPrompt();
   }

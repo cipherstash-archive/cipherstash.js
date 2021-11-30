@@ -14,7 +14,7 @@ function displayResults(result: any, name: string) {
 
 async function queryCollection() {
   try {
-    const stash = await Stash.connect(await Stash.loadConfig())
+    const stash = await Stash.connect()
     const movies = await stash.loadCollection(movieSchema)
 
     let queryResult = await movies.query(movie => movie.title.match("The Matrix"))
