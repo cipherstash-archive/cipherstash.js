@@ -3,7 +3,7 @@ import { movieSchema } from "./example-schema"
 
 async function deleteRecord() {
   try {
-    const stash = await Stash.connect(await Stash.loadConfig())
+    const stash = await Stash.connect()
     const employees = await stash.loadCollection(movieSchema)
 
     let queryResult = await employees.query(movie => movie.exactTitle.eq("The Matrix"))
