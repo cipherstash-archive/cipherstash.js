@@ -6,9 +6,6 @@ import { Auth0Machine2MachineStrategy, StashProfileAuth0Machine2Machine } from '
 
 export function makeAuthStrategy(profile: StashProfile): AuthStrategy {
   switch (profile.config.identityProvider.kind) {
-    // NOTE: the { ...profile, identityProvider: profile.identityProvider }
-    // idiom may seem pointless but it has the effect of narrowing the type and
-    // we don't need to cast.
     case "Auth0-AccessToken": return new Auth0AccessTokenStrategy(profile as StashProfileAuth0AccessToken)
     case "Auth0-DeviceCode": return new Auth0DeviceCodeStrategy(profile as StashProfileAuth0DeviceCode)
     case "Auth0-Machine2Machine": return new Auth0Machine2MachineStrategy(profile as StashProfileAuth0Machine2Machine)

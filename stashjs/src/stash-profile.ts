@@ -10,6 +10,15 @@ export type StashProfile = {
    * The name of the profile. This is the directory name where the profile will be stored `$HOME/.cipherstash/<name>`.
    */
   readonly name: string
+
+  /**
+   * The configuration for this StashProfile
+   */
   readonly config: StashConfiguration
-  readonly creds: OauthAuthenticationInfo
+
+  /**
+   * The auth token for this StashProfile
+   * TODO: this will not be present for a M2M login.
+   */
+  readonly oauthCreds?: OauthAuthenticationInfo
 }

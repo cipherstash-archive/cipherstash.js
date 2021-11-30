@@ -117,7 +117,7 @@ class Store implements ProfileStore {
       return {
         name: sanitiseProfileName(profileName),
         config: JSON.parse(configBuffer.toString('utf-8')),
-        creds: JSON.parse(credsBuffer.toString('utf-8'))
+        oauthCreds: JSON.parse(credsBuffer.toString('utf-8'))
       }
     } catch (error) {
       return Promise.reject(`Failed to load config file: ${describeError(error)}`)
@@ -128,7 +128,7 @@ class Store implements ProfileStore {
     try {
       await fs.promises.mkdir(this.configDir(profile.name), { recursive: true })
       await fs.promises.writeFile(this.profileConfigFilePath(profile.name), stringify(profile.config))
-      await fs.promises.writeFile(this.profileAuthTokenFilePath(profile.name), stringify(profile.creds))
+      await fs.promises.writeFile(this.profileAuthTokenFilePath(profile.name), stringify(profile.oauthCreds))
       if ((await this.loadProfileNames()).length === 1) {
         await this.setDefaultProfile(profile)
       }

@@ -3,7 +3,7 @@ import { movieSchema } from "./example-schema"
 
 async function createCollection() {
   try {
-    const stash = await Stash.connect(await Stash.loadConfig())
+    const stash = await Stash.connect()
     const movies = await stash.createCollection(movieSchema)
     console.log(`Collection "${movies.name}" created`)
   } catch (err) {
