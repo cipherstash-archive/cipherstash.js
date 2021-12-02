@@ -41,7 +41,7 @@ export class Stash {
     this.sourceDataCipherSuiteMemo = withFreshCredentials<CipherSuite>(this.authStrategy, ({ awsConfig }) => {
       return Promise.resolve(makeCipherSuite(
         makeNodeCachingMaterialsManager(
-          this.profile.config.keyManagement.key.cmk,
+          this.profile.config.keyManagement.key.arn,
           awsConfig
         )
       ))

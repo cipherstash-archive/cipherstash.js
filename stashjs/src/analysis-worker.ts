@@ -20,7 +20,7 @@ if (!isMainThread) {
       cipherSuiteMemo = withFreshCredentials<CipherSuite>(authStrategy, ({ awsConfig }) => {
         return Promise.resolve(makeCipherSuite(
           makeNodeCachingMaterialsManager(
-            config.profile.config.keyManagement.key.cmk,
+            config.profile.config.keyManagement.key.arn,
             awsConfig
           )
         ))
