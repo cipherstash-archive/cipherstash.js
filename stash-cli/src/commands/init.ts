@@ -96,7 +96,7 @@ const command: GluegunCommand = {
               roleArn: response.data.keyRoleArn
             },
             key: {
-              cmk: response.data.keyId,
+              arn: response.data.keyId,
               namingKey: response.data.namingKey,
               region: response.data.keyRegion
             }
