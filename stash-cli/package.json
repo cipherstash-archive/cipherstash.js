@@ -50,7 +50,8 @@
   },
   "prettier": {
     "semi": false,
-    "singleQuote": true
+    "singleQuote": true,
+    "printWidth": 120
   },
   "engines": {
     "npm": "use pnpm!"
