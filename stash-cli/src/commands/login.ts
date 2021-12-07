@@ -37,8 +37,6 @@ const command: GluegunCommand = {
 
     if (isNewLogin(options)) {
       const basicProfile = buildBasicStashProfile(options)
-      const consoleApiHost: string = options.consoleApiHost || 'console.cipherstash.com'
-      const consoleApiPort: number = options.consoleApiPort || 443
 
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
         basicProfile.config.identityProvider.host,
@@ -82,8 +80,8 @@ const command: GluegunCommand = {
       const workspace = basicProfile.config.service.workspace
 
       const response = await makeHttpsClient(
-        consoleApiHost,
-        consoleApiPort
+        basicProfile.config.service.host,
+        basicProfile.config.service.port || 443
       ).get(`/api/meta/workspaces/${encodeURIComponent(workspace)}`, {
         headers: {
           Authorization: `Bearer ${authInfo.value.accessToken}`
