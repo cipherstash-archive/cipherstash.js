@@ -1,0 +1,21 @@
+[package]
+name = "ore-rs"
+version = "0.1.0"
+description = "Node bindings for ore.rs"
+license = "ISC"
+edition = "2018"
+exclude = ["index.node"]
+
+[lib]
+crate-type = ["cdylib"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ore-rs = "0.1.0"
+hex-literal = "0.3.2"
+
+[dependencies.neon]
+version = "0.9"
+default-features = false
+features = ["napi-6"]
