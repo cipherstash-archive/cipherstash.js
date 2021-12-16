@@ -1,17 +1,20 @@
 use hex_literal::hex;
 use neon::prelude::*;
-use ore_rs::{scheme::bit2::OREAES128, ORECipher, OREError, PlainText};
+use ore_rs::{scheme::bit2::OREAES128, ORECipher, OREError, PlainText, CipherText};
 use std::cell::RefCell;
 
 struct Cipher(OREAES128);
+
+impl Cipher {
+    pub fn encrypt(&mut self, v: &PlainText<8>) -> Result<CipherText<OREAES128, 8>, OREError> {
+        self.0.encrypt(v)
+    }
+}
 
 // TODO: Use zeroize to clear values garbage collected from Node
 impl Finalize for Cipher {}
 
 type BoxedCipher = JsBox<RefCell<Cipher>>;
-
-// Easiest path forward is probably to just pass a buffer to a function here
-// and implement the OREEncrypt trait for a JsBuffer
 
 fn init(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
     let arg0 = cx.argument::<JsBuffer>(0)?;
@@ -21,7 +24,9 @@ fn init(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
     let clone_key = |data: neon::borrow::Ref<'_, BinaryData<'_>>| {
         let mut k: [u8; 16] = Default::default();
         let slice = data.as_slice::<u8>();
-        if slice.len() != 16 { return Err("Invalid key length") }
+        if slice.len() != 16 {
+            return Err("Invalid key length");
+        }
         k.clone_from_slice(data.as_slice::<u8>());
         return Ok(k);
     };
@@ -37,28 +42,35 @@ fn init(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
     return Ok(cx.boxed(ore));
 }
 
+// TODO: Add an encrypt-left function
+/* This currently only supports 8-byte input buffers. ore.rs will be changed to handle arbitrarily
+ * sized input slices later which will make this function a bit more flexible. */
 fn encrypt(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
     let input = cx.argument::<JsBuffer>(1)?;
 
-    let x = cx
+    let plaintext = cx
         .borrow(&input, |data| {
             let mut plaintext: PlainText<8> = Default::default();
             let slice = data.as_slice::<u8>();
-            /*if slice.len() != 8 {
-                return Err("Input too short");
-            }*/
+            if slice.len() != 8 {
+                return Err("Invalid plaintext length");
+            }
             /* TODO: ORE encrypt should just take a slice of u8 and we can avoid this clone. */
             plaintext.clone_from_slice(slice);
-            // TODO: Should we encrypt _inside_ the borrow block or later? What about a promise?
-            Ok(ore.0.encrypt(&plaintext)?.to_bytes())
+            Ok(plaintext)
         })
-        .or_else(|_: OREError| cx.throw_error("ORE error"))?;
+        .or_else(|e| cx.throw_error(e))?;
+
+    let result = ore
+        .encrypt(&plaintext)
+        .or_else(|_: OREError| cx.throw_error("ORE error"))?
+        .to_bytes();
 
     // Looking at the source code, this appears to do an unsafe memory reinterpret (so it is
     // probably fast)
-    let ct = JsBuffer::external(&mut cx, x);
+    let ct = JsBuffer::external(&mut cx, result);
     return Ok(ct);
 }
 
