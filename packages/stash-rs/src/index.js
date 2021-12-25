@@ -1,6 +1,6 @@
 "use strict";
 
-const { initCipher, encrypt } = require("./index.node");
+const { initCipher, encrypt } = require("../index.node");
 
 // TODO: make encrypt return a promise using promisify?
 // TODO: Add tests!

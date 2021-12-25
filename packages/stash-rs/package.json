@@ -2,7 +2,7 @@
   "name": "ore-rs",
   "version": "0.1.0",
   "description": "Node bindings for ore.rs",
-  "main": "index.node",
+  "main": "dist/index.js",
   "scripts": {
     "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
     "build-debug": "npm run build --",
@@ -14,5 +14,8 @@
   "license": "ISC",
   "devDependencies": {
     "cargo-cp-artifact": "^0.1"
+  },
+  "dependencies": {
+    "typescript": "^4.5.4"
   }
 }
