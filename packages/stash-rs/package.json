@@ -4,7 +4,7 @@
   "description": "Node bindings for ore.rs",
   "main": "dist/index.js",
   "scripts": {
-    "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
+    "build": "cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics && npx tsc",
     "build-debug": "npm run build --",
     "build-release": "npm run build -- --release",
     "install": "npm run build-release",
@@ -13,9 +13,12 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "cargo-cp-artifact": "^0.1"
-  },
-  "dependencies": {
+    "@babel/core": "^7.16.5",
+    "@babel/preset-env": "^7.16.5",
+    "@babel/preset-typescript": "^7.16.5",
+    "@types/node": "^17.0.4",
+    "cargo-cp-artifact": "^0.1",
+    "ts-node": "^10.4.0",
     "typescript": "^4.5.4"
   }
 }
