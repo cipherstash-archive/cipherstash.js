@@ -239,14 +239,13 @@ version = "0.1.0"
 dependencies = [
  "hex-literal",
  "neon",
- "ore-rs 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ore-rs 0.1.0 (git+https://github.com/cipherstash/ore.rs)",
 ]
 
 [[package]]
 name = "ore-rs"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40c5a990f121d80941544ee2ef2c6726d8d0c22554d0ff49ea21f68af4b03a48"
+source = "git+https://github.com/cipherstash/ore.rs#9e1d3bfef8966f023fcd95690df0086c4c15daa2"
 dependencies = [
  "aes",
  "block-modes",
