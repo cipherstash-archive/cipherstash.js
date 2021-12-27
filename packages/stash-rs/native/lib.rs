@@ -86,29 +86,23 @@ fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
     let a = cx.argument::<JsBuffer>(0)?;
     let b = cx.argument::<JsBuffer>(1)?;
 
-    println!("Doing me a compares");
-
-    // TODO: Should we use try_borrow instead?
     let result = cx
         .borrow(&a, |data_a| {
             let slice_a = data_a.as_slice::<u8>();
 
             cx.borrow(&b, |data_b| {
                 let slice_b = data_b.as_slice::<u8>();
-
-                match OREAES128::compare_raw_slices(&slice_a, &slice_b) {
-                    Some(Ordering::Equal) => 0,
-                    Some(Ordering::Less) => -1,
-                    Some(Ordering::Greater) => 1,
-                    None => 0 //cx.throw_error("Comparison failed")
-                }
+                OREAES128::compare_raw_slices(&slice_a, &slice_b)
             })
-            //.or_else(|e| cx.throw_error(e))?;*/
 
         });
-        //.or_else(|e| cx.throw_error(e));
 
-    return Ok(cx.number(result));
+    match result {
+        Some(Ordering::Equal) => Ok(cx.number(0)),
+        Some(Ordering::Less) => Ok(cx.number(-1)),
+        Some(Ordering::Greater) => Ok(cx.number(1)),
+        None => cx.throw_error("Comparison failed")
+    }
 }
 
 #[neon::main]
