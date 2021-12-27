@@ -27,7 +27,7 @@ export const ORE = {
         if (typeof input === 'bigint') {
           // Neon doesn't support Bigint so we do this here
           let buf = Buffer.allocUnsafe(8);
-          buf.writeBigInt64BE(input);
+          buf.writeBigUInt64BE(input);
           return encrypt_buf(cipher, buf);
         } else {
           return encrypt_num(cipher, input);
