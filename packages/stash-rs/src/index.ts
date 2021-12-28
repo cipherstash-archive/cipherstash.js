@@ -9,16 +9,14 @@ const {
 } = require("../index.node");
 
 export type Key = Buffer;
-export type PlainText = number | bigint
+export type PlainText = number | bigint | Buffer
 export type CipherText = Buffer;
 
 export type ORECipher = {
   encrypt: (input: PlainText) => CipherText
 }
 
-
 // TODO: make encrypt return a promise using promisify?
-// TODO: Add tests!
 export const ORE = {
   init: (k1: Key, k2: Key): ORECipher => {
     let cipher = initCipher(k1, k2);
@@ -29,6 +27,8 @@ export const ORE = {
           let buf = Buffer.allocUnsafe(8);
           buf.writeBigUInt64BE(input);
           return encrypt_buf(cipher, buf);
+        } else if (input instanceof Buffer) {
+          return encrypt_buf(cipher, input);
         } else {
           return encrypt_num(cipher, input);
         }
@@ -40,4 +40,3 @@ export const ORE = {
     return compare(a, b);
   }
 };
-
