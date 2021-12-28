@@ -3,6 +3,7 @@ use neon::prelude::*;
 use ore_rs::{scheme::bit2::OREAES128, CipherText, ORECipher, OREEncrypt, OREError, PlainText};
 use std::cell::RefCell;
 use std::cmp::Ordering;
+use core::mem;
 
 struct Cipher(OREAES128);
 
@@ -48,9 +49,16 @@ fn encrypt_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let ore = &mut *cipher.borrow_mut();
     let input = cx.argument::<JsNumber>(1)?;
 
-    let result = input
-        .value(&mut cx)
-        .to_bits()
+    // Convert to a u64 which maintains ordering
+    // TODO: Move this to an inline function, test separately and document
+    let num: u64 = input.value(&mut cx).to_bits();
+    let mut signed: i64 = unsafe { mem::transmute(num) };
+    signed = signed >> 63;
+    let mut mask: u64 = unsafe { mem::transmute(signed) };
+    mask |= 0x8000000000000000;
+    let plaintext: u64 = num ^ mask;
+
+    let result = plaintext
         .encrypt(&mut ore.0)
         .or_else(|_| cx.throw_error("ORE Error"))?
         .to_bytes();
@@ -59,7 +67,23 @@ fn encrypt_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     return Ok(ct);
 }
 
-// TODO: Add an encrypt-left function
+fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
+    let cipher = cx.argument::<BoxedCipher>(0)?;
+    let ore = &mut *cipher.borrow_mut();
+    let input = cx.argument::<JsNumber>(1)?;
+
+    let result = input
+        .value(&mut cx)
+        .to_bits()
+        .encrypt_left(&mut ore.0)
+        .or_else(|_| cx.throw_error("ORE Error"))?
+        .to_bytes();
+
+    let ct = JsBuffer::external(&mut cx, result);
+    return Ok(ct);
+}
+
+
 /* This currently only supports 8-byte input buffers. ore.rs will be changed to handle arbitrarily
  * sized input slices later which will make this function a bit more flexible. */
 fn encrypt_buf(mut cx: FunctionContext) -> JsResult<JsBuffer> {
@@ -80,6 +104,37 @@ fn encrypt_buf(mut cx: FunctionContext) -> JsResult<JsBuffer> {
         })
         .or_else(|e| cx.throw_error(e))?;
 
+    // TODO: We could implement the encrypt trait(s) for the Plaintext type!
+    let result = ore
+        .encrypt(&plaintext)
+        .or_else(|_: OREError| cx.throw_error("ORE error"))?
+        .to_bytes();
+
+    // Looking at the source code, this appears to do an unsafe memory reinterpret (so it is
+    // probably fast)
+    let ct = JsBuffer::external(&mut cx, result);
+    return Ok(ct);
+}
+
+fn encrypt_buf_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
+    let cipher = cx.argument::<BoxedCipher>(0)?;
+    let ore = &mut *cipher.borrow_mut();
+    let input = cx.argument::<JsBuffer>(1)?;
+
+    let plaintext = cx
+        .borrow(&input, |data| {
+            let mut plaintext: PlainText<8> = Default::default();
+            let slice = data.as_slice::<u8>();
+            if slice.len() != 8 {
+                return Err("Invalid plaintext length");
+            }
+            /* TODO: ORE encrypt should just take a slice of u8 and we can avoid this clone. */
+            plaintext.clone_from_slice(slice);
+            Ok(plaintext)
+        })
+        .or_else(|e| cx.throw_error(e))?;
+
+    // TODO: We could implement the encrypt trait(s) for the Plaintext type!
     let result = ore
         .encrypt(&plaintext)
         .or_else(|_: OREError| cx.throw_error("ORE error"))?
@@ -116,6 +171,8 @@ fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("encrypt_buf", encrypt_buf)?;
     cx.export_function("encrypt_num", encrypt_num)?;
+    cx.export_function("encrypt_buf_left", encrypt_buf_left)?;
+    cx.export_function("encrypt_num_left", encrypt_num_left)?;
     cx.export_function("initCipher", init)?;
     cx.export_function("compare", compare)?;
     Ok(())
