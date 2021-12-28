@@ -8,6 +8,11 @@ describe("Encrypt", () => {
     expect(ore.encrypt(456n).length).toEqual(408);
   })
 
+  test("encrypt number", () => {
+    let ore = ORE.init(k1, k2);
+    expect(ore.encrypt(456).length).toEqual(408);
+  })
+
   test("invalid k1 size", () => {
     let kbad = Buffer.from([0, 1, 2]);
     expect(() => {

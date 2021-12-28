@@ -1,6 +1,6 @@
 use hex_literal::hex;
 use neon::prelude::*;
-use ore_rs::{scheme::bit2::OREAES128, ORECipher, OREError, PlainText, CipherText};
+use ore_rs::{scheme::bit2::OREAES128, CipherText, ORECipher, OREEncrypt, OREError, PlainText};
 use std::cell::RefCell;
 use std::cmp::Ordering;
 
@@ -44,8 +44,17 @@ fn init(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
 }
 
 fn encrypt_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    // TODO
-    let result = [0u8];
+    let cipher = cx.argument::<BoxedCipher>(0)?;
+    let ore = &mut *cipher.borrow_mut();
+    let input = cx.argument::<JsNumber>(1)?;
+
+    let result = input
+        .value(&mut cx)
+        .to_bits()
+        .encrypt(&mut ore.0)
+        .or_else(|_| cx.throw_error("ORE Error"))?
+        .to_bytes();
+
     let ct = JsBuffer::external(&mut cx, result);
     return Ok(ct);
 }
@@ -86,22 +95,20 @@ fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
     let a = cx.argument::<JsBuffer>(0)?;
     let b = cx.argument::<JsBuffer>(1)?;
 
-    let result = cx
-        .borrow(&a, |data_a| {
-            let slice_a = data_a.as_slice::<u8>();
+    let result = cx.borrow(&a, |data_a| {
+        let slice_a = data_a.as_slice::<u8>();
 
-            cx.borrow(&b, |data_b| {
-                let slice_b = data_b.as_slice::<u8>();
-                OREAES128::compare_raw_slices(&slice_a, &slice_b)
-            })
-
-        });
+        cx.borrow(&b, |data_b| {
+            let slice_b = data_b.as_slice::<u8>();
+            OREAES128::compare_raw_slices(&slice_a, &slice_b)
+        })
+    });
 
     match result {
         Some(Ordering::Equal) => Ok(cx.number(0)),
         Some(Ordering::Less) => Ok(cx.number(-1)),
         Some(Ordering::Greater) => Ok(cx.number(1)),
-        None => cx.throw_error("Comparison failed")
+        None => cx.throw_error("Comparison failed"),
     }
 }
 
