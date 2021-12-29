@@ -2,6 +2,22 @@ import { ORE } from "./index"
 const k1 = Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
 const k2 = Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
 
+describe("Init", () => {
+  test("invalid k1 size", () => {
+    let kbad = Buffer.from([0, 1, 2]);
+    expect(() => {
+      let ore = ORE.init(kbad, k2);
+    }).toThrow("Invalid key length")
+  })
+
+  test("invalid k2 size", () => {
+    let kbad = Buffer.from([0, 1, 2]);
+    expect(() => {
+      let ore = ORE.init(k1, kbad);
+    }).toThrow("Invalid key length")
+  })
+})
+
 describe("Encrypt", () => {
   test("encrypt big int", () => {
     let ore = ORE.init(k1, k2);
@@ -19,20 +35,6 @@ describe("Encrypt", () => {
     expect(ore.encrypt(buf).length).toEqual(408);
   })
 
-  test("invalid k1 size", () => {
-    let kbad = Buffer.from([0, 1, 2]);
-    expect(() => {
-      let ore = ORE.init(kbad, k2);
-    }).toThrow("Invalid key length")
-  })
-
-  test("invalid k2 size", () => {
-    let kbad = Buffer.from([0, 1, 2]);
-    expect(() => {
-      let ore = ORE.init(k1, kbad);
-    }).toThrow("Invalid key length")
-  })
-
   test("invalid plaintext size", () => {
     expect(() => {
       let ore = ORE.init(k1, k2);
@@ -40,6 +42,32 @@ describe("Encrypt", () => {
     }).toThrow(/out of range/)
   })
 })
+
+describe("Encrypt Left", () => {
+  test("encrypt big int", () => {
+    let ore = ORE.init(k1, k2);
+    expect(ore.encryptLeft(456n).length).toEqual(136);
+  })
+
+  test("encrypt number", () => {
+    let ore = ORE.init(k1, k2);
+    expect(ore.encryptLeft(456).length).toEqual(136);
+  })
+
+  test("encrypt buffer", () => {
+    let ore = ORE.init(k1, k2);
+    let buf = Buffer.from([1, 1, 1, 1, 2, 2, 2, 2]);
+    expect(ore.encryptLeft(buf).length).toEqual(136);
+  })
+
+  test("invalid plaintext size", () => {
+    expect(() => {
+      let ore = ORE.init(k1, k2);
+      ore.encryptLeft(456942938989889898333322n);
+    }).toThrow(/out of range/)
+  })
+})
+
 
 describe("Compare (big-int)", () => {
   test("compare greater than", () => {
