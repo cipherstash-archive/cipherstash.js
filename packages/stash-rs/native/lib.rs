@@ -1,8 +1,9 @@
 use hex_literal::hex;
-use neon::prelude::*;
-use ore_rs::{scheme::bit2::OREAES128, CipherText, ORECipher, OREEncrypt, OREError, PlainText};
+use neon::{prelude::*, result::Throw};
+use ore_rs::{scheme::bit2::OREAES128, CipherText, Left, ORECipher, OREEncrypt, OREError, PlainText};
 use std::cell::RefCell;
 use std::cmp::Ordering;
+
 mod convert;
 use convert::ToOrderedInteger;
 
@@ -15,6 +16,10 @@ struct Cipher(OREAES128);
 impl Cipher {
     pub fn encrypt(&mut self, v: &PlainText<8>) -> Result<CipherText<OREAES128, 8>, OREError> {
         self.0.encrypt(v)
+    }
+
+    pub fn encrypt_left(&mut self, v: &PlainText<8>) -> Result<Left<OREAES128, 8>, OREError> {
+        self.0.encrypt_left(v)
     }
 }
 
@@ -86,20 +91,7 @@ fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 fn encrypt_buf(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
-    let input = cx.argument::<JsBuffer>(1)?;
-
-    let plaintext = cx
-        .borrow(&input, |data| {
-            let mut plaintext: PlainText<8> = Default::default();
-            let slice = data.as_slice::<u8>();
-            if slice.len() != 8 {
-                return Err("Invalid plaintext length");
-            }
-            /* TODO: ORE encrypt should just take a slice of u8 and we can avoid this clone. */
-            plaintext.clone_from_slice(slice);
-            Ok(plaintext)
-        })
-        .or_else(|e| cx.throw_error(e))?;
+    let plaintext: PlainText<8> = fetch_plaintext_from_js_buffer(&mut cx, 1)?;
 
     // TODO: We could implement the encrypt trait(s) for the Plaintext type!
     let result = ore
@@ -116,24 +108,11 @@ fn encrypt_buf(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 fn encrypt_buf_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
-    let input = cx.argument::<JsBuffer>(1)?;
-
-    let plaintext = cx
-        .borrow(&input, |data| {
-            let mut plaintext: PlainText<8> = Default::default();
-            let slice = data.as_slice::<u8>();
-            if slice.len() != 8 {
-                return Err("Invalid plaintext length");
-            }
-            /* TODO: ORE encrypt should just take a slice of u8 and we can avoid this clone. */
-            plaintext.clone_from_slice(slice);
-            Ok(plaintext)
-        })
-        .or_else(|e| cx.throw_error(e))?;
+    let plaintext: PlainText<8> = fetch_plaintext_from_js_buffer(&mut cx, 1)?;
 
     // TODO: We could implement the encrypt trait(s) for the Plaintext type!
     let result = ore
-        .encrypt(&plaintext)
+        .encrypt_left(&plaintext)
         .or_else(|_: OREError| cx.throw_error("ORE error"))?
         .to_bytes();
 
@@ -162,6 +141,22 @@ fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
         Some(Ordering::Greater) => Ok(cx.number(1)),
         None => cx.throw_error("Comparison failed"),
     }
+}
+
+/* Helper function to extract a plaintext from a JS Buffer */
+fn fetch_plaintext_from_js_buffer<const N: usize>(cx: &mut FunctionContext, arg: i32) -> Result<PlainText<N>, Throw> {
+    let input = cx.argument::<JsBuffer>(arg)?;
+
+    cx.borrow(&input, |data| {
+        let mut plaintext: PlainText<N> = [0; N];
+        let slice = data.as_slice::<u8>();
+        if slice.len() != N {
+            return Err("Invalid plaintext length");
+        }
+        plaintext.clone_from_slice(slice);
+        Ok(plaintext)
+    })
+    .or_else(|e| cx.throw_error(e))
 }
 
 #[neon::main]
