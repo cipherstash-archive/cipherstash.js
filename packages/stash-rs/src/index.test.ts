@@ -13,6 +13,12 @@ describe("Encrypt", () => {
     expect(ore.encrypt(456).length).toEqual(408);
   })
 
+  test("encrypt buffer", () => {
+    let ore = ORE.init(k1, k2);
+    let buf = Buffer.from([1, 1, 1, 1, 2, 2, 2, 2]);
+    expect(ore.encrypt(buf).length).toEqual(408);
+  })
+
   test("invalid k1 size", () => {
     let kbad = Buffer.from([0, 1, 2]);
     expect(() => {
