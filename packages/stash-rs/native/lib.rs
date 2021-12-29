@@ -3,7 +3,12 @@ use neon::prelude::*;
 use ore_rs::{scheme::bit2::OREAES128, CipherText, ORECipher, OREEncrypt, OREError, PlainText};
 use std::cell::RefCell;
 use std::cmp::Ordering;
-use core::mem;
+mod convert;
+use convert::ToOrderedInteger;
+
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
 
 struct Cipher(OREAES128);
 
@@ -49,16 +54,9 @@ fn encrypt_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let ore = &mut *cipher.borrow_mut();
     let input = cx.argument::<JsNumber>(1)?;
 
-    // Convert to a u64 which maintains ordering
-    // TODO: Move this to an inline function, test separately and document
-    let num: u64 = input.value(&mut cx).to_bits();
-    let mut signed: i64 = unsafe { mem::transmute(num) };
-    signed = signed >> 63;
-    let mut mask: u64 = unsafe { mem::transmute(signed) };
-    mask |= 0x8000000000000000;
-    let plaintext: u64 = num ^ mask;
-
-    let result = plaintext
+    let result = input
+        .value(&mut cx)
+        .map_to()
         .encrypt(&mut ore.0)
         .or_else(|_| cx.throw_error("ORE Error"))?
         .to_bytes();
@@ -82,7 +80,6 @@ fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let ct = JsBuffer::external(&mut cx, result);
     return Ok(ct);
 }
-
 
 /* This currently only supports 8-byte input buffers. ore.rs will be changed to handle arbitrarily
  * sized input slices later which will make this function a bit more flexible. */
