@@ -77,7 +77,7 @@ fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 
     let result = input
         .value(&mut cx)
-        .to_bits()
+        .map_to()
         .encrypt_left(&mut ore.0)
         .or_else(|_| cx.throw_error("ORE Error"))?
         .to_bytes();
