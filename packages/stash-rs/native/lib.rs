@@ -1,27 +1,10 @@
 use hex_literal::hex;
 use neon::{prelude::*, result::Throw};
-use ore_rs::{scheme::bit2::OREAES128, CipherText, Left, ORECipher, OREEncrypt, OREError, PlainText};
+use ore_rs::{scheme::bit2::OREAES128, ORECipher, OREEncrypt, OREError, PlainText};
 use std::cell::RefCell;
 use std::cmp::Ordering;
 
-mod convert;
-use convert::ToOrderedInteger;
-
-#[cfg(test)]
-#[macro_use]
-extern crate quickcheck;
-
 struct Cipher(OREAES128);
-
-impl Cipher {
-    pub fn encrypt(&mut self, v: &PlainText<8>) -> Result<CipherText<OREAES128, 8>, OREError> {
-        self.0.encrypt(v)
-    }
-
-    pub fn encrypt_left(&mut self, v: &PlainText<8>) -> Result<Left<OREAES128, 8>, OREError> {
-        self.0.encrypt_left(v)
-    }
-}
 
 /* Note that this will Drop the Cipher at which point Zeroize will be called
  * from within the ore.rs crate */
@@ -62,13 +45,11 @@ fn encrypt_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 
     let result = input
         .value(&mut cx)
-        .map_to()
         .encrypt(&mut ore.0)
         .or_else(|_| cx.throw_error("ORE Error"))?
         .to_bytes();
 
-    let ct = JsBuffer::external(&mut cx, result);
-    return Ok(ct);
+    Ok(JsBuffer::external(&mut cx, result))
 }
 
 fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
@@ -78,13 +59,11 @@ fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 
     let result = input
         .value(&mut cx)
-        .map_to()
         .encrypt_left(&mut ore.0)
         .or_else(|_| cx.throw_error("ORE Error"))?
         .to_bytes();
 
-    let ct = JsBuffer::external(&mut cx, result);
-    return Ok(ct);
+    Ok(JsBuffer::external(&mut cx, result))
 }
 
 /* This currently only supports 8-byte input buffers. ore.rs will be changed to handle arbitrarily
@@ -92,35 +71,27 @@ fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 fn encrypt_buf(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
-    let plaintext: PlainText<8> = fetch_plaintext_from_js_buffer(&mut cx, 1)?;
-
-    // TODO: We could implement the encrypt trait(s) for the Plaintext type!
-    let result = ore
-        .encrypt(&plaintext)
+    
+    let result =
+        fetch_plaintext_from_js_buffer::<8>(&mut cx, 1)?
+        .encrypt(&mut ore.0)
         .or_else(|_: OREError| cx.throw_error("ORE error"))?
         .to_bytes();
 
-    // Looking at the source code, this appears to do an unsafe memory reinterpret (so it is
-    // probably fast)
-    let ct = JsBuffer::external(&mut cx, result);
-    return Ok(ct);
+    Ok(JsBuffer::external(&mut cx, result))
 }
 
 fn encrypt_buf_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
-    let plaintext: PlainText<8> = fetch_plaintext_from_js_buffer(&mut cx, 1)?;
 
-    // TODO: We could implement the encrypt trait(s) for the Plaintext type!
-    let result = ore
-        .encrypt_left(&plaintext)
+    let result =
+        fetch_plaintext_from_js_buffer::<8>(&mut cx, 1)?
+        .encrypt_left(&mut ore.0)
         .or_else(|_: OREError| cx.throw_error("ORE error"))?
         .to_bytes();
 
-    // Looking at the source code, this appears to do an unsafe memory reinterpret (so it is
-    // probably fast)
-    let ct = JsBuffer::external(&mut cx, result);
-    return Ok(ct);
+    Ok(JsBuffer::external(&mut cx, result))
 }
 
 fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
