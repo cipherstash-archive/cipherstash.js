@@ -23,7 +23,8 @@ impl Cipher {
     }
 }
 
-// TODO: Use zeroize to clear values garbage collected from Node
+/* Note that this will Drop the Cipher at which point Zeroize will be called
+ * from within the ore.rs crate */
 impl Finalize for Cipher {}
 
 type BoxedCipher = JsBox<RefCell<Cipher>>;
