@@ -19,7 +19,6 @@ export type ORECipher = {
   encryptLeft: (input: PlainText) => CipherText
 }
 
-// TODO: make encrypt return a promise using promisify?
 /* Module to perform Order-revealing Encryption using the underlying ore.rs Rust library */
 export const ORE = {
   /* Initialize a new ORE cipher with a key pair (both keys must be 16-byte buffers). */
