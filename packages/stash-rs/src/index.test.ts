@@ -6,14 +6,14 @@ describe("Init", () => {
   test("invalid k1 size", () => {
     let kbad = Buffer.from([0, 1, 2]);
     expect(() => {
-      let ore = ORE.init(kbad, k2);
+      ORE.init(kbad, k2);
     }).toThrow("Invalid key length")
   })
 
   test("invalid k2 size", () => {
     let kbad = Buffer.from([0, 1, 2]);
     expect(() => {
-      let ore = ORE.init(k1, kbad);
+      ORE.init(k1, kbad);
     }).toThrow("Invalid key length")
   })
 })
