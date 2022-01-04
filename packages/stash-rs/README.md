@@ -1,6 +1,6 @@
 # ore-rs
 
-**ore-rs:** Node bindings for ore.rs
+**ore-rs:** Node bindings for [ore.rs](https://github.com/cipherstash/ore.rs).
 
 This project was bootstrapped by [create-neon](https://www.npmjs.com/package/create-neon).
 
@@ -24,17 +24,76 @@ If you have already installed the project and only want to run the build, run:
 $ npm run build
 ```
 
-This command uses the [cargo-cp-artifact](https://github.com/neon-bindings/cargo-cp-artifact) utility to run the Rust build and copy the built library into `./index.node`.
+This command performs 2 steps:
+
+1. It uses the [cargo-cp-artifact](https://github.com/neon-bindings/cargo-cp-artifact) utility to run the Rust build and copy the built library into `./index.node`.
+2. It compiles the TypeScript code (in `src/index.ts`) with the output being stored in `dist`
 
 ## Exploring ore-rs
 
-After building ore-rs, you can explore its exports at the Node REPL:
+After building ore-rs, you can explore its exports at the TS Node REPL:
 
 ```sh
 $ npm install
-$ node
-> require('.').hello()
-"hello node"
+$ npx ts-node
+> const ORE = require('.')
+> import { ORE } from './src/index'
+> let k1 = Buffer.from("1216a6700004fe46c5c07166025e681e", "hex")
+> let k2 = Buffer.from("3f13a569d5d2c6ce8d2a85cb9e347804", "hex")
+> let cipher = new ORE(k1, k2)
+> let cipher = ORE.init(k1, k2)
+> cipher.encrypt(100)
+```
+
+## Comparison
+
+To compare two encrypted ciphertext values, you can use the `ORE.compare` function which returns -1, 0 or 1 if the first
+operand is less-than, equal-to or greater than the second operand respectively.
+
+Internally, this uses [cmp](https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html#tymethod.cmp).
+
+```typescript
+let a = ore.encrypt(100)
+let b = ore.encrypt(1560)
+ORE.compare(a, b) // => -1
+```
+
+## Data Types
+
+`ore-rs` can encrypt the following types:
+
+### Number
+
+JavaScript numbers are 64-bit floats which the underlying ORE library converts into an order-preserving integer. The
+underlying value no longer represents the source number (unlike `f64::from(i)`) but guarantees ordering is preserved.
+
+```typescript
+// All valid
+cipher.encrypt(456)
+cipher.encrypt(3.14159)
+cipher.encrypt(-100)
+```
+
+### BigInt
+
+`BigInt` value can also be encrypted but this will throw an error if the number requires more than 64-bits of storage.
+`Neon` doesn't actually support `BigInt` so the conversion is done in TypeScript using the `writeBigUInt64BE` function
+(see [node.js docs](https://nodejs.org/api/buffer.html#bufwritebiguint64bevalue-offset]) so this will fail for negative
+numbers or values larger than 2n ** 64n - 1n.
+
+```typescript
+cipher.encrypt(299792458n) // OK
+cipher.encrypt(-100n) // fails!
+cipher.encrypt(1180591620717411303424n) // fails!
+```
+
+### Buffer
+
+An 8-byte buffer can be encrypted directly. If the input is not exactly 8-bytes long, the operation will fail.
+
+```typescript
+cipher.encrypt(Buffer.from([0x00, 0x12, 0x15, 0xfa, 0xcf, 0x1a, 0xdb, 0x38]) // OK
+cipher.encrypt(Buffer.from([0x00, 0x12, 0x15]) // Fails!
 ```
 
 ## Available Scripts
@@ -47,7 +106,7 @@ Installs the project, including running `npm run build`.
 
 ### `npm build`
 
-Builds the Node addon (`index.node`) from source.
+Builds the Node addon (`index.node`) from source and compiles the TypeScript wrapper files.
 
 Additional [`cargo build`](https://doc.rust-lang.org/cargo/commands/cargo-build.html) arguments may be passed to `npm build` and `npm build-*` commands. For example, to enable a [cargo feature](https://doc.rust-lang.org/cargo/reference/features.html):
 
@@ -65,7 +124,7 @@ Same as [`npm build`](#npm-build) but, builds the module with the [`release`](ht
 
 ### `npm test`
 
-Runs the unit tests by calling `cargo test`. You can learn more about [adding tests to your Rust code](https://doc.rust-lang.org/book/ch11-01-writing-tests.html) from the [Rust book](https://doc.rust-lang.org/book/).
+Runs the unit tests in Rust by calling `cargo test` and in TypeScript (Jest) by calling `npx jest`.
 
 ## Project Layout
 
@@ -77,8 +136,11 @@ ore-rs/
 ├── README.md
 ├── index.node
 ├── package.json
-├── src/
+├── native/
 |   └── lib.rs
+├── src/
+|   └── index.ts
+|   └── index.test.ts
 └── target/
 ```
 
@@ -100,13 +162,17 @@ Under the hood, a [Node addon](https://nodejs.org/api/addons.html) is a [dynamic
 
 The npm [manifest file](https://docs.npmjs.com/cli/v7/configuring-npm/package-json), which informs the `npm` command.
 
-### src/
+### native/
 
 The directory tree containing the Rust source code for the project.
 
-### src/lib.rs
+### native/lib.rs
 
 The Rust library's main module.
+
+### src/
+
+TypeScript wrapper files - clients call this code rather than calling the functions in `index.node` directly.
 
 ### target/
 
