@@ -1,5 +1,5 @@
 {
-  "name": "ore-rs",
+  "name": "@cipherstash/ore-rs",
   "version": "0.1.0",
   "description": "Node bindings for ore.rs",
   "main": "dist/index.js",
@@ -13,11 +13,15 @@
     "type": "git",
     "url": "git+https://github.com/cipherstash/node-ore-rs.git"
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "contributors": [
     "Dan Draper <dan@cipherstash.com>",
     "James Sadler <james@cipherstash.com>"
   ],
-  "homepage": "https://github.com/cipherstash/node-ore-rs#readme",
+  "homepage": "https://cipherstash.com",
   "keywords": [
     "cipherstash",
     "encryption",
