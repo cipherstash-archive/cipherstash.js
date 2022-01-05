@@ -9,8 +9,31 @@
     "install": "npm run build-release",
     "test": "cargo test && npx jest"
   },
-  "author": "",
-  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipherstash/node-ore-rs.git"
+  },
+  "contributors": [
+    "Dan Draper <dan@cipherstash.com>",
+    "James Sadler <james@cipherstash.com>"
+  ],
+  "homepage": "https://github.com/cipherstash/node-ore-rs#readme",
+  "keywords": [
+    "cipherstash",
+    "encryption",
+    "database",
+    "search",
+    "full text search",
+    "cryptography",
+    "ORE",
+    "order revealing encryption",
+    "security",
+    "secure",
+    "client-side encryption",
+    "stashjs",
+    "stash"
+  ],
+  "license": "GPLv3",
   "devDependencies": {
     "@babel/core": "^7.16.5",
     "@babel/preset-env": "^7.16.5",
@@ -32,5 +55,16 @@
     "testMatch": [
       "**/*.test.ts"
     ]
-  }
+  },
+  "files": [
+    "babel.config.js",
+    "Cargo.lock",
+    "Cargo.toml",
+    "COPYING",
+    "dist/**",
+    "native",
+    "scripts/*",
+    "src/**",
+    "tsconfig.json"
+  ]
 }
