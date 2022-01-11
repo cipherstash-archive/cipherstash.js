@@ -1,44 +1,41 @@
 import * as gRPC from '@grpc/grpc-js'
 import * as  protoLoader from '@grpc/proto-loader'
-import * as path from 'path'
 
 import * as ProtoGrpcType from './generated/api'
 import * as API from './generated/stash/GRPC/V1/API'
 
-import * as GrpcCreateRequest from './generated/stash/GRPC/V1/Collections/CreateRequest'
-import * as GrpcDeleteRequest from './generated/stash/GRPC/V1/Collections/DeleteRequest'
-import * as GrpcInfoReply from './generated/stash/GRPC/V1/Collections/InfoReply'
-import * as GrpcInfoRequest from './generated/stash/GRPC/V1/Collections/InfoRequest'
-import * as GrpcListRequest from './generated/stash/GRPC/V1/Collections/ListRequest'
-import * as GrpcListReply from './generated/stash/GRPC/V1/Collections/ListReply'
+import { CreateRequest  as CollectionCreateRequest } from './generated/stash/GRPC/V1/Collections/CreateRequest'
+import { DeleteRequest as CollectionDeleteRequest } from './generated/stash/GRPC/V1/Collections/DeleteRequest'
+import { InfoReply__Output as CollectionInfoReply } from './generated/stash/GRPC/V1/Collections/InfoReply'
+import { InfoRequest as CollectionInfoRequest } from './generated/stash/GRPC/V1/Collections/InfoRequest'
+import { ListRequest as CollectionListRequest } from './generated/stash/GRPC/V1/Collections/ListRequest'
+import { ListReply__Output as CollectionListReply } from './generated/stash/GRPC/V1/Collections/ListReply'
 
-import * as GrpcDocument from './generated/stash/GRPC/V1/Documents/Document'
-import * as GrpcGetReply from './generated/stash/GRPC/V1/Documents/GetReply'
-import * as GrpcGetRequest from './generated/stash/GRPC/V1/Documents/GetRequest'
-import * as GrpcGetAllReply from './generated/stash/GRPC/V1/Documents/GetAllReply'
-import * as GrpcGetAllRequest from './generated/stash/GRPC/V1/Documents/GetAllRequest'
-import * as GrpcDocumentDeleteReply from './generated/stash/GRPC/V1/Documents/DeleteReply'
-import * as GrpcDocumentDeleteRequest from './generated/stash/GRPC/V1/Documents/DeleteRequest'
-import * as GrpcPutReply from './generated/stash/GRPC/V1/Documents/PutReply'
-import * as GrpcPutRequest from './generated/stash/GRPC/V1/Documents/PutRequest'
-import * as GrpcStreamingPutRequest from './generated/stash/GRPC/V1/Documents/StreamingPutRequest'
-import * as GrpcStreamingPutBegin from './generated/stash/GRPC/V1/Documents/StreamingPutBegin'
-import * as GrpcStreamingPutReply from './generated/stash/GRPC/V1/Documents/StreamingPutReply'
-import * as GrpcTerm from './generated/stash/GRPC/V1/Documents/Term'
-import * as GrpcVector from './generated/stash/GRPC/V1/Documents/Vector'
+import { Document as DocumentType } from './generated/stash/GRPC/V1/Documents/Document'
+import { GetReply__Output as DocumentGetReply } from './generated/stash/GRPC/V1/Documents/GetReply'
+import { GetRequest as DocumentGetRequest } from './generated/stash/GRPC/V1/Documents/GetRequest'
+import { GetAllReply__Output as DocumentGetAllReply } from './generated/stash/GRPC/V1/Documents/GetAllReply'
+import { GetAllRequest as DocumentGetAllRequest } from './generated/stash/GRPC/V1/Documents/GetAllRequest'
+import { DeleteReply__Output as DocumentDeleteReply } from './generated/stash/GRPC/V1/Documents/DeleteReply'
+import { DeleteRequest as DocumentDeleteRequest } from './generated/stash/GRPC/V1/Documents/DeleteRequest'
+import { PutReply__Output as DocumentPutReply } from './generated/stash/GRPC/V1/Documents/PutReply'
+import { PutRequest as DocuementPutRequest } from './generated/stash/GRPC/V1/Documents/PutRequest'
+import { StreamingPutRequest as DocumentStreamingPutRequest } from './generated/stash/GRPC/V1/Documents/StreamingPutRequest'
+import { StreamingPutBegin as DocumentStreamingPutBegin } from './generated/stash/GRPC/V1/Documents/StreamingPutBegin'
+import { StreamingPutReply__Output as DocumentStreamingPutReply } from './generated/stash/GRPC/V1/Documents/StreamingPutReply'
+import { Term as DocumentTerm } from './generated/stash/GRPC/V1/Documents/Term'
+import { Vector as DocumentVector} from './generated/stash/GRPC/V1/Documents/Vector'
 
-import * as GrpcAddReply from './generated/stash/GRPC/V1/Indexes/AddReply'
-import * as GrpcAddRequest from './generated/stash/GRPC/V1/Indexes/AddRequest'
-import * as GrpcIndex from './generated/stash/GRPC/V1/Indexes/Index'
+import { Aggregate as QueryAggregate } from './generated/stash/GRPC/V1/Queries/Aggregate'
+import { Constraint as QueryConstraint } from './generated/stash/GRPC/V1/Queries/Constraint'
+import { Exact as QueryExact } from './generated/stash/GRPC/V1/Queries/Exact'
+import { Query as QueryQuery } from './generated/stash/GRPC/V1/Queries/Query'
+import { QueryReply__Output as QueryQueryReply } from './generated/stash/GRPC/V1/Queries/QueryReply'
+import { QueryRequest as QueryQueryRequest } from './generated/stash/GRPC/V1/Queries/QueryRequest'
+import { Range as QueryRange } from './generated/stash/GRPC/V1/Queries/Range'
+import { AggregateResult as QueryAggregateResult } from './generated/stash/GRPC/V1/Queries/AggregateResult'
 
-import * as GrpcAggregate from './generated/stash/GRPC/V1/Queries/Aggregate'
-import * as GrpcAggregateResult from './generated/stash/GRPC/V1/Queries/AggregateResult'
-import * as GrpcConstraint from './generated/stash/GRPC/V1/Queries/Constraint'
-import * as GrpcExact from './generated/stash/GRPC/V1/Queries/Exact'
-import * as GrpcQuery from './generated/stash/GRPC/V1/Queries/Query'
-import * as GrpcQueryReply from './generated/stash/GRPC/V1/Queries/QueryReply'
-import * as GrpcQueryRequest from './generated/stash/GRPC/V1/Queries/QueryRequest'
-import * as GrpcRange from './generated/stash/GRPC/V1/Queries/Range'
+import { Index__Output as IndexIndex } from './generated/stash/GRPC/V1/Indexes/Index'
 
 import { protoDefsBuffer  } from './generated/stashjs-api-v1'
 
@@ -52,7 +49,6 @@ const grpcDefinition = protoLoader.loadFileDescriptorSetFromBuffer(
   }
 )
 
-
 const APIProto = (gRPC.loadPackageDefinition(grpcDefinition) as unknown as ProtoGrpcType.ProtoGrpcType).stash
 
 export namespace V1  {
@@ -64,63 +60,47 @@ export namespace V1  {
   export type APIClient = API.APIClient
   export type APIDefinition = API.APIDefinition
 
-  export type CreateRequestOutput = GrpcCreateRequest.CreateRequest__Output
-  export type CreateRequestInput = GrpcCreateRequest.CreateRequest
-  export type DeleteRequestOutput = GrpcDeleteRequest.DeleteRequest__Output
-  export type DeleteRequestInput = GrpcDeleteRequest.DeleteRequest
-  export type InfoReplyOutput = GrpcInfoReply.InfoReply__Output
-  export type InfoReplyInput = GrpcInfoReply.InfoReply
-  export type ListReply = GrpcListReply.ListReply__Output
-  export type ListRequestOutput = GrpcListRequest.ListRequest__Output
-  export type InfoRequestOutput = GrpcInfoRequest.InfoRequest__Output
-  export type InfoRequestInput = GrpcInfoRequest.InfoRequest
-  export type DocumentOutput = GrpcDocument.Document__Output
-  export type DocumentInput = GrpcDocument.Document
-  export type GetReplyOutput = GrpcGetReply.GetReply__Output
-  export type GetReplyInput = GrpcGetReply.GetReply
-  export type GetAllReplyOutput = GrpcGetAllReply.GetAllReply__Output
-  export type GetAllReplyInput = GrpcGetAllReply.GetAllReply
-  export type GetRequestOutput = GrpcGetRequest.GetRequest__Output
-  export type GetRequestInput = GrpcGetRequest.GetRequest
-  export type DocumentDeleteRequestOutput = GrpcDocumentDeleteRequest.DeleteRequest__Output
-  export type DocumentDeleteRequest = GrpcDocumentDeleteRequest.DeleteRequest
-  export type DocumentDeleteReplyOutput = GrpcDocumentDeleteReply.DeleteReply__Output
-  export type DocumentDeleteReply = GrpcDocumentDeleteReply.DeleteReply
-  export type PutReplyOutput = GrpcPutReply.PutReply__Output
-  export type PutReplyInput = GrpcPutReply.PutReply
-  export type PutRequestOutput = GrpcPutRequest.PutRequest__Output
-  export type PutRequestInput = GrpcPutRequest.PutRequest
-  export type StreamingPutRequest = GrpcStreamingPutRequest.StreamingPutRequest
-  export type StreamingPutRequestOutput = GrpcStreamingPutRequest.StreamingPutRequest__Output
-  export type StreamingPutReply = GrpcStreamingPutReply.StreamingPutReply
-  export type StreamingPutReplyOutput = GrpcStreamingPutReply.StreamingPutReply__Output
-  export type StreamingPutBegin = GrpcStreamingPutBegin.StreamingPutBegin
-  export type StreamingPutBeginOutput = GrpcStreamingPutBegin.StreamingPutBegin__Output
-  export type TermOutput = GrpcTerm.Term__Output
-  export type TermInput = GrpcTerm.Term
-  export type VectorOutput = GrpcVector.Vector__Output
-  export type VectorInput = GrpcVector.Vector
-  export type AddReplyOutput = GrpcAddReply.AddReply__Output
-  export type AddReplyInput = GrpcAddReply.AddReply
-  export type AddRequestOutput = GrpcAddRequest.AddRequest__Output
-  export type AddRequestInput = GrpcAddRequest.AddRequest
-  export type IndexOutput = GrpcIndex.Index__Output
-  export type IndexInput = GrpcIndex.Index
-  export type AggregateOutput = GrpcAggregate.Aggregate__Output
-  export type AggregateInput = GrpcAggregate.Aggregate
-  export type AggregateResultOutput = GrpcAggregateResult.AggregateResult__Output
-  export type AggregateResultInput = GrpcAggregateResult.AggregateResult
-  export type ConstraintOutput = GrpcConstraint.Constraint__Output
-  export type ConstraintInput = GrpcConstraint.Constraint
-  export type ExactOutput = GrpcExact.Exact__Output
-  export type ExactInput = GrpcExact.Exact
-  export type QueryOutput = GrpcQuery.Query__Output
-  export type QueryInput = GrpcQuery.Query
-  export type QueryReplyOutput = GrpcQueryReply.QueryReply__Output
-  export type QueryReplyInput = GrpcQueryReply.QueryReply
-  export type QueryRequestOutput = GrpcQueryRequest.QueryRequest__Output
-  export type QueryRequestInput = GrpcQueryRequest.QueryRequest
-  export type RangeOutput = GrpcRange.Range__Output
-  export type RangeInput = GrpcRange.Range
+  export namespace Collection {
+    export type CreateRequest = CollectionCreateRequest
+    export type CreateReply = CollectionInfoReply
+    export type DeleteRequest = CollectionDeleteRequest
+    export type InfoReply = CollectionInfoReply
+    export type InfoRequest = CollectionInfoRequest
+    export type ListRequest = CollectionListRequest
+    export type ListReply = CollectionListReply
+  }
+
+  export namespace Document {
+    export type Document = DocumentType
+    export type GetReply = DocumentGetReply
+    export type GetRequest = DocumentGetRequest
+    export type GetAllReply = DocumentGetAllReply
+    export type GetAllRequest = DocumentGetAllRequest
+    export type DeleteReply = DocumentDeleteReply
+    export type DeleteRequest = DocumentDeleteRequest
+    export type PutReply = DocumentPutReply
+    export type PutRequest = DocuementPutRequest
+    export type StreamingPutRequest = DocumentStreamingPutRequest
+    export type StreamingPutBegin = DocumentStreamingPutBegin
+    export type StreamingPutReply = DocumentStreamingPutReply
+    export type Term = DocumentTerm
+    export type Vector = DocumentVector
+  }
+
+  export namespace Query {
+    export type Aggregate = QueryAggregate
+    export type AggregateResult = QueryAggregateResult
+    export type Constraint = QueryConstraint
+    export type Exact = QueryExact
+    export type Query = QueryQuery
+    export type QueryReply = QueryQueryReply
+    export type QueryRequest = QueryQueryRequest
+    export type Range = QueryRange
+  }
+
+  export namespace Index {
+    export type Index = IndexIndex
+  }
 }
+
 
