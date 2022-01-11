@@ -13,6 +13,8 @@ export class Collection<
 
   public get name() { return this.collection.name }
 
+  public get schema() { return this.collection.schema }
+
   public get(id: string | Buffer): Promise<R & HasID | null> {
     return convertPrivateApiResult(this.collection.get(id))
   }
