@@ -15,7 +15,7 @@ cp -R ../../../data-service/priv/grpc/* ./grpc
 
 proto-loader-gen-types api.proto --outDir=generated --grpcLib=@grpc/grpc-js \
   --includeDirs grpc/v1 --keepCase=true --longs=number --enums=string \
-  --defaults=true --oneofs==true
+  --defaults=false --oneofs==true
 
 ./scripts/pack-api.sh
 pnpx tsc
