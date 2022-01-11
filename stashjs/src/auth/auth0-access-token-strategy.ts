@@ -1,7 +1,9 @@
-import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy";
+import { AuthenticationDetails, AuthStrategy } from "./auth-strategy";
 import { Auth0AccessToken, StashConfiguration } from "../stash-config";
 import { AWSClientConfig, awsConfig } from "../aws";
 import { StashProfile } from "../stash-profile";
+import { AuthenticationFailure } from "../errors";
+import { AsyncResult, Err, Ok } from "../result";
 
 export type StashProfileAuth0AccessToken = StashProfile & {
   config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0AccessToken }
@@ -12,15 +14,16 @@ export class Auth0AccessTokenStrategy implements AuthStrategy {
 
   constructor(private profile: StashProfileAuth0AccessToken) {}
 
-  public async initialise(): Promise<void> {
-    try {
-      this.awsConfig = await awsConfig(
-        this.profile.config.keyManagement.awsCredentials,
-        this.profile.config.identityProvider.accessToken
-      )
-      return Promise.resolve()
-    } catch (err) {
-      return Promise.reject(err)
+  public async initialise(): AsyncResult<void, AuthenticationFailure> {
+    const config = await awsConfig(
+      this.profile.config.keyManagement.awsCredentials,
+      this.profile.config.identityProvider.accessToken
+    )
+    if (config.ok) {
+      this.awsConfig = config.value
+      return Ok(void 0)
+    } else {
+      return Err(AuthenticationFailure(config.error))
     }
   }
 
@@ -31,7 +34,10 @@ export class Auth0AccessTokenStrategy implements AuthStrategy {
     return awsCredsAreFresh
   }
 
-  public withAuthentication<R>(callback: AuthenticationDetailsCallback<R>): Promise<R> {
-    return callback({authToken: this.profile.config.identityProvider.accessToken, awsConfig: this.awsConfig})
+  public async getAuthenticationDetails(): AsyncResult<AuthenticationDetails, AuthenticationFailure> {
+    return Ok({
+      authToken: this.profile.config.identityProvider.accessToken,
+      awsConfig: this.awsConfig
+    })
   }
 }

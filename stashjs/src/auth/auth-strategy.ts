@@ -1,10 +1,13 @@
 import { AWSClientConfig } from '../aws'
+import { AsyncResult, Err, Ok } from '../result'
+import { AuthenticationFailure } from '../errors'
 
-export type AuthenticationDetails =
-  {authToken: string, awsConfig: AWSClientConfig}
+export type AuthenticationDetails = {
+  authToken: string
+  awsConfig: AWSClientConfig
+}
 
-export type AuthenticationDetailsCallback<R> =
-  (input: AuthenticationDetails) => Promise<R>
+export type MemoBuilder<R> = (input: AuthenticationDetails) => AsyncResult<R, AuthenticationFailure>
 
 export interface AuthStrategy {
   /**
@@ -14,23 +17,17 @@ export interface AuthStrategy {
    *
    * This is also a good place to schedule a token expiry handler.
    */
-  initialise(): Promise<void>
+  initialise(): AsyncResult<void, AuthenticationFailure>
 
   /**
-   * Executes a callback and provides the callback with authentication details.
+   * Gets the authentication details from the strategy.
    *
-   * This can be used to wrap a request to a downstream service that requires
-   * the credentials.
-   *
-   * If the authentication token has expired this method will refresh the token
-   * before invoking the callback.
-   *
-   * Returns the result of the callback.
-   *
-   * If an authentication attempt fails, or an attempt to refresh the token
-   * fails then the Promise will be rejected with an error.
+   * If the strategy has not yet performed authentication, or the authentication
+   * details have expired, it *must* attempt to re-authenticate before returning
+   * the result.
    */
-  withAuthentication<R>(callback: AuthenticationDetailsCallback<R>): Promise<R>
+  getAuthenticationDetails(): AsyncResult<AuthenticationDetails, AuthenticationFailure>
+
 
   /**
    * Returns true if the credentials managed by this AuthStrategy have not expired.
@@ -59,20 +56,31 @@ export interface AuthStrategy {
  *                  credentials will build a new value
  * @returns a Memo<T>
  */
-export function withFreshCredentials<T>(authStrategy: AuthStrategy, builder: AuthenticationDetailsCallback<T>): Memo<T> {
-  let latestValuePromise = authStrategy.withAuthentication(builder)
+export function withFreshCredentials<R>(authStrategy: AuthStrategy, builder: MemoBuilder<R>): Memo<R> {
+  let value: R
+
   return {
     async freshValue() {
-      if (authStrategy.isFresh()) {
-        return latestValuePromise
+      if (value && authStrategy.isFresh()) {
+        return Ok(value)
       } else {
-        latestValuePromise = authStrategy.withAuthentication(builder)
-        return latestValuePromise
+        const authDetails = await authStrategy.getAuthenticationDetails()
+        if (authDetails.ok) {
+          const result = await builder(authDetails.value)
+          if (result.ok) {
+            value = result.value
+            return Ok(value)
+          } else {
+            return Err(result.error)
+          }
+        } else {
+          return Err(authDetails.error)
+        }
       }
     }
   }
 }
 
-export interface Memo<T> {
-  freshValue(): Promise<T>
+export interface Memo<R> {
+  freshValue(): AsyncResult<R, AuthenticationFailure>
 }

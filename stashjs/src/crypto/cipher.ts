@@ -11,6 +11,8 @@ import { KMS as KMSv3 } from "@aws-sdk/client-kms"
 import * as crypto from 'crypto'
 import { deserialize, serialize } from '../serializer'
 import { AWSClientConfig } from '../aws'
+import { AsyncResult, Ok, Err, fromPromise } from '../result'
+import { DecryptionFailure, EncryptionFailure, KMSError  } from '../errors'
 
 // TODO: Read https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#key-commitment
 
@@ -49,8 +51,8 @@ const maxMessagesEncrypted = 1000
 const partition = "source"
 
 export type CipherSuite = {
-  encrypt: <T>(plaintext: T) => Promise<EncryptOutput>
-  decrypt: <T>(ciphertext: Buffer) => Promise<T>
+  encrypt: <T>(plaintext: T) => AsyncResult<EncryptOutput, EncryptionFailure>
+  decrypt: <T>(ciphertext: Buffer) => AsyncResult<T, DecryptionFailure>
 }
 
 export function makeNodeCachingMaterialsManager(generatorKeyId: string, awsConfig: AWSClientConfig): NodeCachingMaterialsManager {
@@ -73,19 +75,21 @@ export function makeCipherSuite(cmm: NodeCachingMaterialsManager): CipherSuite {
   return {
     encrypt: async <T>(plaintext: T) => {
       const buffer = serialize(plaintext)
-      try {
-        return await client.encrypt(cmm, buffer, {
-          encryptionContext: context,
-          plaintextLength: buffer.byteLength
-        })
-      } catch (err) {
-        return Promise.reject(err)
-      }
+      const promise = client.encrypt(cmm, buffer, {
+        encryptionContext: context,
+        plaintextLength: buffer.byteLength
+      })
+      return await fromPromise(promise, EncryptionFailure)
     },
 
     decrypt: async <T>(ciphertext: Buffer) => {
-      const decrypted = await client.decrypt(cmm, ciphertext)
-      return deserialize(decrypted.plaintext) as T
+      const promise = client.decrypt(cmm, ciphertext)
+      const decrypted = await fromPromise(promise, DecryptionFailure)
+      if (decrypted.ok) {
+        return Ok(deserialize<T>(decrypted.value.plaintext))
+      } else {
+        return Err(decrypted.error)
+      }
     }
   }
 }
@@ -100,15 +104,20 @@ export function makeCipherSuite(cmm: NodeCachingMaterialsManager): CipherSuite {
  * @param namingKey Base64-encoded naming key
  * @returns a function that when given a name, returns the hash of the name as a Buffer
  */
-export async function makeRefGenerator(kmsClient: KMSv3, namingKey: string): Promise<MakeRefFn> {
+export async function makeRefGenerator(kmsClient: KMSv3, namingKey: string): AsyncResult<MakeRefFn, KMSError> {
   // Do the expensive initialisation here instead of in `makeRef(string)`.  That
   // way it only happens once.
-  const key = await kmsClient.decrypt({ CiphertextBlob: Buffer.from(namingKey, 'base64') })
+  const promise = kmsClient.decrypt({ CiphertextBlob: Buffer.from(namingKey, 'base64') })
+  const key = await fromPromise(promise, KMSError)
 
-  return function makeRef(name) {
-    const hmac = crypto.createHmac('sha256', key.Plaintext!)
-    hmac.update(name)
-    return hmac.digest()
+  if (key.ok) {
+    return Ok(function makeRef(name) {
+      const hmac = crypto.createHmac('sha256', key.value.Plaintext!)
+      hmac.update(name)
+      return hmac.digest()
+    })
+  } else {
+    return Err(key.error)
   }
 }
 

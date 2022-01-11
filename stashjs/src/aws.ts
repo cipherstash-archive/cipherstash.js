@@ -1,5 +1,7 @@
 import { AssumeRoleWithWebIdentityCommandOutput, STS } from "@aws-sdk/client-sts"
 import { Credentials } from '@aws-sdk/types'
+import { AWSFederationFailure } from "./errors"
+import { AsyncResult, Ok, fromPromise } from "./result"
 import { AwsCredentialsSource } from './stash-config'
 
 // You'd think there'd be one of these ready-to-go in @aws-sdk/types, but
@@ -11,25 +13,19 @@ export type AWSClientConfig = {
 }
 
 
-export async function awsConfig(creds: AwsCredentialsSource, token: string): Promise<AWSClientConfig> {
-  return new Promise((resolve, reject) => {
-    switch(creds.kind) {
-      case "Federated":
-        federateAwsToken(token, creds.roleArn, creds.region)
-          .then(cfg => resolve(cfg))
-          .catch(err => reject(err))
-        break
-      case "Explicit":
-        resolve({
-          credentials: {
-            accessKeyId: creds.accessKeyId,
-            secretAccessKey: creds.secretAccessKey,
-          },
-          region: creds.region
-        })
-        break
-    }
-  })
+export async function awsConfig(creds: AwsCredentialsSource, token: string): AsyncResult<AWSClientConfig, AWSFederationFailure> {
+  switch(creds.kind) {
+    case "Federated":
+      return federateAwsToken(token, creds.roleArn, creds.region)
+    case "Explicit":
+      return Ok({
+        credentials: {
+          accessKeyId: creds.accessKeyId,
+          secretAccessKey: creds.secretAccessKey,
+        },
+        region: creds.region
+      })
+  }
 }
 
 // Remember the last credentials that were acquired by federation. We'll keep these
@@ -58,7 +54,7 @@ function toAwsClientConfig(region: string, credentials: AssumeRoleWithWebIdentit
       sessionToken,
       expiration
     },
-    region: region
+    region
   }
 }
 
@@ -77,12 +73,12 @@ async function federateAwsToken(
   accessToken: string,
   roleArn: string,
   region: string
-): Promise<AWSClientConfig> {
+): AsyncResult<AWSClientConfig, AWSFederationFailure> {
   if (cachedAwsClientConfig && cachedAwsClientConfigExpiry && !requiresRefresh(cachedAwsClientConfigExpiry)) {
-    return cachedAwsClientConfig
+    return Ok(cachedAwsClientConfig)
   } else {
     const client = new STS({ region })
-    return client.assumeRoleWithWebIdentity({
+    const promise = client.assumeRoleWithWebIdentity({
       RoleArn: roleArn,
       WebIdentityToken: accessToken,
       // TODO: This should possibly be the user ID (sub from the access token)
@@ -94,10 +90,10 @@ async function federateAwsToken(
          cachedAwsClientConfigExpiry = credentials!.Expiration
          return cachedAwsClientConfig
       } else {
-        return Promise.reject(new Error("STS Token Exchange failed"))
+        return Promise.reject("STS Token Exchange failed")
       }
-    }).catch(err => {
-      return Promise.reject(err)
     })
+    const federationResult = await fromPromise(promise, AWSFederationFailure)
+    return federationResult
   }
 }

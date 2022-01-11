@@ -1,10 +1,12 @@
-import { ClientWritableStream, Metadata } from "@grpc/grpc-js"
+import { ClientWritableStream } from "@grpc/grpc-js"
 import { V1 } from "@cipherstash/stashjs-grpc"
 import { CollectionSchema } from "."
 import { AnalysisRunner, AnalysisResult } from "./analysis-runner"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
-import { Stash } from "./stash"
-import { AuthStrategy } from "./auth/auth-strategy"
+import { StashInternal } from "./stash-internal"
+import { AsyncResult, Err, fromPromise, Ok } from "./result"
+import { StreamingPutFailure, wrap } from "./errors"
+import { makeAsyncResultApiWrapper } from "./stash-api-async-result-wrapper"
 
 export class StreamWriter<
   R extends StashRecord,
@@ -13,17 +15,15 @@ export class StreamWriter<
 > {
 
   private analysisRunner: AnalysisRunner
+  private api: ReturnType<typeof makeAsyncResultApiWrapper>
 
   constructor(
-    private stash: Stash,
-    private schema: CollectionSchema<R, M, MM>,
     private collectionId: Buffer,
-    private authStrategy: AuthStrategy
+    stash: StashInternal,
+    schema: CollectionSchema<R, M, MM>,
   ) {
-    this.analysisRunner = new AnalysisRunner({
-      profile: this.stash.profile,
-      schema: this.schema
-    })
+    this.analysisRunner = new AnalysisRunner({ profile: stash.profile, schema })
+    this.api = makeAsyncResultApiWrapper(stash.stub, stash.authStrategy)
    }
 
   /**
@@ -35,34 +35,40 @@ export class StreamWriter<
    * @returns a Promise that will resolve once all records from the iterator
    *          have been written.
    */
-  public writeAll(records: AsyncIterator<R>): Promise<V1.StreamingPutReply> {
+  public writeAll(records: AsyncIterator<R>): AsyncResult<V1.Document.StreamingPutReply, StreamingPutFailure> {
     return this.writeStream(this.analysisRunner.analyze(records))
   }
 
-  private async writeStream(analysisResults: AsyncIterator<AnalysisResult>): Promise<V1.StreamingPutReply> {
-    return this.authStrategy.withAuthentication<V1.StreamingPutReply>(({ authToken }) => {
-      return new Promise(async (resolve, reject) => {
-        const metaData = new Metadata()
-        metaData.set('authorization', `Bearer ${ authToken }`)
-        const stream = this.stash.stub.putStream(metaData, (err, result) => {
-          if (err) {
-            reject(err)
-          } else {
-            resolve(result!)
-          }
-        })
-        await this.writeStreamingPutBegin(stream, this.collectionId)
-        let result = await analysisResults.next()
-        while (!result.done) {
-          await this.writeOneStreamingPutRequest(stream, result.value)
-          result = await analysisResults.next()
+  private async writeStream(analysisResults: AsyncIterator<AnalysisResult>): AsyncResult<V1.Document.StreamingPutReply, StreamingPutFailure> {
+    const initialised = await this.api.document.putStream()
+    if (initialised.ok) {
+      const { stream, reply } = initialised.value
+      const begin = await this.writeStreamingPutBegin(stream, this.collectionId)
+      if (!begin.ok) {
+        return Err(begin.error)
+      }
+      let result = await analysisResults.next()
+      while (!result.done) {
+        const putRequest = await this.writeOneStreamingPutRequest(stream, result.value)
+        if (!putRequest.ok) {
+          return Err(putRequest.error)
         }
-        stream.end()
-      })
-    })
+        result = await analysisResults.next()
+      }
+      stream.end()
+
+      const message = await reply
+      if (message.ok) {
+        return Ok(message.value)
+      } else {
+        return Err(StreamingPutFailure(message.error))
+      }
+    } else {
+      return Err(StreamingPutFailure(initialised.error))
+    }
   }
 
-  private toStreamingPutRequest(analysisResult: AnalysisResult): V1.StreamingPutRequest {
+  private toStreamingPutRequest(analysisResult: AnalysisResult): V1.Document.StreamingPutRequest {
     return {
       document: {
         vectors: analysisResult.vectors,
@@ -74,26 +80,41 @@ export class StreamWriter<
     }
   }
 
-  private async writeStreamingPutBegin(stream: ClientWritableStream<V1.StreamingPutRequest>, collectionId: Buffer): Promise<void> {
-    return new Promise(async (resolve) => {
+  private async writeStreamingPutBegin(stream: ClientWritableStream<V1.Document.StreamingPutRequest>, collectionId: Buffer): AsyncResult<void, StreamingPutFailure> {
+    const promise = new Promise<void>(async (resolve, reject) => {
       while (!stream.write({ begin: { collectionId }}, () => { resolve(void 0) })) {
-        await this.waitForDrain(stream)
+        const wait = await this.waitForDrain(stream)
+        if (!wait.ok) {
+          return reject(wait.error)
+        }
       }
+      resolve(void 0)
     })
+
+    return fromPromise(promise, (err: any) => err)
   }
 
-  private async writeOneStreamingPutRequest(stream: ClientWritableStream<V1.StreamingPutRequest>, analysisResult: AnalysisResult): Promise<void> {
+  private async writeOneStreamingPutRequest(stream: ClientWritableStream<V1.Document.StreamingPutRequest>, analysisResult: AnalysisResult): AsyncResult<void, StreamingPutFailure> {
     const payload = this.toStreamingPutRequest(analysisResult)
-    return new Promise(async (resolve) => {
+    const promise = new Promise<void>(async (resolve, reject) => {
       while (!stream.write(payload, () => { resolve(void 0) })) {
-        await this.waitForDrain(stream)
+        const wait = await this.waitForDrain(stream)
+        if (!wait.ok) {
+          return reject(wait.error)
+        }
       }
+      resolve(void 0)
     })
+
+    return fromPromise(promise, (err: any) => err)
   }
 
-  private async waitForDrain(stream: ClientWritableStream<V1.StreamingPutRequest>): Promise<void> {
-    return new Promise(resolve => {
+  private async waitForDrain(stream: ClientWritableStream<V1.Document.StreamingPutRequest>): AsyncResult<void, StreamingPutFailure> {
+    const promise = new Promise<void>((resolve, reject) => {
       stream.once('drain', () => resolve(void 0))
+      stream.once('error', reject)
     })
+
+    return fromPromise(promise, (err: unknown) => StreamingPutFailure(wrap(err)))
   }
 }

@@ -1,28 +1,20 @@
-import { V1 } from "@cipherstash/stashjs-grpc";
-import { CipherSuite } from "../crypto/cipher";
+import { V1 } from "@cipherstash/stashjs-grpc"
+import { CipherSuite } from "../crypto/cipher"
 import { StashRecord } from "../dsl/mappings-dsl"
+import { DecryptionFailure } from "../errors"
+import { AsyncResult, gather } from "../result"
 
-export async function convertGetReplyToUserRecord<
-  R extends StashRecord
->(
-  output: V1.GetReplyOutput,
-  cipherSuite: CipherSuite
-): Promise<R | null> {
-  if (output.source!.source!) {
-    return await cipherSuite.decrypt(output.source!.source!)
-  } else {
-    return null
-  }
-}
+export const convertGetReplyToUserRecord =
+  (cipher: CipherSuite) =>
+    <R extends StashRecord>(reply: V1.Document.GetReply): AsyncResult<R, DecryptionFailure> =>
+      cipher.decrypt(reply.source!.source!)
 
-export async function convertGetAllReplyToUserRecords<
-  R extends StashRecord
->(
-  output: V1.GetAllReplyOutput,
-  cipherSuite: CipherSuite
-): Promise<Array<R>> {
-  // TODO: Can we decrypt all in one hit with the SDK?
-  return await Promise.all(output.documents!.map((doc) =>
-    cipherSuite.decrypt(doc.source)
-  )) as unknown as Array<R>
-}
+
+export const convertGetAllReplyToUserRecords =
+  (cipher: CipherSuite) =>
+    async <R extends StashRecord>(reply: V1.Document.GetAllReply) =>
+      gather(
+        await Promise.all(
+          reply.documents!.map(doc => cipher.decrypt<R>(doc.source!))
+        )
+      )

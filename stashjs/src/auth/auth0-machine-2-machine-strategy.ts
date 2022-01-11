@@ -1,9 +1,10 @@
-import { stashOauth } from './oauth-utils'
+import { OauthAuthenticationInfo, stashOauth } from './oauth-utils'
 import { AuthenticationState } from './authentication-state'
-import { AuthenticationDetailsCallback, AuthStrategy } from './auth-strategy'
+import { AuthenticationDetails, AuthStrategy } from './auth-strategy'
 import { Auth0Machine2Machine, StashConfiguration } from '../stash-config'
-import { describeError } from '../utils'
-import { awsConfig } from '../aws'
+import { AuthenticationFailure } from '../errors'
+import { AsyncResult, Err, Ok } from '../result'
+import { AWSClientConfig, awsConfig } from '../aws'
 
 export type StashProfileAuth0Machine2Machine = {
   config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0Machine2Machine }
@@ -14,9 +15,14 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy {
 
   constructor(private profile: StashProfileAuth0Machine2Machine) {}
 
-  public async initialise(): Promise<void> {
-    await this.authenticate()
-    this.scheduleTokenRefresh()
+  public async initialise(): AsyncResult<void, AuthenticationFailure> {
+    const authenticated = await this.authenticate()
+    if (authenticated.ok) {
+      this.scheduleTokenRefresh()
+      return Ok(void 0)
+    } else {
+      return Err(authenticated.error)
+    }
   }
 
   public isFresh(): boolean {
@@ -34,21 +40,16 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy {
     return awsCredsAreFresh && auth0CredsAreFresh
   }
 
-  public async withAuthentication<R>(callback: AuthenticationDetailsCallback<R>): Promise<R> {
-    if (this.state.name != "authenticated") {
-      await this.authenticate()
-    }
-
-    if (this.state.name == "authenticated") {
-      try {
-        return await callback({authToken: this.state.oauthInfo.accessToken, awsConfig: this.state.awsConfig})
-      } catch (err) {
-        return Promise.reject(`API call failed: ${describeError(err)}`)
-      }
-    } else if (this.state.name == "authentication-failed") {
-      return Promise.reject(`Authentication failure: ${this.state.error}`)
+  public async getAuthenticationDetails(): AsyncResult<AuthenticationDetails, AuthenticationFailure> {
+    const authenticated = await this.authenticate()
+    if (authenticated.ok) {
+      const { oauthInfo, awsConfig } = authenticated.value
+      return Ok({
+        authToken: oauthInfo.accessToken,
+        awsConfig
+      })
     } else {
-      return Promise.reject("Internal error: unreachable state")
+      return Err(authenticated.error)
     }
   }
 
@@ -74,50 +75,61 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy {
   }
 
   private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
-    try {
-      const oauthInfo = await stashOauth.performTokenRefresh(
-        this.profile.config.identityProvider.host,
-        refreshToken,
-        this.profile.config.identityProvider.clientId
-      )
+    const oauthInfo = await stashOauth.performTokenRefresh(
+      this.profile.config.identityProvider.host,
+      refreshToken,
+      this.profile.config.identityProvider.clientId
+    )
 
-      if (this.state.name == "authenticated") {
+    if (oauthInfo.ok) {
+      const aws = await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.value.accessToken)
+      if (aws.ok) {
         this.state = {
           name: "authenticated",
-          oauthInfo,
-          awsConfig: await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.accessToken)
+          oauthInfo: oauthInfo.value,
+          awsConfig: aws.value
+        }
+      } else {
+        this.state = {
+          name: "authentication-failed",
+          error: AuthenticationFailure(aws.error)
         }
       }
-    } catch (err) {
+    } else {
       this.state = {
         name: "authentication-failed",
-        error: describeError(err)
+        error: oauthInfo.error
       }
     }
   }
 
-  private async authenticate(): Promise<void> {
-    try {
-      const oauthInfo = await stashOauth.authenticateViaClientCredentials(
-        this.profile.config.identityProvider.host,
-        this.profile.config.service.host,
-        this.profile.config.identityProvider.clientId,
-        this.profile.config.identityProvider.clientSecret
-      )
-      try {
+  private async authenticate(): AsyncResult<SuccessfulAuthentication, AuthenticationFailure> {
+    const oauthInfo = await stashOauth.authenticateViaClientCredentials(
+      this.profile.config.identityProvider.host,
+      this.profile.config.service.host,
+      this.profile.config.identityProvider.clientId,
+      this.profile.config.identityProvider.clientSecret
+    )
+
+    if (oauthInfo.ok) {
+      const aws = await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.value.accessToken)
+      if (aws.ok) {
         this.state = {
           name: "authenticated",
-          oauthInfo,
-          awsConfig: await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.accessToken)
+          oauthInfo: oauthInfo.value,
+          awsConfig: aws.value
         }
-      } catch (error) {
-        this.state = { name: "authentication-failed", error: `Token federation failure: ${describeError(error)}` }
+        return Ok(this.state)
+      } else {
+        this.state = { name: "authentication-failed", error: AuthenticationFailure(aws.error) }
+        return Err(AuthenticationFailure(aws.error))
       }
-    } catch (error) {
-      this.state = { name: "authentication-failed", error: `Oauth failure: ${describeError(error)}` }
+    } else {
+        this.state = { name: "authentication-failed", error: oauthInfo.error }
+        return Err(oauthInfo.error)
     }
   }
-}
+ }
 
 /* Refresh tokens before the expiry to avoid API errors due
  * to race conditions. Expiry buffer is in seconds */
@@ -126,4 +138,10 @@ const EXPIRY_BUFFER_SECONDS = 20
 export type ClientCredentials = {
   clientId: string,
   clientSecret: string
+}
+
+export type SuccessfulAuthentication = {
+  readonly name: "authenticated",
+  readonly oauthInfo: OauthAuthenticationInfo,
+  readonly awsConfig: AWSClientConfig
 }

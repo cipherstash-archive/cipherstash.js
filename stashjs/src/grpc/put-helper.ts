@@ -11,7 +11,7 @@ export function convertAnalyzedRecordToVectors<
 >(
   analyzedRecord: AnalyzedRecord<R, M, MM>,
   meta: MM
-): V1.VectorInput[] {
+): V1.Document.Vector[] {
   return Object.entries(analyzedRecord.indexEntries).map(
     ([indexId, terms]) => {
       const idxMeta = findByIndexId(meta, indexId)!

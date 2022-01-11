@@ -6,18 +6,23 @@ export {
   StashProfile,
 } from './stash-profile'
 
+export { StashInternal } from "./stash-internal"
 export { Stash } from "./stash"
 
 export {
   Aggregate,
   AggregateResult,
   AggregationOptions,
-  Collection,
+  CollectionInternal,
   CollectionMetadata,
   Ordering,
   OrderingOptions,
   QueryOptions,
   QueryResult,
+} from "./collection-internal"
+
+export {
+  Collection,
 } from "./collection"
 
 export {
@@ -96,3 +101,5 @@ export {
   profileStore,
   defaults
 } from './auth/profile-store'
+
+export * from './errors'
