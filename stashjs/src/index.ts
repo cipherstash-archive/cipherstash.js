@@ -102,4 +102,6 @@ export {
   defaults
 } from './auth/profile-store'
 
-export * from './errors'
+export * as errors from './errors'
+
+export * from './result'

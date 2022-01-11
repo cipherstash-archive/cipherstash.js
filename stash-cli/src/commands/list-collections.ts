@@ -10,7 +10,9 @@ import {
   isExactMapping,
   isFieldDynamicMatchMapping,
   isMatchMapping,
-  isRangeMapping
+  isRangeMapping,
+  Result,
+  errors
 } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
@@ -23,14 +25,23 @@ const command: GluegunCommand = {
     const profileName: string | undefined = parameters.options.profile
 
     try {
-      let profile: StashProfile;
+      let profile: Result<StashProfile, errors.LoadProfileFailure>;
       if (profileName) {
         profile = await profileStore.loadProfile(profileName)
       } else {
         profile = await profileStore.loadDefaultProfile()
       }
 
-      const stash = await Stash.connect(profile)
+      if (!profile.ok) {
+        print.error(
+          `Could not list collections. Reason: "${describeError(profile.error)}"`
+        )
+        process.exit(1)
+        return
+      }
+
+
+      const stash = await Stash.connect(profile.value)
       const collectionNames = await stash.listCollections()
       collectionNames.forEach(async collectionName => {
         const collection = await stash.loadCollection(collectionName)

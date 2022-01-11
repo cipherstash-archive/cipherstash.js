@@ -6,8 +6,8 @@ import {
   profileStore,
   defaults,
   stashOauth,
-  describeError,
-  StashProfile
+  StashProfile,
+  errors
 } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
@@ -38,79 +38,89 @@ const command: GluegunCommand = {
       process.exit(1)
     }
 
-    try {
-      const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
-        identityProviderHost,
-        identityProviderClientId,
-        serviceHost,
-        workspace
-      )
+    const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
+      identityProviderHost,
+      identityProviderClientId,
+      serviceHost,
+      workspace
+    )
 
-      print.info(
-        `Visit ${pollingInfo.verificationUri} to complete authentication`
-      )
-      print.info('Waiting for authentication...')
-
-      // Only open the browser when running this command locally.  If we are
-      // running under SSH then the browser will open on the remote host - which
-      // is not what we want.  Instead the user can simply click the
-      // verification link that gets printed.
-      if (!isInteractive()) {
-        await open(pollingInfo.verificationUri)
-      }
-
-      const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
-        identityProviderHost,
-        identityProviderClientId,
-        pollingInfo.deviceCode,
-        pollingInfo.interval
-      )
-
-      const response = await makeHttpsClient(
-        consoleApiHost,
-        consoleApiPort
-      ).get(`/api/meta/workspaces/${encodeURIComponent(workspace)}`, {
-        headers: {
-          Authorization: `Bearer ${authInfo.accessToken}`
-        }
-      })
-
-      const profile: StashProfile = {
-        name: workspace,
-        config: {
-          service: {
-            workspace,
-            host: serviceHost,
-            port: servicePort
-          },
-          identityProvider: {
-            kind: 'Auth0-DeviceCode',
-            host: identityProviderHost,
-            clientId: identityProviderClientId
-          },
-          keyManagement: {
-            kind: 'AWS-KMS',
-            awsCredentials: {
-              kind: 'Federated',
-              region: response.data.keyRegion,
-              roleArn: response.data.keyRoleArn
-            },
-            key: {
-              arn: response.data.keyId,
-              namingKey: response.data.namingKey,
-              region: response.data.keyRegion
-            }
-          }
-        },
-        oauthCreds: authInfo
-      }
-
-      await profileStore.saveProfile(profile)
-
-      print.info(`Workspace configuration and authentication details have been saved in dir ~/.cipherstash`)
-    } catch (error) {
-      print.error(`Could not init: ${describeError(error)}`)
+    if (!pollingInfo.ok) {
+      print.error('An error occurred and "stash init" could not complete successfully')
+      print.error(`Reason: ${errors.toErrorMessage(pollingInfo.error)}`)
+      process.exit(1)
+      return
     }
+
+    print.info(
+      `Visit ${pollingInfo.value.verificationUri} to complete authentication`
+    )
+    print.info('Waiting for authentication...')
+
+    // Only open the browser when running this command locally.  If we are
+    // running under SSH then the browser will open on the remote host - which
+    // is not what we want.  Instead the user can simply click the
+    // verification link that gets printed.
+    if (!isInteractive()) {
+      await open(pollingInfo.value.verificationUri)
+    }
+
+    const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
+      identityProviderHost,
+      identityProviderClientId,
+      pollingInfo.value.deviceCode,
+      pollingInfo.value.interval
+    )
+
+    if (!authInfo.ok) {
+      print.error('An error occurred and "stash init" could not complete successfully')
+      print.error(`Reason: ${errors.toErrorMessage(authInfo.error)}`)
+      process.exit(1)
+      return
+    }
+
+    const response = await makeHttpsClient(
+      consoleApiHost,
+      consoleApiPort
+    ).get(`/api/meta/workspaces/${encodeURIComponent(workspace)}`, {
+      headers: {
+        Authorization: `Bearer ${authInfo.value.accessToken}`
+      }
+    })
+
+    const profile: StashProfile = {
+      name: workspace,
+      config: {
+        service: {
+          workspace,
+          host: serviceHost,
+          port: servicePort
+        },
+        identityProvider: {
+          kind: 'Auth0-DeviceCode',
+          host: identityProviderHost,
+          clientId: identityProviderClientId
+        },
+        keyManagement: {
+          kind: 'AWS-KMS',
+          awsCredentials: {
+            kind: 'Federated',
+            region: response.data.keyRegion,
+            roleArn: response.data.keyRoleArn
+          },
+          key: {
+            arn: response.data.keyId,
+            namingKey: response.data.namingKey,
+            region: response.data.keyRegion
+          }
+        }
+      },
+      oauthCreds: authInfo.value
+    }
+
+    await profileStore.saveProfile(profile)
+
+    print.info(`Workspace configuration and authentication details have been saved in dir ~/.cipherstash`)
   }
 }
 
