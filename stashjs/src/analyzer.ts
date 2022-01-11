@@ -120,7 +120,7 @@ function flattenCondition<
       | FieldDynamicMatchCondition<R, M, Extract<keyof M, string>>,
     mappings: M,
     meta: MM
-  ): Array<V1.ConstraintInput> {
+  ): Array<V1.Query.Constraint> {
 
   if (isConjunctiveCondition<R, M>(condition)) {
     return condition.conditions.flatMap(c => flattenCondition<R, M, MM>(c, mappings, meta))
@@ -208,7 +208,7 @@ export type QueryAnalyzer<
 > = (query: Query<R, M>) => AnalyzedQuery
 
 export type AnalyzedQuery = {
-  constraints: Array<V1.ConstraintInput>
+  constraints: Array<V1.Query.Constraint>
 }
 
 const buildFieldExtractor: <
