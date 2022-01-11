@@ -5,9 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "./scripts/pkg-build.sh",
-    "build-then-watch": "pnpm build && pnpx tsc --watch",
+    "build-then-watch": "pnpm build; pnpx tsc --watch",
     "prepublishOnly": "pnpm build --filter ./",
-    "postinstall": "./scripts/pkg-postinstall.sh",
     "clean": "rm -fr ./dist ./build",
     "test": "pnpx jest"
   },
@@ -93,10 +92,8 @@
   "files": [
     "scripts/*",
     "src/**",
-    "src/crypto/ore/fastore/**",
     "dist/**",
     "babel.config.js",
-    "binding.gyp",
     "tsconfig.json"
   ]
 }

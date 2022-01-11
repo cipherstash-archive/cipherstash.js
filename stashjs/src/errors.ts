@@ -166,3 +166,59 @@ export const wrap
       return { tag: 'NativeError', cause: new Error(`${thrown}`) }
     }
   }
+
+  export function simpleDescriptionForError<Cause, E extends StashJSError<ErrorTag, Cause>>(error: E): string {
+    switch (error.tag) {
+      case 'AnalysisFailure': return "Analysis of a record failed"
+      case 'AuthenticationFailure': return "Authentication failed"
+      case 'AWSFederationFailure': return "Failed to federate credentials to AWS"
+      case 'CollectionCreationFailure': return "Failed to create collection"
+      case 'CollectionDeleteFailure': return "Failed to delete collection"
+      case 'CollectionLoadFailure': return "Failed to load collection"
+      case 'CollectionListFailure': return "Failed to list collections"
+      case 'ConnectionFailure': return "Failed to connect to StashJS service"
+      case 'DecryptionFailure': return "Failed to decrypt"
+      case 'DocumentDeleteFailure': return "Failed to delete document from a collection"
+      case 'DocumentGetFailure': return "Failed to get document from collection"
+      case 'DocumentGetAllFailure': return "Failed to get all documents from collection"
+      case 'DocumentPutFailure': return "Failed to put document in collection"
+      case 'DocumentQueryFailure': return "Failed to query documents"
+      case 'EncryptionFailure': return "Failed to encrypt"
+      case 'GRPCError': return "A gRPC error occurred"
+      case 'IllegalStateError': return "An internal error occurred: this is bug in StashJS"
+      case 'IOError': return "Error occurred reading or writing to the filesystem or the network"
+      case 'KMSError': return "KMS error"
+      case 'LoadProfileFailure': return "Failed to load Stash profile"
+      case 'LoadProfileNamesFailure': return "Failed to load Stash profile names"
+      case 'MalformedConfigFile': return "Stash profile was malformed"
+      case 'MissingConfigDir': return "Stash config directory not found"
+      case 'MissingProfile': return "Stash profile not found"
+      case 'NoDefaultProfileSet': return "No default Stash profile is set and StashJS was initiated without naming a specific profile"
+      case 'OAuthFailure': return "OAuth authentication failed"
+      case 'SaveProfileFailure': return "Failed to save profile"
+      case 'SetDefaultProfileFailure': return "Failed to set the default profile"
+      case 'StreamingPutFailure': return "Failure during streaming bulk upsert"
+    }
+  }
+
+
+  export function toErrorMessage<Cause, E extends StashJSError<ErrorTag, Cause> | NativeError>(error: E): string {
+    let desc: string;
+    if (error.tag === 'NativeError') {
+      desc = `${ error.cause.message }`
+      if (error.cause.stack) {
+        desc = `(Native JS Error) ${ desc }\n${ error.cause.stack }`
+      }
+      return desc
+    } else {
+      desc = simpleDescriptionForError(error)
+      if (error.message) {
+        desc = `${ desc } (${ error.message })`
+      }
+      if (error.cause) {
+        return `${ desc }\n${ toErrorMessage(error.cause as any)}`
+      } else {
+        return desc
+      }
+    }
+  }
