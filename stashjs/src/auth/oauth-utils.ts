@@ -2,7 +2,8 @@ import https from 'https'
 import axios, { AxiosInstance } from 'axios'
 import querystring from 'querystring'
 import jws from 'jws'
-import { describeError } from '../utils'
+import { AuthenticationFailure, OAuthFailure } from '../errors'
+import { AsyncResult, Ok, Err, Result, fromPromise } from '../result'
 
 const SCOPES = "collection.create collection.delete collection.info collection.list document.put document.delete document.get document.query"
 
@@ -26,21 +27,22 @@ class StashOauth {
     audience: string,
     clientId: string,
     clientSecret: string
-  ): Promise<OauthAuthenticationInfo> {
-    try {
-      const response = await makeOauthClient(idpHost).post('/oauth/token', querystring.stringify({
-        audience,
-        grant_type: "client_credentials",
-        client_id: clientId,
-        client_secret: clientSecret
-      }))
-      if (response.status >= 200 && response.status < 400) {
-        return camelcaseKeys(response.data) as OauthAuthenticationInfo
+  ): AsyncResult<OauthAuthenticationInfo, AuthenticationFailure> {
+    const promise = makeOauthClient(idpHost).post('/oauth/token', querystring.stringify({
+      audience,
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret
+    }))
+    const response = await fromPromise(promise, OAuthFailure)
+    if (response.ok) {
+      if (response.value.status >= 200 && response.value.status < 400) {
+        return Ok(camelcaseKeys(response.value.data) as OauthAuthenticationInfo)
       } else {
-        return Promise.reject(`Authentication failed - returned status ${response.status}`)
+        return Err(AuthenticationFailure(OAuthFailure(`Authentication failed - returned status ${response.value.status}`)))
       }
-    } catch (err) {
-      return Promise.reject(`Authentication failed: ${JSON.stringify(err)}`)
+    } else {
+      return Err(AuthenticationFailure(OAuthFailure(response.error)))
     }
   }
 
@@ -48,35 +50,41 @@ class StashOauth {
     idpHost: string,
     refreshToken: string,
     clientId: string
-  ): Promise<OauthAuthenticationInfo> {
-    try {
-      let params = {
-        grant_type: "refresh_token",
-        refresh_token: refreshToken,
-        client_id: clientId
+  ): AsyncResult<OauthAuthenticationInfo, AuthenticationFailure> {
+    let params = {
+      grant_type: "refresh_token",
+      refresh_token: refreshToken,
+      client_id: clientId
+    }
+    const promise = makeOauthClient(idpHost).post('/oauth/token', querystring.stringify(params))
+    const response = await fromPromise(promise, OAuthFailure)
+    if (response.ok) {
+      const unpacked = this.unpackResponse(camelcaseKeys(JSON.parse(response.value.data)))
+      if (unpacked.ok) {
+        return Ok(unpacked.value)
+      } else {
+        return Err(AuthenticationFailure(OAuthFailure(unpacked.error), 'Failed to unpack response from Auth0'))
       }
-      try {
-        const response = await makeOauthClient(idpHost).post('/oauth/token', querystring.stringify(params))
-        return this.unpackResponse(camelcaseKeys(JSON.parse(response.data)))
-      } catch (err: any) {
-        return Promise.reject(`Token refresh failed - ${err?.message}`)
-      }
-    } catch (err) {
-      return Promise.reject(`Token refresh failed: ${describeError(err)}`)
+    } else {
+      return Err(AuthenticationFailure(OAuthFailure(response.error), 'Token refresh failed'))
     }
   }
 
-  public unpackResponse(json: any): OauthAuthenticationInfo {
+  public unpackResponse(json: any): Result<OauthAuthenticationInfo, OAuthFailure> {
     json = camelcaseKeys(json)
     if (!json['accessToken'] || !json['refreshToken']) {
-      throw new Error(`Unexpected reponse payload: ${JSON.stringify(json)}`)
+      return Err(OAuthFailure(`Unexpected reponse payload: ${JSON.stringify(json)}`))
     }
 
-    const decoded = jws.decode(json['accessToken'])
-    return {
-      accessToken: json['accessToken'],
-      refreshToken: json['refreshToken'],
-      expiry: decoded.payload.exp
+    try {
+      const decoded = jws.decode(json['accessToken'])
+      return Ok({
+        accessToken: json['accessToken'],
+        refreshToken: json['refreshToken'],
+        expiry: decoded.payload.exp
+      })
+    } catch (err: unknown) {
+      return Err(OAuthFailure(err))
     }
   }
 
@@ -85,37 +93,33 @@ class StashOauth {
     clientId: string,
     audience: string,
     workspace?: string // When signing into the console for the first time we will not even know the workspace
-  ): Promise<DeviceCodePollingInfo> {
+  ): AsyncResult<DeviceCodePollingInfo, AuthenticationFailure> {
     const scope = !!workspace ?
       `offline_access ${SCOPES} ws:${workspace}` :
       `offline_access ${SCOPES}`
 
-    const response: any = await makeOauthClient(idpHost).post("/oauth/device/code", {
+    const promise = makeOauthClient(idpHost).post("/oauth/device/code", {
       client_id: clientId,
       scope,
       audience
     })
+    const response = await fromPromise(promise, OAuthFailure)
 
-    if (response) {
-      if (response.status === 200) {
+    if (response.ok) {
+      if (response.value.status === 200) {
         const {
           device_code: deviceCode,
           user_code: userCode,
           verification_uri_complete: verificationUri,
           interval
-        } = response.data
+        } = response.value.data
 
-        return {
-          deviceCode,
-          userCode,
-          verificationUri,
-          interval
-        }
+        return Ok({ deviceCode, userCode, verificationUri, interval })
       } else {
-        return Promise.reject(`Could not initiate login: ${describeError(response.data)}`)
+        return Err(AuthenticationFailure(OAuthFailure(response.value.data)))
       }
     } else {
-      return Promise.reject(`Could not initiate login (empty respone from IDP)`)
+      return Err(AuthenticationFailure(OAuthFailure(response.error)))
     }
   }
 
@@ -124,32 +128,31 @@ class StashOauth {
     clientId: string,
     deviceCode: string,
     interval: number
-  ): Promise<OauthAuthenticationInfo> {
+  ): AsyncResult<OauthAuthenticationInfo, AuthenticationFailure> {
     while (true) {
-      const response: any = await makeOauthClient(idpHost).post("/oauth/token", {
+      const response = await fromPromise(makeOauthClient(idpHost).post("/oauth/token", {
         grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
         device_code: deviceCode,
         client_id: clientId
-      }).catch((err: any) => {
-        if (err.response) {
-          return Promise.resolve(err.response)
-        } else {
-          return Promise.reject(err)
-        }
-      })
+      }), OAuthFailure)
 
-      // See https://auth0.com/docs/flows/call-your-api-using-the-device-authorization-flow#token-responses
-      if (response.data?.access_token) {
-        return this.unpackResponse(response.data)
-      } else if (response.data?.error === "authorization_pending") {
-        await pause(interval)
-      } else if (response.data?.error === "slow_down") {
-        // increase polling interval by 5 seconds
-        // see: https://datatracker.ietf.org/doc/html/rfc8628#section-3.5
-        interval += 5
-        await pause(interval)
-      } else if (response.error) {
-        return Promise.reject(response.data.error_description)
+      if (response.ok) {
+        // See https://auth0.com/docs/flows/call-your-api-using-the-device-authorization-flow#token-responses
+        if (response.value.data?.access_token) {
+          const unpackedResponse = this.unpackResponse(response.value.data)
+          if (unpackedResponse.ok) {
+            return Ok(unpackedResponse.value)
+          }
+        } else if (response.value.data?.error === "authorization_pending") {
+          await pause(interval)
+        } else if (response.value.data?.error === "slow_down") {
+          // increase polling interval by 5 seconds
+          // see: https://datatracker.ietf.org/doc/html/rfc8628#section-3.5
+          interval += 5
+          await pause(interval)
+        }
+      } else {
+        return Err(AuthenticationFailure(OAuthFailure(response.error)))
       }
     }
   }
@@ -161,7 +164,7 @@ async function pause(seconds: number): Promise<void> {
   })
 }
 
-function camelcaseKeys(json: any): any {
+function camelcaseKeys(json: object): object {
   return Object.fromEntries(Object.entries(json).map(
     ([key, val]) => [key.replace(/(\_\w)/g, (k) => k[1]!.toUpperCase() ), val]
   ))

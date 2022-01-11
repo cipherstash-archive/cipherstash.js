@@ -1,12 +1,13 @@
-import { AuthenticationDetailsCallback, AuthStrategy } from "./auth-strategy"
+import { AuthenticationDetails, AuthStrategy } from "./auth-strategy"
 import { AuthenticationState } from './authentication-state'
 import { stashOauth, OauthAuthenticationInfo } from './oauth-utils'
-import { describeError } from "../utils"
 import { profileStore } from './profile-store'
 import { Auth0DeviceCode, StashConfiguration } from "../stash-config"
 import { awsConfig } from "../aws";
 import { StashProfile } from "../stash-profile";
 import * as open from 'open'
+import { AsyncResult, Ok, Err } from "../result"
+import { AuthenticationFailure, IllegalStateError, OAuthFailure } from "../errors"
 
 export type StashProfileAuth0DeviceCode  = StashProfile & {
   config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0DeviceCode },
@@ -18,44 +19,71 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy {
 
   constructor(private profile: StashProfileAuth0DeviceCode) { }
 
-  public async initialise(): Promise<void> {
-    try {
-      if (!this.isExpired(this.profile.oauthCreds.expiry)) {
+  public async initialise(): AsyncResult<void, AuthenticationFailure> {
+    this.scheduleTokenRefresh()
+    if (!this.isExpired(this.profile.oauthCreds.expiry)) {
+      const awsConfigDetails = await awsConfig(this.profile.config.keyManagement.awsCredentials, this.profile.oauthCreds.accessToken)
+      if (awsConfigDetails.ok) {
         this.state = {
           name: "authenticated",
           oauthInfo: this.profile.oauthCreds,
-          awsConfig: await awsConfig(this.profile.config.keyManagement.awsCredentials, this.profile.oauthCreds.accessToken)
+          awsConfig: awsConfigDetails.value
         }
+        return Ok(void 0)
       } else {
-        try {
-          // Try to perform an immediate refresh
-          await this.performTokenRefreshAndUpdateState(this.profile.oauthCreds.refreshToken)
-        } catch (err) {
-          // If the refresh has failed, try to start over with device code auth
-          const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
-            this.profile.config.identityProvider.host,
-            this.profile.config.identityProvider.clientId,
-            this.profile.config.service.host,
-            this.profile.config.service.workspace
-          )
+        return Err(AuthenticationFailure(awsConfigDetails.error))
+      }
+    } else {
+      // Try to perform an immediate refresh
+      const refreshResult = await this.performTokenRefreshAndUpdateState(this.profile.oauthCreds.refreshToken)
+      if (refreshResult.ok) {
+        return Ok(void 0)
+      } else {
+        const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
+          this.profile.config.identityProvider.host,
+          this.profile.config.identityProvider.clientId,
+          this.profile.config.service.host,
+          this.profile.config.service.workspace
+        )
 
+        if (pollingInfo.ok) {
           if (!isInteractive()) {
-            open.default(pollingInfo.verificationUri)
+            open.default(pollingInfo.value.verificationUri)
           }
 
           const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
             this.profile.config.identityProvider.host,
             this.profile.config.identityProvider.clientId,
-            pollingInfo.deviceCode,
-            pollingInfo.interval
+            pollingInfo.value.deviceCode,
+            pollingInfo.value.interval
           )
 
-          await profileStore.saveProfile({ ...this.profile, oauthCreds: authInfo })
+          if (authInfo.ok) {
+            const saved = await profileStore.saveProfile({ ...this.profile, oauthCreds: authInfo.value })
+            if (saved.ok) {
+              return Ok(void 0)
+            } else {
+              return Err(AuthenticationFailure(saved.error))
+            }
+          } else {
+            return Err(authInfo.error)
+          }
+        } else {
+          return Err(refreshResult.error)
         }
       }
-      this.scheduleTokenRefresh()
-    } catch (err) {
-      return Promise.reject(err)
+    }
+  }
+
+  public async getAuthenticationDetails(): AsyncResult<AuthenticationDetails, AuthenticationFailure> {
+    if (this.state.name === "authenticated") {
+      return Ok({
+        authToken: this.state.oauthInfo.accessToken,
+        awsConfig: this.state.awsConfig
+      })
+    } else {
+      // FIXME: if we're not already in an authenticated state what should we return?
+      return Err(AuthenticationFailure(IllegalStateError("Looks like initialise has not been called yet")))
     }
   }
 
@@ -74,62 +102,49 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy {
     return awsCredsAreFresh && auth0CredsAreFresh
   }
 
-  public async withAuthentication<R>(callback: AuthenticationDetailsCallback<R>): Promise<R> {
-    if (this.state.name == "authenticated") {
-      try {
-        return await callback({authToken: this.state.oauthInfo.accessToken, awsConfig: this.state.awsConfig})
-      } catch (err) {
-        return Promise.reject(`API call failed: ${describeError(err)}`)
-      }
-    } else {
-      return Promise.reject("Not authenticated")
-    }
-  }
-
   private isExpired(expiresAt: number): boolean {
     return (Date.now() - (EXPIRY_BUFFER_SECONDS * 1000)) > (expiresAt * 1000)
   }
 
-  private async scheduleTokenRefresh(): Promise<void> {
-    if (this.state.name == "authenticated") {
+  private async scheduleTokenRefresh(): AsyncResult<void, never> {
+    if (this.state.name === "authenticated") {
       const { refreshToken, expiry } = this.state.oauthInfo
       const timeout = setTimeout(async () => {
-        try {
-          await this.performTokenRefreshAndUpdateState(refreshToken)
-        } finally {
-          this.scheduleTokenRefresh()
-        }
+        await this.performTokenRefreshAndUpdateState(refreshToken)
+        this.scheduleTokenRefresh()
       }, (expiry * 1000) - (EXPIRY_BUFFER_SECONDS * 1000) - Date.now())
       timeout.unref()
-    } else if (this.state.name == "authentication-expired") {
+    } else if (this.state.name === "authentication-expired") {
       const { refreshToken } = this.state.oauthInfo
-      try {
-        await this.performTokenRefreshAndUpdateState(refreshToken)
-      } finally {
-        this.scheduleTokenRefresh()
-      }
+      await this.performTokenRefreshAndUpdateState(refreshToken)
+      this.scheduleTokenRefresh()
     }
+    return Ok(void 0)
   }
 
-  private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
-    try {
-      const idpHost = this.profile.config.identityProvider.host
-      const clientId = this.profile.config.identityProvider.clientId
-      const oauthInfo = await stashOauth.performTokenRefresh(idpHost, refreshToken, clientId)
-      await profileStore.saveProfile({ ...this.profile, oauthCreds: oauthInfo })
+  private async performTokenRefreshAndUpdateState(refreshToken: string): AsyncResult<void, AuthenticationFailure> {
+    const { host, clientId } = this.profile.config.identityProvider
 
-      this.state = {
-        name: "authenticated",
-        oauthInfo,
-        awsConfig: await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.accessToken)
+    const oauthInfo = await stashOauth.performTokenRefresh(host, refreshToken, clientId)
+    if (oauthInfo.ok) {
+      const saved = await profileStore.saveProfile({ ...this.profile, oauthCreds: oauthInfo.value })
+      if (saved.ok) {
+        const awsConfigDetails = await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.value.accessToken)
+        if (awsConfigDetails.ok) {
+          this.state = {
+            name: "authenticated",
+            oauthInfo: oauthInfo.value,
+            awsConfig: awsConfigDetails.value
+          }
+          return Ok(void 0)
+        } else {
+          return Err(AuthenticationFailure(awsConfigDetails.error))
+        }
+      } else {
+        return Err(AuthenticationFailure(saved.error))
       }
-      return Promise.resolve()
-    } catch (err) {
-      this.state = {
-        name: "authentication-failed",
-        error: describeError(err)
-      }
-      return Promise.reject()
+    } else {
+      return Err(AuthenticationFailure(OAuthFailure(oauthInfo.error)))
     }
   }
 }

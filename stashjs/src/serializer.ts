@@ -4,7 +4,7 @@ export function serialize(plaintext: any): Buffer {
   return BSON.serialize(encodeToBson(plaintext))
 }
 
-export function deserialize(plaintext: Buffer): any {
+export function deserialize<T = any>(plaintext: Buffer): T {
   return decodeFromBson(BSON.deserialize(plaintext, { promoteBuffers: true }))
 }
 

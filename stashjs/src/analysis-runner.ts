@@ -11,7 +11,7 @@ require('./analysis-worker') // force typescript to compile this file and make i
 
 export type AnalysisResult = {
   docId: Buffer,
-  vectors: Array<V1.VectorInput>,
+  vectors: Array<V1.Document.Vector>,
   encryptedSource: Buffer
 }
 
