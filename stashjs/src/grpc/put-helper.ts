@@ -19,7 +19,7 @@ export function convertAnalyzedRecordToVectors<
         indexId: idStringToBuffer(indexId),
         terms: terms.map((term) => {
           return {
-            term: oreEncryptTermToBuffer(term, idxMeta.$prf, idxMeta.$prp),
+            term: oreEncryptTermToBuffer(term, idxMeta.$prfKey, idxMeta.$prpKey),
             link: analyzedRecord.recordId,
           }
         })

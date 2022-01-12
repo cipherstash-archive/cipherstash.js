@@ -202,8 +202,8 @@ export class StashInternal {
     return Object.fromEntries(storedMappings.map(sm => {
       return [sm.meta.$indexName, {
         ...sm.meta,
-        $prf: Buffer.from(sm.meta.$prf, 'hex'),
-        $prp: Buffer.from(sm.meta.$prp, 'hex'),
+        $prfKey: Buffer.from(sm.meta.$prfKey, 'hex'),
+        $prpKey: Buffer.from(sm.meta.$prpKey, 'hex'),
       }]
     }))
   }
@@ -219,8 +219,8 @@ export class StashInternal {
           meta: {
             ...meta,
             $indexId: idBufferToString(indexId),
-            $prf: Buffer.from(meta!.$prf, 'hex'),
-            $prp: Buffer.from(meta!.$prp, 'hex'),
+            $prfKey: Buffer.from(meta!.$prfKey, 'hex'),
+            $prpKey: Buffer.from(meta!.$prpKey, 'hex'),
           }
         })))
       )(Unit)
@@ -241,8 +241,8 @@ export class StashInternal {
           mapping,
           meta: {
             ...definition.meta[indexName]!,
-            $prf: definition.meta[indexName]!.$prf.toString('hex'),
-            $prp: definition.meta[indexName]!.$prp.toString('hex'),
+            $prfKey: definition.meta[indexName]!.$prfKey.toString('hex'),
+            $prpKey: definition.meta[indexName]!.$prpKey.toString('hex'),
           }
         }
 

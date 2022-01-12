@@ -128,14 +128,14 @@ function flattenCondition<
     const indexMeta = meta[condition.indexName]!
     return [{
       indexId: idStringToBuffer(indexMeta.$indexId),
-      exact: encodeExact(condition, indexMeta.$prf, indexMeta.$prp),
+      exact: encodeExact(condition, indexMeta.$prfKey, indexMeta.$prpKey),
       condition: "exact"
     }]
   } else if (isRangeCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     return [{
       indexId: idStringToBuffer(indexMeta.$indexId),
-      range: encodeRange(condition, indexMeta.$prf, indexMeta.$prp),
+      range: encodeRange(condition, indexMeta.$prfKey, indexMeta.$prpKey),
       condition: "range"
     }]
   } else if (isMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
@@ -144,7 +144,7 @@ function flattenCondition<
     const pipeline = buildTextProcessingPipeline(mapping.options)
     return pipeline([condition.value]).map(term => ({
       indexId: idStringToBuffer(indexMeta.$indexId),
-      exact: encodeMatch(term, indexMeta.$prf, indexMeta.$prp),
+      exact: encodeMatch(term, indexMeta.$prfKey, indexMeta.$prpKey),
       condition: "exact"
     }))
   } else if (isDynamicMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
@@ -153,7 +153,7 @@ function flattenCondition<
     const pipeline = buildTextProcessingPipeline(mapping.options)
     return pipeline([condition.value]).map(term => ({
       indexId: Buffer.from(indexMeta.$indexId, 'hex'),
-      exact: encodeMatch(term, indexMeta.$prf, indexMeta.$prp),
+      exact: encodeMatch(term, indexMeta.$prfKey, indexMeta.$prpKey),
       condition: "exact"
     }))
   } else if (isFieldDynamicMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
@@ -162,7 +162,7 @@ function flattenCondition<
     const pipeline = buildTextProcessingPipeline(mapping.options)
     return pipeline([condition.value]).map(term => ({
       indexId: Buffer.from(indexMeta.$indexId, 'hex'),
-      exact: encodeMatch(`${condition.fieldName}:${term}`, indexMeta.$prf, indexMeta.$prp),
+      exact: encodeMatch(`${condition.fieldName}:${term}`, indexMeta.$prfKey, indexMeta.$prpKey),
       condition: "exact"
     }))
   } else {

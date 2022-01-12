@@ -197,8 +197,8 @@ export type MappingsMeta<M> =
     [F in keyof M]-?: {
       $indexName: string,
       $indexId: string,
-      $prf: Buffer,
-      $prp: Buffer
+      $prfKey: Buffer,
+      $prpKey: Buffer
     }
   } : never
 

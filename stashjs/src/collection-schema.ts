@@ -59,8 +59,8 @@ export class CollectionSchema<
                 // because we'll use it later to key analysis objects
                 //$indexId: idBufferToString(makeId()),
                 $indexId: idBufferToString(makeId()),
-                $prf: crypto.randomBytes(16),
-                $prp: crypto.randomBytes(16)
+                $prfKey: crypto.randomBytes(16),
+                $prpKey: crypto.randomBytes(16)
               }
             ]
           })) as MM
