@@ -19,7 +19,7 @@ import { GetAllRequest as DocumentGetAllRequest } from './generated/stash/GRPC/V
 import { DeleteReply__Output as DocumentDeleteReply } from './generated/stash/GRPC/V1/Documents/DeleteReply'
 import { DeleteRequest as DocumentDeleteRequest } from './generated/stash/GRPC/V1/Documents/DeleteRequest'
 import { PutReply__Output as DocumentPutReply } from './generated/stash/GRPC/V1/Documents/PutReply'
-import { PutRequest as DocuementPutRequest } from './generated/stash/GRPC/V1/Documents/PutRequest'
+import { PutRequest as DocumentPutRequest } from './generated/stash/GRPC/V1/Documents/PutRequest'
 import { StreamingPutRequest as DocumentStreamingPutRequest } from './generated/stash/GRPC/V1/Documents/StreamingPutRequest'
 import { StreamingPutBegin as DocumentStreamingPutBegin } from './generated/stash/GRPC/V1/Documents/StreamingPutBegin'
 import { StreamingPutReply__Output as DocumentStreamingPutReply } from './generated/stash/GRPC/V1/Documents/StreamingPutReply'
@@ -79,7 +79,7 @@ export namespace V1  {
     export type DeleteReply = DocumentDeleteReply
     export type DeleteRequest = DocumentDeleteRequest
     export type PutReply = DocumentPutReply
-    export type PutRequest = DocuementPutRequest
+    export type PutRequest = DocumentPutRequest
     export type StreamingPutRequest = DocumentStreamingPutRequest
     export type StreamingPutBegin = DocumentStreamingPutBegin
     export type StreamingPutReply = DocumentStreamingPutReply
