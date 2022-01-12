@@ -82,8 +82,7 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy {
         awsConfig: this.state.awsConfig
       })
     } else {
-      // FIXME: if we're not already in an authenticated state what should we return?
-      return Err(AuthenticationFailure(IllegalStateError("Looks like initialise has not been called yet")))
+      return Err(AuthenticationFailure(IllegalStateError("Authentication details were requested but StashJS is not currently authenticated")))
     }
   }
 

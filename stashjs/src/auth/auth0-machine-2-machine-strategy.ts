@@ -2,7 +2,7 @@ import { OauthAuthenticationInfo, stashOauth } from './oauth-utils'
 import { AuthenticationState } from './authentication-state'
 import { AuthenticationDetails, AuthStrategy } from './auth-strategy'
 import { Auth0Machine2Machine, StashConfiguration } from '../stash-config'
-import { AuthenticationFailure } from '../errors'
+import { AuthenticationFailure, IllegalStateError } from '../errors'
 import { AsyncResult, Err, Ok } from '../result'
 import { AWSClientConfig, awsConfig } from '../aws'
 
@@ -41,15 +41,13 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy {
   }
 
   public async getAuthenticationDetails(): AsyncResult<AuthenticationDetails, AuthenticationFailure> {
-    const authenticated = await this.authenticate()
-    if (authenticated.ok) {
-      const { oauthInfo, awsConfig } = authenticated.value
+    if (this.state.name === "authenticated") {
       return Ok({
-        authToken: oauthInfo.accessToken,
-        awsConfig
+        authToken: this.state.oauthInfo.accessToken,
+        awsConfig: this.state.awsConfig
       })
     } else {
-      return Err(authenticated.error)
+      return Err(AuthenticationFailure(IllegalStateError("Authentication details were requested but StashJS is not currently authenticated")))
     }
   }
 
