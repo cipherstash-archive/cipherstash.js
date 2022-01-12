@@ -65,3 +65,12 @@ export function describeError(err: any): string {
     return JSON.stringify(err)
   }
 }
+
+export function inspect<T>(value: T, label?: string): T {
+  if (label) {
+    console.log({ [label]: value })
+  } else {
+    console.log(value)
+  }
+  return value
+}
