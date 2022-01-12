@@ -143,6 +143,7 @@ export class CollectionInternal<
   ): AsyncResult<QueryResult<R & HasID>, DocumentQueryFailure> {
     const options = queryOptions ? queryOptions : {}
     const query = this.analyzeQuery(callback(this.schema.makeQueryBuilder()))
+    const timerStart = new Date().getTime()
 
     return convertErrorsTo(
       DocumentQueryFailure,
@@ -155,7 +156,7 @@ export class CollectionInternal<
           )
         ),
         ([_, cipher, reply]) => Ok.Async({
-          took: 100,
+          took: (new Date().getTime() - timerStart) / 1000,
           documents: convertQueryReplyToUserRecords(cipher)<R & HasID>(reply!),
           aggregates: reply!.aggregates ? reply!.aggregates.map(agg => ({
             name: agg.name! as Aggregate,
@@ -167,6 +168,7 @@ export class CollectionInternal<
   }
 
   private async queryWithoutConstraints(options: QueryOptions<R, M>): AsyncResult<QueryResult<R & HasID>, DocumentQueryFailure> {
+    const timerStart = new Date().getTime()
     return convertErrorsTo(
       DocumentQueryFailure,
       await sequence(
@@ -178,7 +180,7 @@ export class CollectionInternal<
           )
         ),
         ([_, cipher, reply]) => Ok.Async({
-          took: 100,
+          took: (new Date().getTime() - timerStart) / 1000,
           documents: convertQueryReplyToUserRecords(cipher)<R & HasID>(reply!),
           aggregates: reply!.aggregates ? reply!.aggregates.map(agg => ({
             name: agg.name! as Aggregate,
