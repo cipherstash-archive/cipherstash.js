@@ -11,8 +11,9 @@ export class Collection<
 > {
   constructor(private collection: CollectionInternal<R, M, MM>) {}
 
+  public get id() { return this.collection.id }
+  public get ref() { return this.collection.ref }
   public get name() { return this.collection.name }
-
   public get schema() { return this.collection.schema }
 
   public get(id: string | Buffer): Promise<R & HasID | null> {

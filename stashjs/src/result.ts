@@ -114,6 +114,19 @@ export function gather<V, E>(results: Array<Result<V, E>>): Result<Array<V>, E> 
   return results.reduce<Result<Array<V>, E>>(concat, Ok<Array<V>>([]))
 }
 
+export function gatherTuple2<V1, E1, V2, E2>(results: [Result<V1, E1>, Result<V2, E2>]): Result<[V1, V2], E1 | E2> {
+  return (gatherTupleImpl(results) as any) as Result<[V1, V2], E1 | E2>
+}
+
+export function gatherTuple3<V1, E1, V2, E2, V3, E3>(results: [Result<V1, E1>, Result<V2, E2>, Result<V3, E3>]): Result<[V1, V2, V3], E1 | E2 | E3> {
+  return gatherTupleImpl(results) as any
+}
+
+function gatherTupleImpl(results: Array<Result<any, any>>): Result<Array<any>, any> {
+  return results.reduce<Result<Array<any>, any>>(concat, Ok<Array<any>>([]))
+}
+
+
 /**
  * This is the primitive from which to build the 3 and 4 argument versions of sequence.
  *

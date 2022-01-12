@@ -22,22 +22,22 @@ export function makeAsyncResultApiWrapper(stub: V1.APIClient, authStrategy: Auth
 
   return {
     collection: {
-      create: secureEndpoint<V1.Collection.CreateRequest, V1.Collection.CreateReply>(stub.createCollection),
-      info: secureEndpoint<V1.Collection.InfoRequest, V1.Collection.InfoReply>(stub.collectionInfo),
-      list: secureEndpoint<V1.Collection.ListRequest, V1.Collection.ListReply>(stub.collectionList),
-      delete: secureEndpoint<V1.Collection.DeleteRequest, V1.Collection.InfoReply>(stub.deleteCollection)
+      create: secureEndpoint<V1.Collection.CreateRequest, V1.Collection.CreateReply>(stub.createCollection.bind(stub)),
+      info: secureEndpoint<V1.Collection.InfoRequest, V1.Collection.InfoReply>(stub.collectionInfo.bind(stub)),
+      list: secureEndpoint<V1.Collection.ListRequest, V1.Collection.ListReply>(stub.collectionList.bind(stub)),
+      delete: secureEndpoint<V1.Collection.DeleteRequest, V1.Collection.InfoReply>(stub.deleteCollection.bind(stub))
     },
     document: {
-      get: secureEndpoint<V1.Document.GetRequest, V1.Document.GetReply>(stub.get),
-      getAll: secureEndpoint<V1.Document.GetAllRequest, V1.Document.GetAllReply>(stub.getAll),
-      put: secureEndpoint<V1.Document.PutRequest, V1.Document.PutReply>(stub.put),
-      delete: secureEndpoint<V1.Document.DeleteRequest, V1.Document.DeleteReply>(stub.delete),
+      get: secureEndpoint<V1.Document.GetRequest, V1.Document.GetReply>(stub.get.bind(stub)),
+      getAll: secureEndpoint<V1.Document.GetAllRequest, V1.Document.GetAllReply>(stub.getAll.bind(stub)),
+      put: secureEndpoint<V1.Document.PutRequest, V1.Document.PutReply>(stub.put.bind(stub)),
+      delete: secureEndpoint<V1.Document.DeleteRequest, V1.Document.DeleteReply>(stub.delete.bind(stub)),
 
       // `putStream` is a bit different. See the comments on the helper functions down below.
-      putStream: authenticatePutStream(authStrategy)(stub.putStream)
+      putStream: authenticatePutStream(authStrategy)(stub.putStream.bind(stub))
     },
     query: {
-      query: secureEndpoint<V1.Query.QueryRequest, V1.Query.QueryReply>(stub.query)
+      query: secureEndpoint<V1.Query.QueryRequest, V1.Query.QueryReply>(stub.query.bind(stub))
     }
   }
 }

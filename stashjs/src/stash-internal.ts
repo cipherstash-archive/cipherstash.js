@@ -12,7 +12,7 @@ import { makeRefGenerator } from './crypto/cipher'
 import { KMS } from '@aws-sdk/client-kms'
 import { StashProfile } from './stash-profile'
 import { profileStore } from './auth/profile-store'
-import { AsyncResult, sequence, gather, Err, Ok, Unit, convertErrorsTo, parallel, toAsync } from './result'
+import { AsyncResult, sequence, gather, Err, Ok, Unit, convertErrorsTo, parallel, toAsync, gatherTuple2 } from './result'
 import { CollectionCreationFailure, ConnectionFailure, DecryptionFailure, EncryptionFailure, KMSError, CollectionLoadFailure, CollectionListFailure, CollectionDeleteFailure, LoadProfileFailure } from './errors'
 
 import { makeAsyncResultApiWrapper } from './stash-api-async-result-wrapper'
@@ -213,12 +213,12 @@ export class StashInternal {
       DecryptionFailure,
       await sequence(
         _ => this.sourceDataCipherSuiteMemo.freshValue(),
-        async cipher => gather(await Promise.all(encryptedMappings.map(em => cipher.decrypt<StoredMapping>(em.settings!)))),
-        decrypted => Ok.Async(decrypted.map(({ mapping, meta }) => ({
+        async cipher => gather(await Promise.all(encryptedMappings.map(async em => gatherTuple2([await cipher.decrypt<StoredMapping>(em.settings!), Ok(em.id!)])))),
+        decrypted => Ok.Async(decrypted.map(([{ mapping, meta }, indexId]) => ({
           mapping,
           meta: {
             ...meta,
-            $indexId: idBufferToString(mapping.id!),
+            $indexId: idBufferToString(indexId),
             $prf: Buffer.from(meta!.$prf, 'hex'),
             $prp: Buffer.from(meta!.$prp, 'hex'),
           }
