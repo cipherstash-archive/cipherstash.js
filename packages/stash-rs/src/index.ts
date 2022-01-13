@@ -3,10 +3,10 @@
 /* Importing the rust compiled lib (index.node) doesn't work and so we use require here */
 const {
   initCipher,
-  encrypt_buf,
-  encrypt_num,
-  encrypt_buf_left,
-  encrypt_num_left,
+  encryptBuf,
+  encryptNum,
+  encryptBufLeft,
+  encryptNumLeft,
   compare
 } = require("../index.node");
 
@@ -25,7 +25,7 @@ export const ORE = {
   init: (k1: Key, k2: Key): ORECipher => {
     let cipher = initCipher(k1, k2);
     return {
-      /* 
+      /*
        * Encrypt the given `PlainText` outputting a "full" CipherText (i.e. a `Buffer`
        * containing both the Left and Right components).
        */
@@ -34,15 +34,15 @@ export const ORE = {
           // Neon doesn't support Bigint so we do this here
           let buf = Buffer.allocUnsafe(8);
           buf.writeBigUInt64BE(input);
-          return encrypt_buf(cipher, buf);
+          return encryptBuf(cipher, buf);
         } else if (input instanceof Buffer) {
-          return encrypt_buf(cipher, input);
+          return encryptBuf(cipher, input);
         } else {
-          return encrypt_num(cipher, input);
+          return encryptNum(cipher, input);
         }
       },
 
-      /* 
+      /*
        * Encrypt the given `PlainText` outputting only a Left CipherText (i.e. a `Buffer`
        * containing just the Left component).
        */
@@ -51,11 +51,11 @@ export const ORE = {
           // Neon doesn't support Bigint so we do this here
           let buf = Buffer.allocUnsafe(8);
           buf.writeBigUInt64BE(input);
-          return encrypt_buf_left(cipher, buf);
+          return encryptBufLeft(cipher, buf);
         } else if (input instanceof Buffer) {
-          return encrypt_buf_left(cipher, input);
+          return encryptBufLeft(cipher, input);
         } else {
-          return encrypt_num_left(cipher, input);
+          return encryptNumLeft(cipher, input);
         }
       }
     }
