@@ -71,7 +71,7 @@ fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 fn encrypt_buf(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
-    
+
     let result =
         fetch_plaintext_from_js_buffer::<8>(&mut cx, 1)?
         .encrypt(&mut ore.0)
@@ -133,10 +133,10 @@ fn fetch_plaintext_from_js_buffer<const N: usize>(cx: &mut FunctionContext, arg:
 
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
-    cx.export_function("encrypt_buf", encrypt_buf)?;
-    cx.export_function("encrypt_num", encrypt_num)?;
-    cx.export_function("encrypt_buf_left", encrypt_buf_left)?;
-    cx.export_function("encrypt_num_left", encrypt_num_left)?;
+    cx.export_function("encryptBuf", encrypt_buf)?;
+    cx.export_function("encryptNum", encrypt_num)?;
+    cx.export_function("encryptBufLeft", encrypt_buf_left)?;
+    cx.export_function("encryptNumLeft", encrypt_num_left)?;
     cx.export_function("initCipher", init)?;
     cx.export_function("compare", compare)?;
     Ok(())
