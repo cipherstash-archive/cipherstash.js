@@ -107,7 +107,7 @@ function getVar(envVar: string, fallback?: string): string {
   if (typeof value != 'undefined') {
     return value
   } else {
-    if (fallback) {
+    if (typeof fallback != 'undefined') {
       return fallback
     } else {
       throw new Error(`"missing configuration: ${envVar}`)
