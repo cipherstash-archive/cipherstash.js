@@ -1,6 +1,11 @@
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import { profileStore, stashOauth, StashProfile, errors } from '@cipherstash/stashjs'
+import {
+  profileStore,
+  stashOauth,
+  StashProfile,
+  errors
+} from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
@@ -15,10 +20,14 @@ const command: GluegunCommand = {
       if (defaultProfile.ok) {
         workspace = defaultProfile.value.name
       } else {
-        print.error('Error: no workspace was provided and default workspace is set')
+        print.error(
+          'Error: no workspace was provided and default workspace is set'
+        )
         const workspaceIds = await profileStore.loadProfileNames()
         if (!workspaceIds.ok) {
-          print.error('An error occurred and "stash login" could not complete successfully')
+          print.error(
+            'An error occurred and "stash login" could not complete successfully'
+          )
           print.error(`Reason: ${errors.toErrorMessage(workspaceIds.error)}`)
           process.exit(1)
           return
@@ -45,13 +54,14 @@ const command: GluegunCommand = {
       }
     }
 
-
     const profile = workspace
       ? await profileStore.loadProfile(workspace)
       : await profileStore.loadDefaultProfile()
 
     if (!profile.ok) {
-      print.error('An error occurred and "stash login" could not complete successfully')
+      print.error(
+        'An error occurred and "stash login" could not complete successfully'
+      )
       print.error(`Reason: ${errors.toErrorMessage(profile.error)}`)
       process.exit(1)
       return
@@ -72,7 +82,9 @@ const command: GluegunCommand = {
     )
 
     if (!pollingInfo.ok) {
-      print.error('An error occurred and "stash login" could not complete successfully')
+      print.error(
+        'An error occurred and "stash login" could not complete successfully'
+      )
       print.error(`Reason: ${errors.toErrorMessage(pollingInfo.error)}`)
       process.exit(1)
       return
@@ -99,13 +111,18 @@ const command: GluegunCommand = {
     )
 
     if (!authInfo.ok) {
-      print.error('An error occurred and "stash login" could not complete successfully')
+      print.error(
+        'An error occurred and "stash login" could not complete successfully'
+      )
       print.error(`Reason: ${errors.toErrorMessage(authInfo.error)}`)
       process.exit(1)
       return
     }
 
-    const updatedProfile: StashProfile = { ...profile.value, oauthCreds: authInfo.value }
+    const updatedProfile: StashProfile = {
+      ...profile.value,
+      oauthCreds: authInfo.value
+    }
 
     print.info('Login Successful')
 
