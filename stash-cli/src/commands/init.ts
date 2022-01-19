@@ -46,7 +46,9 @@ const command: GluegunCommand = {
     )
 
     if (!pollingInfo.ok) {
-      print.error('An error occurred and "stash init" could not complete successfully')
+      print.error(
+        'An error occurred and "stash init" could not complete successfully'
+      )
       print.error(`Reason: ${errors.toErrorMessage(pollingInfo.error)}`)
       process.exit(1)
       return
@@ -73,20 +75,22 @@ const command: GluegunCommand = {
     )
 
     if (!authInfo.ok) {
-      print.error('An error occurred and "stash init" could not complete successfully')
+      print.error(
+        'An error occurred and "stash init" could not complete successfully'
+      )
       print.error(`Reason: ${errors.toErrorMessage(authInfo.error)}`)
       process.exit(1)
       return
     }
 
-    const response = await makeHttpsClient(
-      consoleApiHost,
-      consoleApiPort
-    ).get(`/api/meta/workspaces/${encodeURIComponent(workspace)}`, {
-      headers: {
-        Authorization: `Bearer ${authInfo.value.accessToken}`
+    const response = await makeHttpsClient(consoleApiHost, consoleApiPort).get(
+      `/api/meta/workspaces/${encodeURIComponent(workspace)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${authInfo.value.accessToken}`
+        }
       }
-    })
+    )
 
     const profile: StashProfile = {
       name: workspace,
@@ -120,7 +124,9 @@ const command: GluegunCommand = {
 
     await profileStore.saveProfile(profile)
 
-    print.info(`Workspace configuration and authentication details have been saved in dir ~/.cipherstash`)
+    print.info(
+      `Workspace configuration and authentication details have been saved in dir ~/.cipherstash`
+    )
   }
 }
 
