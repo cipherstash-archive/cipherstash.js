@@ -130,10 +130,13 @@ class StashOauth {
     interval: number
   ): AsyncResult<OauthAuthenticationInfo, AuthenticationFailure> {
     while (true) {
-      const response = await fromPromise(makeOauthClient(idpHost).post("/oauth/token", {
+      const client = makeOauthClient(idpHost)
+      const response = await fromPromise(client.post("/oauth/token", {
         grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
         device_code: deviceCode,
-        client_id: clientId
+        client_id: clientId,
+      }, {
+        validateStatus: (status: number) => client.defaults.validateStatus!(status) || status === 403
       }), OAuthFailure)
 
       if (response.ok) {
