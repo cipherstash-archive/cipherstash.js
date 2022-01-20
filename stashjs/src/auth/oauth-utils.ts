@@ -177,9 +177,6 @@ function makeOauthClient(idpHost: string): AxiosInstance {
   return axios.create({
     baseURL: `https://${idpHost}`,
     timeout: 5000,
-    headers: {
-      'Accept': 'application/vnd.github.v3+json',
-    },
     httpsAgent: new https.Agent({
       port: 443,
       rejectUnauthorized: true,
