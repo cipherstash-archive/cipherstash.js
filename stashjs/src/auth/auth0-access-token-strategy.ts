@@ -10,7 +10,7 @@ export type StashProfileAuth0AccessToken = StashProfile & {
 }
 
 export class Auth0AccessTokenStrategy implements AuthStrategy {
-  private awsConfig: AWSClientConfig = {credentials: {accessKeyId: "", secretAccessKey: ""}, region: ""}
+  private awsConfig: AWSClientConfig = {credentials: {accessKeyId: "", secretAccessKey: "", sessionToken: ""}, region: ""}
 
   constructor(private profile: StashProfileAuth0AccessToken) {}
 
