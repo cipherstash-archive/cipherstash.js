@@ -64,7 +64,8 @@ export function loadProfileFromEnv(): StashProfile {
     config: {
       service: {
         workspace: getVar('CS_WORKSPACE'),
-        host: getVar('CS_SERVICE_FQDN')
+        host: getVar('CS_SERVICE_FQDN'),
+        port: parseInt(getVar('CS_SERVICE_PORT', "443"))
       },
       identityProvider: getVar("CS_ACCESS_TOKEN", "") === "" ?
         getVar("CS_IDP_CLIENT_SECRET", "") === "" ? {
