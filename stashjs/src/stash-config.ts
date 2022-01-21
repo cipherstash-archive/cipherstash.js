@@ -36,6 +36,7 @@ export type ExplicitAwsCredentialsSource = {
   kind: "Explicit"
   accessKeyId: string
   secretAccessKey: string
+  sessionToken: string
   region: string
 }
 
@@ -91,6 +92,7 @@ export function loadProfileFromEnv(): StashProfile {
           kind: "Explicit",
           accessKeyId: getVar("CS_AWS_ACCESS_KEY_ID"),
           secretAccessKey: getVar("CS_AWS_SECRET_ACCESS_KEY"),
+          sessionToken: getVar("CS_AWS_SESSION_TOKEN", ""),
           region: getVar('CS_AWS_REGION')
         } : {
           kind: "Federated",

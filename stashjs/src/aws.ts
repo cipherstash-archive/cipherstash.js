@@ -22,6 +22,7 @@ export async function awsConfig(creds: AwsCredentialsSource, token: string): Asy
         credentials: {
           accessKeyId: creds.accessKeyId,
           secretAccessKey: creds.secretAccessKey,
+          sessionToken: creds.sessionToken,
         },
         region: creds.region
       })
