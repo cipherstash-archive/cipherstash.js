@@ -1,7 +1,7 @@
 import { StashRecord, Mappings, MappingsMeta, HasID } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { StashInternal } from "./stash-internal"
-import { idBufferToString, idStringToBuffer, makeId } from "./utils"
+import { idBufferToString, idToBuffer, makeId } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./grpc/get-helper"
@@ -43,8 +43,8 @@ export class CollectionInternal<
   }
 
   public async get(id: string | Buffer): AsyncResult<R & HasID | null, DocumentGetFailure> {
-    const docId = id instanceof Buffer ? id : idStringToBuffer(id)
-    const collectionId = idStringToBuffer(this.id)
+    const docId = id instanceof Buffer ? id : idToBuffer(id)
+    const collectionId = idToBuffer(this.id)
 
     return convertErrorsTo(
       DocumentGetFailure,
@@ -60,10 +60,10 @@ export class CollectionInternal<
 
   public async getAll(ids: Array<string | Buffer>): AsyncResult<Array<R>, DocumentGetAllFailure> {
     const docIds = ids.map((id) => {
-      return (id instanceof Buffer) ? id : idStringToBuffer(id)
+      return (id instanceof Buffer) ? id : idToBuffer(id)
     })
 
-    const collectionId = idStringToBuffer(this.id)
+    const collectionId = idToBuffer(this.id)
 
     return convertErrorsTo(
       DocumentGetAllFailure,
@@ -78,11 +78,11 @@ export class CollectionInternal<
   }
 
   public async put(doc: R): AsyncResult<string, DocumentPutFailure> {
-    const collectionId = idStringToBuffer(this.id)
+    const collectionId = idToBuffer(this.id)
     doc = this.maybeGenerateId(doc)
     const docWithBufferId = {
       ...doc,
-      id: idStringToBuffer(doc.id as string),
+      id: idToBuffer(doc.id as string),
     } as R
     const vectors = convertAnalyzedRecordToVectors(
       this.analyzeRecord(docWithBufferId),
@@ -116,8 +116,8 @@ export class CollectionInternal<
   }
 
   public async delete(id: string | Buffer): AsyncResult<null, DocumentDeleteFailure> {
-    const docId = id instanceof Buffer ? id : idStringToBuffer(id)
-    const collectionId = idStringToBuffer(this.id)
+    const docId = id instanceof Buffer ? id : idToBuffer(id)
+    const collectionId = idToBuffer(this.id)
 
     return convertErrorsTo(
       DocumentDeleteFailure,
@@ -130,7 +130,7 @@ export class CollectionInternal<
 
   public async putStream(records: AsyncIterator<R>): AsyncResult<V1.Document.StreamingPutReply, StreamingPutFailure> {
     const streamWriter: StreamWriter<R, M, MM> = new StreamWriter(
-      idStringToBuffer(this.id),
+      idToBuffer(this.id),
       this.stash,
       this.schema
     )
@@ -196,18 +196,18 @@ export class CollectionInternal<
     const constraints = query.constraints
 
     return Ok.Async({
-      collectionId: idStringToBuffer(this.id),
+      collectionId: idToBuffer(this.id),
       query: {
         limit: options.limit || DEFAULT_QUERY_LIMIT,
         constraints,
         aggregates: options.aggregation ? options.aggregation.map(agg => ({
-          indexId: idStringToBuffer(this.schema.meta[agg.ofIndex]!.$indexId),
+          indexId: idToBuffer(this.schema.meta[agg.ofIndex]!.$indexId),
           type: agg.aggregate
         })) : [],
         skipResults: typeof options.skipResults == "boolean" ? options.skipResults : false,
         offset: options.offset,
         ordering: options.order ? options.order.map(o => ({
-          indexId: idStringToBuffer(this.schema.meta[o.byIndex]!.$indexId),
+          indexId: idToBuffer(this.schema.meta[o.byIndex]!.$indexId),
           direction: o.direction
         })) : []
       }
