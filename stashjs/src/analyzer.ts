@@ -8,7 +8,7 @@ import { encodeEquatable, encodeOrderable, UINT64_MAX, UINT64_MIN } from "./enco
 import { extractStringFields, extractStringFieldsWithPath } from "./string-field-extractor";
 import { TextProcessor, textPipeline, standardTokenizer, ngramsTokenizer, downcaseFilter, upcaseFilter } from "./text-processors";
 import { FieldOfType, FieldType, unreachable } from "./type-utils";
-import { biggest, smallest, idStringToBuffer } from "./utils";
+import { biggest, smallest, idToBuffer } from "./utils";
 
 /**
  * Builds and returns a function that will analyze a record using the mapping
@@ -127,14 +127,14 @@ function flattenCondition<
   } else if (isExactCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     return [{
-      indexId: idStringToBuffer(indexMeta.$indexId),
+      indexId: idToBuffer(indexMeta.$indexId),
       exact: encodeExact(condition, indexMeta.$prfKey, indexMeta.$prpKey),
       condition: "exact"
     }]
   } else if (isRangeCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     return [{
-      indexId: idStringToBuffer(indexMeta.$indexId),
+      indexId: idToBuffer(indexMeta.$indexId),
       range: encodeRange(condition, indexMeta.$prfKey, indexMeta.$prpKey),
       condition: "range"
     }]
@@ -143,7 +143,7 @@ function flattenCondition<
     const mapping = mappings[condition.indexName]! as MatchMapping<R, FieldOfType<R, MatchMappingFieldType>>
     const pipeline = buildTextProcessingPipeline(mapping.options)
     return pipeline([condition.value]).map(term => ({
-      indexId: idStringToBuffer(indexMeta.$indexId),
+      indexId: idToBuffer(indexMeta.$indexId),
       exact: encodeMatch(term, indexMeta.$prfKey, indexMeta.$prpKey),
       condition: "exact"
     }))
