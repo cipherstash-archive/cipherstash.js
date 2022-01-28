@@ -5,7 +5,7 @@ import { AnalysisConfig, AnalysisResult } from "./analysis-runner"
 import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
-import { idStringToBuffer, makeId } from "./utils"
+import { idToBuffer, makeId } from "./utils"
 import { makeAuthStrategy } from './auth/make-auth-strategy'
 import { Memo, withFreshCredentials } from "./auth/auth-strategy"
 import { AsyncResult, Err, Ok } from "./result"
@@ -38,7 +38,7 @@ if (!isMainThread) {
       const encryptedSource = await cipher.value.encrypt(record)
       if (encryptedSource.ok) {
         const result = {
-          docId: record.id ? idStringToBuffer(record.id) : makeId(),
+          docId: record.id ? idToBuffer(record.id) : makeId(),
           vectors,
           encryptedSource: encryptedSource.value.result
         }
@@ -69,6 +69,10 @@ if (!isMainThread) {
   parentPort!.on('message', async (record: StashRecord) => {
     const config: AnalysisConfig = workerData.config
     const result = await performAnalyis(config, record)
-    parentPort!.postMessage({ workerId: workerData.workerId, result })
+    if (result.ok) {
+      parentPort!.postMessage({ workerId: workerData.workerId, result: result.value })
+    } else {
+      parentPort!.emit("messageerror", new Error(result.error.message))
+    }
   })
 }

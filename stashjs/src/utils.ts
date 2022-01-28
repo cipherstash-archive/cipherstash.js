@@ -1,9 +1,17 @@
 import { v4 as uuidv4, parse as parseUUID, stringify as stringifyUUID } from 'uuid'
 import stringifyObject from 'stringify-object'
 
-export function idStringToBuffer(id: string): Buffer {
-  // Throws `TypeError` if id is not a valid UUID
-  return parseUUID(id) as unknown as Buffer
+export function idToBuffer(id: string): Buffer
+export function idToBuffer(id: Buffer): Buffer
+export function idToBuffer(id: Uint8Array): Buffer
+export function idToBuffer(id: string | Buffer | Uint8Array): Buffer {
+  if (typeof id === 'string') {
+    return parseUUID(id) as unknown as Buffer
+  } else if (id instanceof Buffer) {
+    return id
+  } else {
+    return Buffer.from(id)
+  }
 }
 
 export function idBufferToString(id: Buffer): string {

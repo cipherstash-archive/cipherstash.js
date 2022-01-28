@@ -6,7 +6,7 @@ import { AuthStrategy, Memo, withFreshCredentials } from './auth/auth-strategy'
 import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
 import { makeAuthStrategy } from './auth/make-auth-strategy'
 import { CollectionInternal, CollectionMetadata } from './collection-internal'
-import { idBufferToString, idStringToBuffer, refBufferToString } from './utils'
+import { idBufferToString, idToBuffer, refBufferToString } from './utils'
 import { loadProfileFromEnv } from './stash-config'
 import { makeRefGenerator } from './crypto/cipher'
 import { KMS } from '@aws-sdk/client-kms'
@@ -250,7 +250,7 @@ export class StashInternal {
         if (encryption.ok) {
           const { result } = encryption.value
           return Ok({
-            id: idStringToBuffer(storedMapping.meta.$indexId),
+            id: idToBuffer(storedMapping.meta.$indexId),
             settings: result
           })
         } else {
