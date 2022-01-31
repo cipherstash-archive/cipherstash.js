@@ -18,8 +18,16 @@ export type ORECipher = {
   encryptLeft: (input: PlainText) => CipherText
 }
 
+export type Ordering = -1 | 0 | 1
+
+export interface ORE {
+  encode: (input: PlainText) => PlainText
+  init: (k1: Key, k2: Key) => ORECipher
+  compare: (a: CipherText, b: CipherText) => Ordering
+}
+
 /* Module to perform Order-revealing Encryption using the underlying ore.rs Rust library */
-export const ORE = {
+export const ORE: ORE = {
 
   /**
    * Prepares a plaintext (a JS number AKA f64) for ORE encryption by converting
@@ -54,7 +62,5 @@ export const ORE = {
    * Compare two cipher texts returning -1 if a < b, 0 if a === b, and 1 if a > b.
    * Throws if the inputs are not comparable.
    */
-  compare: (a: CipherText, b: CipherText): any => { // TODO: Enum integer type
-    return compare(a, b);
-  }
+  compare: (a: CipherText, b: CipherText): Ordering => compare(a, b)
 };
