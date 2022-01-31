@@ -25,7 +25,7 @@ fn init(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
             return Err("Invalid key length");
         }
         k.clone_from_slice(data.as_slice::<u8>());
-        return Ok(k);
+        Ok(k)
     };
 
     let k1 = cx.borrow(&arg0, clone_key).or_else(|e| cx.throw_error(e))?;
@@ -74,7 +74,7 @@ fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
 
         cx.borrow(&b, |data_b| {
             let slice_b = data_b.as_slice::<u8>();
-            OREAES128::compare_raw_slices(&slice_a, &slice_b)
+            OREAES128::compare_raw_slices(slice_a, slice_b)
         })
     });
 
