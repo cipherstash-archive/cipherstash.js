@@ -279,11 +279,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
+name = "ore-encoding-rs"
+version = "0.1.0"
+source = "git+https://github.com/cipherstash/ore_encoding.rs#a1954938880634304f48c01d50d9c18649539fc9"
+
+[[package]]
 name = "ore-rs"
 version = "0.1.0"
 dependencies = [
  "hex-literal",
  "neon",
+ "ore-encoding-rs",
  "ore-rs 0.1.0 (git+https://github.com/cipherstash/ore.rs)",
  "quickcheck",
 ]
