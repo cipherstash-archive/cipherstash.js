@@ -3,15 +3,14 @@
 /* Importing the rust compiled lib (index.node) doesn't work and so we use require here */
 const {
   initCipher,
-  encryptBuf,
   encryptNum,
-  encryptBufLeft,
   encryptNumLeft,
-  compare
+  compare,
+  encodeNum
 } = require("../index.node");
 
 export type Key = Buffer;
-export type PlainText = number | bigint | Buffer
+export type PlainText = number
 export type CipherText = Buffer;
 
 export type ORECipher = {
@@ -21,6 +20,18 @@ export type ORECipher = {
 
 /* Module to perform Order-revealing Encryption using the underlying ore.rs Rust library */
 export const ORE = {
+
+  /**
+   * Prepares a plaintext (a JS number AKA f64) for ORE encryption by converting
+   * to an orderable integer (u64).  The orderable integer is returned as a JS
+   * number which will be different to the input plaintext and should be treated
+   * as an opaque value.
+   *
+   * @param input the JS number to encode
+   * @returns a JS number that can be encrypted with the ORE scheme
+   */
+  encode: encodeNum,
+
   /* Initialize a new ORE cipher with a key pair (both keys must be 16-byte buffers). */
   init: (k1: Key, k2: Key): ORECipher => {
     let cipher = initCipher(k1, k2);
@@ -29,35 +40,13 @@ export const ORE = {
        * Encrypt the given `PlainText` outputting a "full" CipherText (i.e. a `Buffer`
        * containing both the Left and Right components).
        */
-      encrypt: (input: PlainText): CipherText => {
-        if (typeof input === 'bigint') {
-          // Neon doesn't support Bigint so we do this here
-          let buf = Buffer.allocUnsafe(8);
-          buf.writeBigUInt64BE(input);
-          return encryptBuf(cipher, buf);
-        } else if (input instanceof Buffer) {
-          return encryptBuf(cipher, input);
-        } else {
-          return encryptNum(cipher, input);
-        }
-      },
+      encrypt: (input: PlainText): CipherText => encryptNum(cipher, input),
 
       /*
        * Encrypt the given `PlainText` outputting only a Left CipherText (i.e. a `Buffer`
        * containing just the Left component).
        */
-      encryptLeft: (input: PlainText): CipherText => {
-        if (typeof input === 'bigint') {
-          // Neon doesn't support Bigint so we do this here
-          let buf = Buffer.allocUnsafe(8);
-          buf.writeBigUInt64BE(input);
-          return encryptBufLeft(cipher, buf);
-        } else if (input instanceof Buffer) {
-          return encryptBufLeft(cipher, input);
-        } else {
-          return encryptNumLeft(cipher, input);
-        }
-      }
+      encryptLeft: (input: PlainText): CipherText => encryptNumLeft(cipher, input)
     }
   },
 
