@@ -37,12 +37,12 @@ After building ore-rs, you can explore its exports at the TS Node REPL:
 $ npm install
 $ npx ts-node
 > const ORE = require('.')
-> import { ORE } from './src/index'
+> import { ORE } from '@cipherstash/ore-rs'
 > let k1 = Buffer.from("1216a6700004fe46c5c07166025e681e", "hex")
 > let k2 = Buffer.from("3f13a569d5d2c6ce8d2a85cb9e347804", "hex")
 > let cipher = new ORE(k1, k2)
 > let cipher = ORE.init(k1, k2)
-> cipher.encrypt(100)
+> cipher.encrypt(ORE.encodeNumber(100))
 ```
 
 ## Comparison
@@ -53,8 +53,8 @@ operand is less-than, equal-to or greater than the second operand respectively.
 Internally, this uses [cmp](https://doc.rust-lang.org/nightly/core/cmp/trait.Ord.html#tymethod.cmp).
 
 ```typescript
-let a = ore.encrypt(100)
-let b = ore.encrypt(1560)
+let a = ore.encrypt(ORE.encodeNumber(100))
+let b = ore.encrypt(ORE.encodeNumber(1560))
 ORE.compare(a, b) // => -1
 ```
 
@@ -69,31 +69,20 @@ underlying value no longer represents the source number (unlike `f64::from(i)`) 
 
 ```typescript
 // All valid
-cipher.encrypt(456)
-cipher.encrypt(3.14159)
-cipher.encrypt(-100)
+cipher.encrypt(ORE.encodeNumber(456))
+cipher.encrypt(ORE.encodeNumber(3.14159))
+cipher.encrypt(ORE.encodeNumber(-100))
 ```
 
-### BigInt
+### String
 
-`BigInt` value can also be encrypted but this will throw an error if the number requires more than 64-bits of storage.
-`Neon` doesn't actually support `BigInt` so the conversion is done in TypeScript using the `writeBigUInt64BE` function
-(see [node.js docs](https://nodejs.org/api/buffer.html#bufwritebiguint64bevalue-offset]) so this will fail for negative
-numbers or values larger than 2n ** 64n - 1n.
+`ORE.encodeString` performs unicode normalisation (NFC) on the input string, then hashes the result using siphash.
+The resulting number can be encrypted. However, because strings are hashed only equality comparisons make sense.
 
 ```typescript
-cipher.encrypt(299792458n) // OK
-cipher.encrypt(-100n) // fails!
-cipher.encrypt(1180591620717411303424n) // fails!
-```
-
-### Buffer
-
-An 8-byte buffer can be encrypted directly. If the input is not exactly 8-bytes long, the operation will fail.
-
-```typescript
-cipher.encrypt(Buffer.from([0x00, 0x12, 0x15, 0xfa, 0xcf, 0x1a, 0xdb, 0x38]) // OK
-cipher.encrypt(Buffer.from([0x00, 0x12, 0x15]) // Fails!
+let s1 = cipher.encrypt(ORE.encodeString("Hello from CipherStash!")) // OK
+let s2 = cipher.encrypt(ORE.encodeString("Hello from CipherStash!")) // OK
+ORE.compare(s1, s2) // => 0
 ```
 
 ## Available Scripts
