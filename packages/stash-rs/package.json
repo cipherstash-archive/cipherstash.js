@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "npx cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics && npx tsc",
-    "build-release": "npx cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics --release && npx tsc",
+    "build-release": "npx cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics --release",
+    "prepublishOnly": "npm run build-release && npx tsc",
     "install": "npm run build-release",
     "test": "cargo test && npx jest"
   },
