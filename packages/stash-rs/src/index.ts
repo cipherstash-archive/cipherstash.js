@@ -6,11 +6,19 @@ const {
   compare,
   encodeNumber,
   encodeString,
-  encodeBuffer
+  encodeBuffer,
+  encodeRangeBetween,
+  encodeRangeEq,
+  encodeRangeGt,
+  encodeRangeGte,
+  encodeRangeLt,
+  encodeRangeLte,
 } = require("../index.node")
 
 export type Key = Buffer
 export type CipherText = Buffer
+export type OrePlainText = number
+export type OreRange = { min: OrePlainText, max: OrePlainText }
 
 export type ORECipher = {
   /*
@@ -40,7 +48,7 @@ export interface ORE {
    * @param input the JS string to encode
    * @returns a JS number that can be encrypted with the ORE scheme
    */
-  encodeString: (input: string) => number
+  encodeString: (input: string) => OrePlainText
 
   /**
    * Prepares a plaintext (a JS number AKA f64) for ORE encryption by converting
@@ -51,7 +59,7 @@ export interface ORE {
    * @param input the JS number to encode
    * @returns a JS number that can be encrypted with the ORE scheme
    */
-  encodeNumber: (input: number) => number
+  encodeNumber: (input: number) => OrePlainText
 
   /**
    * Converts an 8 byte buffer containing a 64 bit unsigned integer into an
@@ -60,7 +68,15 @@ export interface ORE {
    * @param input the JS buffer to encode
    * @returns a JS number that can be encrypted with the ORE scheme
    */
-  encodeBuffer: (input: Buffer) => number
+  encodeBuffer: (input: Buffer) => OrePlainText
+
+
+  encodeRangeLt: (value: OrePlainText) => OreRange
+  encodeRangeLte: (value: OrePlainText) => OreRange
+  encodeRangeGt: (value: OrePlainText) => OreRange
+  encodeRangeGte: (value: OrePlainText) => OreRange
+  encodeRangeEq: (value: OrePlainText) => OreRange
+  encodeRangeBetween: (min: OrePlainText, max: OrePlainText) => OreRange
 
   /**
    * Initialize a new ORE cipher with a key pair (both keys must be 16-byte
@@ -82,10 +98,15 @@ export interface ORE {
 export const ORE: ORE = {
 
   encodeNumber,
-
   encodeString,
-
   encodeBuffer,
+
+  encodeRangeBetween,
+  encodeRangeEq,
+  encodeRangeGt,
+  encodeRangeGte,
+  encodeRangeLt,
+  encodeRangeLte,
 
   init: (k1: Key, k2: Key): ORECipher => {
     let cipher = initCipher(k1, k2);
