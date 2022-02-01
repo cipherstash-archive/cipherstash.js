@@ -70,6 +70,8 @@ export interface ORE {
    */
   encodeBuffer: (input: Buffer) => OrePlainText
 
+  encode: (input: number | Buffer | string) => OrePlainText
+
 
   encodeRangeLt: (value: OrePlainText) => OreRange
   encodeRangeLte: (value: OrePlainText) => OreRange
@@ -100,6 +102,15 @@ export const ORE: ORE = {
   encodeNumber,
   encodeString,
   encodeBuffer,
+  encode: input => {
+    if (typeof input === 'number') {
+      return encodeNumber(input)
+    } else if (typeof input === 'string') {
+      return encodeString(input)
+    } else {
+      return encodeBuffer(input)
+    }
+  },
 
   encodeRangeBetween,
   encodeRangeEq,
@@ -107,6 +118,7 @@ export const ORE: ORE = {
   encodeRangeGte,
   encodeRangeLt,
   encodeRangeLte,
+
 
   init: (k1: Key, k2: Key): ORECipher => {
     let cipher = initCipher(k1, k2);
