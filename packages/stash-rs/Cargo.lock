@@ -280,23 +280,11 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "ore-encoding-rs"
-version = "0.22.0"
-source = "git+https://github.com/cipherstash/ore_encoding.rs#c96a1339f13fa13e51618663452a5acab0940caa"
+version = "0.23.0"
+source = "git+https://github.com/cipherstash/ore_encoding.rs#4e9b8f3dea391d076c1990afe2daa5a5e7c3f171"
 dependencies = [
  "num",
  "siphasher",
-]
-
-[[package]]
-name = "ore-rs"
-version = "0.1.0"
-dependencies = [
- "hex-literal",
- "neon",
- "ore-encoding-rs",
- "ore-rs 0.1.0 (git+https://github.com/cipherstash/ore.rs)",
- "quickcheck",
- "unicode-normalization",
 ]
 
 [[package]]
@@ -311,6 +299,18 @@ dependencies = [
  "num",
  "rand 0.3.23",
  "rand_chacha",
+]
+
+[[package]]
+name = "ore-rs"
+version = "0.3.0"
+dependencies = [
+ "hex-literal",
+ "neon",
+ "ore-encoding-rs",
+ "ore-rs 0.1.0",
+ "quickcheck",
+ "unicode-normalization",
 ]
 
 [[package]]
