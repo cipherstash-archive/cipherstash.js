@@ -2,6 +2,8 @@ use hex_literal::hex;
 use neon::{prelude::*};
 use ore_rs::{scheme::bit2::OREAES128, ORECipher, OREEncrypt};
 use ore_encoding_rs::OrePlaintext;
+use ore_encoding_rs::siphash;
+use unicode_normalization::UnicodeNormalization;
 use std::cell::RefCell;
 use std::cmp::Ordering;
 
@@ -92,11 +94,21 @@ fn encode_num(mut cx: FunctionContext) -> JsResult<JsNumber> {
     Ok(cx.number(output))
 }
 
+fn encode_string(mut cx: FunctionContext) -> JsResult<JsNumber> {
+    let input = cx.argument::<JsString>(0)?.value(&mut cx);
+    // Unicode normalization FTW (NFC)
+    //                    👇👇👇
+    let normalized = input.nfc().collect::<String>();
+    let output = siphash(normalized.as_bytes());
+    Ok(cx.number(f64::from_bits(output)))
+}
+
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
-    cx.export_function("encodeNum", encode_num)?;
-    cx.export_function("encryptNum", encrypt_num)?;
-    cx.export_function("encryptNumLeft", encrypt_num_left)?;
+    cx.export_function("encodeNumber", encode_num)?;
+    cx.export_function("encodeString", encode_string)?;
+    cx.export_function("encrypt", encrypt_num)?;
+    cx.export_function("encryptLeft", encrypt_num_left)?;
     cx.export_function("initCipher", init)?;
     cx.export_function("compare", compare)?;
     Ok(())

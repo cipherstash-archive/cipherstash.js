@@ -16,6 +16,7 @@ path = "native/lib.rs"
 ore-rs = { git = "https://github.com/cipherstash/ore.rs" }
 ore-encoding-rs = { git = "https://github.com/cipherstash/ore_encoding.rs" }
 hex-literal = "0.3.2"
+unicode-normalization = "0.1.19"
 
 [dev-dependencies]
 quickcheck = "1.0.3"
