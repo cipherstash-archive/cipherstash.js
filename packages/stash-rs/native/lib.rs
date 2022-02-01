@@ -103,10 +103,31 @@ fn encode_string(mut cx: FunctionContext) -> JsResult<JsNumber> {
     Ok(cx.number(f64::from_bits(output)))
 }
 
+fn encode_buffer(mut cx: FunctionContext) -> JsResult<JsNumber> {
+    let input = cx.argument::<JsBuffer>(0)?;
+
+    let result = cx.borrow(&input, |data| {
+        let slice = data.as_slice::<u8>();
+        if slice.len() != 8 {
+            return Err("Invalid buffer length");
+        }
+
+        let slice_8_bytes: [u8; 8] = [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7]];
+        Ok(f64::from_ne_bytes(slice_8_bytes))
+    })
+    .or_else(|e| cx.throw_error(e));
+
+    match result {
+        Ok(num) => Ok(cx.number(num)),
+        Err(err) => Err(err)
+    }
+}
+
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("encodeNumber", encode_num)?;
     cx.export_function("encodeString", encode_string)?;
+    cx.export_function("encodeBuffer", encode_buffer)?;
     cx.export_function("encrypt", encrypt_num)?;
     cx.export_function("encryptLeft", encrypt_num_left)?;
     cx.export_function("initCipher", init)?;
