@@ -36,12 +36,12 @@ const command: GluegunCommand = {
       const stash = await Stash.connect(profile.value)
       const collectionNames = await stash.listCollections()
       if (parameters.options.json) {
-        console.log(JSON.stringify(collectionNames))
+        print.info(JSON.stringify(collectionNames))
       } else {
-        console.log('  Name')
-        console.log('  ------')
+        print.info('  Name')
+        print.info('  ------')
         collectionNames.forEach(collectionName => {
-          console.log('  ' + collectionName)
+          print.info('  ' + collectionName)
         })
       }
     } catch (error) {
