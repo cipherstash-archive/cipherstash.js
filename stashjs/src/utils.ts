@@ -36,10 +36,6 @@ export function makeId(): Buffer {
   return uuidv4({}, Buffer.alloc(16))
 }
 
-export const biggest = (a: bigint, b: bigint) => a > b ? a : b
-
-export const smallest = (a: bigint, b: bigint) => a < b ? a : b
-
 /**
  * Like JSON.stringify(...) but handles bigints and prettifies the output.
  *

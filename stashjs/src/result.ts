@@ -5,8 +5,8 @@ import { unreachable } from "./type-utils"
  * result with a value or an error result.
  */
 export type Result<V, E> =
-  | { tag: 'Result.Ok', ok: true, value: V }
-  | { tag: 'Result.Err', ok: false, error: E }
+  | Readonly<{ tag: 'Result.Ok', ok: true, value: V }>
+  | Readonly<{ tag: 'Result.Err', ok: false, error: E }>
 
 /**
  * Produces a success result.
