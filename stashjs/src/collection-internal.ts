@@ -84,10 +84,7 @@ export class CollectionInternal<
       ...doc,
       id: idToBuffer(doc.id as string),
     } as R
-    const vectors = convertAnalyzedRecordToVectors(
-      this.analyzeRecord(docWithBufferId),
-      this.schema.meta
-    )
+    const vectors = convertAnalyzedRecordToVectors(this.analyzeRecord(docWithBufferId))
 
     return convertErrorsTo(
       DocumentPutFailure,
