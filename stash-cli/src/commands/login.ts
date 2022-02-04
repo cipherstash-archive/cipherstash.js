@@ -6,15 +6,7 @@ import { AxiosResponse } from 'axios'
 import { makeHttpsClient } from '../https-client'
 import { isInteractive } from '../terminal'
 
-import {
-  profileStore,
-  defaults,
-  stashOauth,
-  StashProfile,
-  makeAuthStrategy,
-  errors
-} from '@cipherstash/stashjs'
-
+import { profileStore, defaults, stashOauth, StashProfile, makeAuthStrategy, errors } from '@cipherstash/stashjs'
 
 // A first time login (saves a profile for that workspace + credentials)
 // stash login --workspace foo
@@ -46,9 +38,7 @@ const command: GluegunCommand = {
       )
 
       if (!pollingInfo.ok) {
-        print.error(
-          'An error occurred and "stash login" could not complete successfully'
-        )
+        print.error('An error occurred and "stash login" could not complete successfully')
         print.error(`Reason: ${errors.toErrorMessage(pollingInfo.error)}`)
         process.exit(1)
         return
@@ -69,9 +59,7 @@ const command: GluegunCommand = {
       )
 
       if (!authInfo.ok) {
-        print.error(
-          'An error occurred and "stash login" could not complete successfully'
-        )
+        print.error('An error occurred and "stash login" could not complete successfully')
         print.error(`Reason: ${errors.toErrorMessage(authInfo.error)}`)
         process.exit(1)
         return
@@ -95,7 +83,9 @@ const command: GluegunCommand = {
         print.error(`Failed to save profile: ${saved.error.message}`)
       }
     } else {
-      let profile = options.profile ? await profileStore.loadProfile(options.profile) : await profileStore.loadDefaultProfile()
+      let profile = options.profile
+        ? await profileStore.loadProfile(options.profile)
+        : await profileStore.loadDefaultProfile()
       if (profile.ok) {
         const authStrategy = makeAuthStrategy(profile.value)
         const login = await authStrategy.initialise()
@@ -117,14 +107,12 @@ function isNewLogin(options: Options): boolean {
 
 // This utility deeply checks that T is assignment-compatible with Target.
 // Field types that are not assignment compatible will be converted to `never`.
-type AssignableTo<Target, T> =
-    T extends Target ? T
-  : T extends object ? {
-    [F in keyof T]:
-      F extends keyof Target ?
-        AssignableTo<Target[F], T[F]>
-      : never
-  }
+type AssignableTo<Target, T> = T extends Target
+  ? T
+  : T extends object
+  ? {
+      [F in keyof T]: F extends keyof Target ? AssignableTo<Target[F], T[F]> : never
+    }
   : never
 
 // Represents the default parts of the profile that can be determined before
@@ -133,23 +121,26 @@ type AssignableTo<Target, T> =
 // TODO: we should remove the federated key details from StashConfiguration and
 // store them seperately like we do for access tokens. StashConfiguration should
 // be *static*.
-type BasicStashProfile = AssignableTo<StashProfile, {
-  name: StashProfile['name'],
-  config: {
-    service: StashProfile['config']['service']
-    identityProvider: {
-      kind: "Auth0-DeviceCode",
-      host: string,
-      clientId: string
-    },
-    keyManagement: {
-      kind: StashProfile['config']['keyManagement']['kind']
-      awsCredentials: {
-        kind: StashProfile['config']['keyManagement']['awsCredentials']['kind']
+type BasicStashProfile = AssignableTo<
+  StashProfile,
+  {
+    name: StashProfile['name']
+    config: {
+      service: StashProfile['config']['service']
+      identityProvider: {
+        kind: 'Auth0-DeviceCode'
+        host: string
+        clientId: string
+      }
+      keyManagement: {
+        kind: StashProfile['config']['keyManagement']['kind']
+        awsCredentials: {
+          kind: StashProfile['config']['keyManagement']['awsCredentials']['kind']
+        }
       }
     }
   }
-}>
+>
 
 function buildBasicStashProfile(options: Options): BasicStashProfile {
   const serviceHost: string = options.serviceHost || defaults.service.host
@@ -174,10 +165,10 @@ function buildBasicStashProfile(options: Options): BasicStashProfile {
       keyManagement: {
         kind: 'AWS-KMS',
         awsCredentials: {
-          kind: 'Federated',
-        },
+          kind: 'Federated'
+        }
       }
-    },
+    }
   }
 }
 

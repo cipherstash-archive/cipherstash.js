@@ -33,11 +33,7 @@ const command: GluegunCommand = {
       }
 
       if (!profile.ok) {
-        print.error(
-          `Could not list collections. Reason: "${describeError(
-            profile.error
-          )}"`
-        )
+        print.error(`Could not list collections. Reason: "${describeError(profile.error)}"`)
         process.exit(1)
         return
       }
@@ -47,22 +43,16 @@ const command: GluegunCommand = {
       collectionNames.forEach(async collectionName => {
         const collection = await stash.loadCollection(collectionName)
         console.log(collectionName)
-        Object.entries(collection.schema.mappings).forEach(
-          ([indexName, mapping]) => {
-            console.log(
-              `  Index: ${indexName}; Type: ${
-                mapping.matcher
-              } (supports ${describeOperators(
-                mapping
-              )}), Field(s): ${describeFields(mapping)}`
-            )
-          }
-        )
+        Object.entries(collection.schema.mappings).forEach(([indexName, mapping]) => {
+          console.log(
+            `  Index: ${indexName}; Type: ${mapping.matcher} (supports ${describeOperators(
+              mapping
+            )}), Field(s): ${describeFields(mapping)}`
+          )
+        })
       })
     } catch (error) {
-      print.error(
-        `Could not list collections. Reason: "${describeError(error)}"`
-      )
+      print.error(`Could not list collections. Reason: "${describeError(error)}"`)
     }
   }
 }
@@ -86,11 +76,7 @@ function describeFields(mapping: MappingOn<StashRecord>): string {
 }
 
 function describeOperators(mapping: MappingOn<StashRecord>): string {
-  if (
-    isMatchMapping(mapping) ||
-    isDynamicMatchMapping(mapping) ||
-    isFieldDynamicMatchMapping(mapping)
-  ) {
+  if (isMatchMapping(mapping) || isDynamicMatchMapping(mapping) || isFieldDynamicMatchMapping(mapping)) {
     return '=~'
   }
 

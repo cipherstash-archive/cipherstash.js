@@ -2,13 +2,7 @@ import * as https from 'https'
 import axios, { AxiosInstance } from 'axios'
 import { GluegunCommand } from 'gluegun'
 import * as open from 'open'
-import {
-  profileStore,
-  defaults,
-  stashOauth,
-  StashProfile,
-  errors
-} from '@cipherstash/stashjs'
+import { profileStore, defaults, stashOauth, StashProfile, errors } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
@@ -17,18 +11,14 @@ const command: GluegunCommand = {
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
 
-    const serviceHost: string =
-      parameters.options.serviceHost || defaults.service.host
+    const serviceHost: string = parameters.options.serviceHost || defaults.service.host
     const servicePort: number = parameters.options.servicePort || 443
 
-    const identityProviderHost: string =
-      parameters.options.identityProviderHost || defaults.identityProvider.host
+    const identityProviderHost: string = parameters.options.identityProviderHost || defaults.identityProvider.host
     const identityProviderClientId: string =
-      parameters.options.identityProviderClientId ||
-      defaults.identityProvider.clientId
+      parameters.options.identityProviderClientId || defaults.identityProvider.clientId
 
-    const consoleApiHost: string =
-      parameters.options.consoleApiHost || 'console.cipherstash.com'
+    const consoleApiHost: string = parameters.options.consoleApiHost || 'console.cipherstash.com'
     const consoleApiPort: number = parameters.options.consoleApiPort || 443
 
     const workspace: string | undefined = parameters.options.workspace
@@ -46,17 +36,13 @@ const command: GluegunCommand = {
     )
 
     if (!pollingInfo.ok) {
-      print.error(
-        'An error occurred and "stash init" could not complete successfully'
-      )
+      print.error('An error occurred and "stash init" could not complete successfully')
       print.error(`Reason: ${errors.toErrorMessage(pollingInfo.error)}`)
       process.exit(1)
       return
     }
 
-    print.info(
-      `Visit ${pollingInfo.value.verificationUri} to complete authentication`
-    )
+    print.info(`Visit ${pollingInfo.value.verificationUri} to complete authentication`)
     print.info('Waiting for authentication...')
 
     // Only open the browser when running this command locally.  If we are
@@ -75,9 +61,7 @@ const command: GluegunCommand = {
     )
 
     if (!authInfo.ok) {
-      print.error(
-        'An error occurred and "stash init" could not complete successfully'
-      )
+      print.error('An error occurred and "stash init" could not complete successfully')
       print.error(`Reason: ${errors.toErrorMessage(authInfo.error)}`)
       process.exit(1)
       return
@@ -124,19 +108,14 @@ const command: GluegunCommand = {
 
     await profileStore.saveProfile(profile)
 
-    print.info(
-      `Workspace configuration and authentication details have been saved in dir ~/.cipherstash`
-    )
+    print.info(`Workspace configuration and authentication details have been saved in dir ~/.cipherstash`)
   }
 }
 
 export default command
 
 function isInteractive(): boolean {
-  return (
-    process.env['SSH_CLIENT'] !== undefined ||
-    process.env['SSH_TTY'] !== undefined
-  )
+  return process.env['SSH_CLIENT'] !== undefined || process.env['SSH_TTY'] !== undefined
 }
 
 function makeHttpsClient(host: string, port: number): AxiosInstance {
