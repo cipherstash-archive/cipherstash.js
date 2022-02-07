@@ -68,19 +68,6 @@ type FindFieldsOfType<
 export type FieldOfType<R, T> = FindFieldsOfType<R, Field<R>, T>
 
 /**
- * Get the type name of a type.
- *
- * JS sucks at this, e.g. typeof new Date() returns "[object Object]"
- */
-export type TypeName<T> =
-  T extends string ? "string" :
-  T extends number ? "number" :
-  T extends boolean ? "boolean" :
-  T extends bigint ? "bigint" :
-  T extends Date ? "Date" :
-  never
-
-/**
  * In cases where we cannot prove to TypeScript that an `if` or `switch` is
  * exhaustive in its condition checking, this function allows us to tell TS that
  * an `else` or `default` block is unreachable. In the event that what we tell

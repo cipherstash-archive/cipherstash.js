@@ -31,7 +31,7 @@ if (!isMainThread) {
 
     const analyzer = getRecordAnalyzer(config.schema)
     const analyzedRecord = analyzer(record)
-    const vectors = convertAnalyzedRecordToVectors(analyzedRecord, config.schema.meta)
+    const vectors = convertAnalyzedRecordToVectors(analyzedRecord)
 
     const cipher = await cipherMemo.freshValue()
     if (cipher.ok) {
