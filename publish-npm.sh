@@ -13,13 +13,11 @@ set -x # trace what gets executed (useful for debugging)
 
 dryrun="${1:-no}"
 
-echo $dryrun
-
 while true; do
   read -r -p "Did you update the CHANGELOG? " yn
   case $yn in
     [Yy]*)
-      if [[ $dryrun == "dryrun" ]]; then
+      if [[ "$dryrun" == "dryrun" ]]; then
         pnpm publish -r --access public --dry-run --no-git-checks
       else
         echo "Doing a publish for realz..."
