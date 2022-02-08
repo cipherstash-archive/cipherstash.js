@@ -11,11 +11,20 @@ set -e # exit when a command fails
 set -u # exit when script tries to use undeclared variables
 set -x # trace what gets executed (useful for debugging)
 
+dryrun="${1:-no}"
+
+echo $dryrun
+
 while true; do
   read -r -p "Did you update the CHANGELOG? " yn
   case $yn in
     [Yy]*)
-      pnpm publish -r --access public
+      if [[ $dryrun == "dryrun" ]]; then
+        pnpm publish -r --access public --dry-run --no-git-checks
+      else
+        echo "Doing a publish for realz..."
+        pnpm publish -r --access public
+      fi
       break
       ;;
     [Nn]*) exit ;;
