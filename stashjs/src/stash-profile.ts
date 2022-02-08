@@ -19,6 +19,7 @@ export type StashProfile = {
   /**
    * The auth token for this StashProfile
    * TODO: this will not be present for a M2M login.
+   * TODO: We should create a new type for M2M logins to avoid having an optional type
    */
   readonly oauthCreds?: OauthAuthenticationInfo
 }

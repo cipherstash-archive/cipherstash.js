@@ -6,7 +6,7 @@ import { AxiosResponse } from 'axios'
 import { makeHttpsClient } from '../https-client'
 import { isInteractive } from '../terminal'
 
-import { profileStore, defaults, stashOauth, StashProfile, makeAuthStrategy, errors } from '@cipherstash/stashjs'
+import { profileStore, defaults, stashOauth, OauthAuthenticationInfo, StashProfile, makeAuthStrategy, errors } from '@cipherstash/stashjs'
 
 // A first time login (saves a profile for that workspace + credentials)
 // stash login --workspace foo
@@ -67,19 +67,28 @@ const command: GluegunCommand = {
 
       const workspace = basicProfile.config.service.workspace
 
-      const response = await makeHttpsClient(
-        basicProfile.config.service.host,
-        basicProfile.config.service.port || 443
-      ).get(`/api/meta/workspaces/${encodeURIComponent(workspace)}`, {
-        headers: {
-          Authorization: `Bearer ${authInfo.value.accessToken}`
-        }
-      })
+      const response = await makeHttpsClient("console.cipherstash.com", 443)
+        .get(`/api/meta/workspaces/${encodeURIComponent(workspace)}`, {
+          headers: {
+            Authorization: `Bearer ${authInfo.value.accessToken}`
+          }
+        })
+        .catch((error) => {
+          print.error(`Failed to load workspace meta-data. API responded with code: '${error.response.status}' and body: '${JSON.stringify(error.response.data)}'`)
+          process.exit(1)
+        })
 
-      const saved = await profileStore.saveProfile(buildCompletedStashProfile(basicProfile, response))
+      if (!response.data) {
+        print.error(`Could not load workspace meta-data: API returned empty response`)
+        process.exit(1)
+        return
+      }
+
+      const saved = await profileStore.saveProfile(buildCompletedStashProfile(basicProfile, authInfo.value, response))
       if (saved.ok) {
         print.info(`Workspace configuration and authentication details have been saved in dir ~/.cipherstash`)
       } else {
+        console.error(saved.error)
         print.error(`Failed to save profile: ${saved.error.message}`)
       }
     } else {
@@ -172,9 +181,10 @@ function buildBasicStashProfile(options: Options): BasicStashProfile {
   }
 }
 
-function buildCompletedStashProfile(basicProfile: BasicStashProfile, response: AxiosResponse<any, any>): StashProfile {
+function buildCompletedStashProfile(basicProfile: BasicStashProfile, oauthCreds: OauthAuthenticationInfo, response: AxiosResponse<any, any>): StashProfile {
   return {
     name: basicProfile.name,
+    oauthCreds: oauthCreds,
     config: {
       ...basicProfile.config,
       keyManagement: {
