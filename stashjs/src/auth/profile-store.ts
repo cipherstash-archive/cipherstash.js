@@ -20,7 +20,7 @@ export const defaults: ConfigurationTemplate = {
   },
   identityProvider: {
     kind: 'Auth0-DeviceCode',
-    host: 'cipherstash.au.auth0.com',
+    host: 'auth.cipherstash.com',
     clientId: 'CtY9DNGongoSvZaAwbb6sw0Hr7Gl7pg7'
   },
   keyManagement: {
@@ -79,7 +79,7 @@ class Store implements ProfileStore {
     fs.mkdirSync(dir, { recursive: true })
   }
 
-  public async loadProfileNames() {
+  public async loadProfileNames(): AsyncResult<Array<string>, LoadProfileNamesFailure> {
     if (!fs.existsSync(dir)) {
       return Err(LoadProfileNamesFailure(MissingConfigDir))
     }
@@ -96,7 +96,7 @@ class Store implements ProfileStore {
     }
   }
 
-  public async setDefaultProfile(profile: StashProfile) {
+  public async setDefaultProfile(profile: StashProfile): AsyncResult<void, SetDefaultProfileFailure> {
     if (!fs.existsSync(dir)) {
       return Err(SetDefaultProfileFailure(MissingConfigDir))
     }
@@ -110,7 +110,7 @@ class Store implements ProfileStore {
     }
   }
 
-  public async loadDefaultProfile() {
+  public async loadDefaultProfile(): AsyncResult<StashProfile, LoadProfileFailure> {
     if (!fs.existsSync(dir)) {
       return Err(LoadProfileFailure(MissingConfigDir))
     }
@@ -136,7 +136,7 @@ class Store implements ProfileStore {
     }
   }
 
-  public async loadProfile(profileName: string) {
+  public async loadProfile(profileName: string): AsyncResult<StashProfile, LoadProfileFailure> {
     if (!fs.existsSync(dir)) {
       return Err(LoadProfileFailure(MissingConfigDir))
     }
@@ -172,7 +172,7 @@ class Store implements ProfileStore {
     }
   }
 
-  public async saveProfile(profile: StashProfile) {
+  public async saveProfile(profile: StashProfile): AsyncResult<void, SaveProfileFailure> {
     try {
       await fs.promises.mkdir(this.configDir(profile.name), { recursive: true })
       await fs.promises.writeFile(this.profileConfigFilePath(profile.name), stringify(profile.config))
