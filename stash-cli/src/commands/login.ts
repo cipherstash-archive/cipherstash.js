@@ -74,12 +74,12 @@ const command: GluegunCommand = {
           }
         })
         .catch((error) => {
-          print.error(`Failed to load workspace meta-data. API responded with code: '${error.response.status}' and body: '${JSON.stringify(error.response.data)}'`)
+          print.error(`Failed to load workspace metadata. API responded with code: '${error.response.status}' and body: '${JSON.stringify(error.response.data)}'`)
           process.exit(1)
         })
 
       if (!response.data) {
-        print.error(`Could not load workspace meta-data: API returned empty response`)
+        print.error(`Could not load workspace metadata: API returned empty response`)
         process.exit(1)
         return
       }
@@ -88,7 +88,6 @@ const command: GluegunCommand = {
       if (saved.ok) {
         print.info(`Workspace configuration and authentication details have been saved in dir ~/.cipherstash`)
       } else {
-        console.error(saved.error)
         print.error(`Failed to save profile: ${saved.error.message}`)
       }
     } else {
