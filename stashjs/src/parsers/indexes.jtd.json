@@ -1,0 +1,48 @@
+{
+  "definitions": {
+    "indexDef": {
+      "discriminator": "kind",
+      "mapping": {
+        "exact": {
+          "properties": {
+            "field": { "type": "string" }
+          }
+        },
+        "range": {
+          "properties": {
+            "field": { "type": "string" }
+          }
+        },
+        "fullText": {
+          "properties": {
+            "fields": { "elements": { "type": "string" }},
+            "tokenFilters": {
+              "elements": { "ref": "tokenFilter" }
+            },
+            "tokenizer": { "ref": "tokenizer" }
+          }
+        }
+      }
+    },
+    "tokenFilter": {
+      "discriminator": "kind",
+      "mapping": {
+        "downcase": { "properties": {} },
+        "upcase": { "properties": {} },
+        "ngram": {
+          "optionalProperties": {
+            "tokenLength": { "type": "uint8" }
+          }
+        }
+      }
+    },
+    "tokenizer": {
+      "discriminator": "kind",
+      "mapping": {
+        "standard": { "properties": {} }
+      }
+    }
+  },
+
+  "values": { "ref": "indexDef" }
+}
