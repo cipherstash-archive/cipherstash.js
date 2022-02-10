@@ -116,7 +116,7 @@ export class CollectionSchema<
     indexName: N,
     mapping: MO
   ): OperatorsForIndex<R, M, N> {
-    switch (mapping.matcher) {
+    switch (mapping.kind) {
       case "exact": return operators.exact(indexName) as OperatorsForIndex<R, M, N>
       case "range": return operators.range(indexName) as OperatorsForIndex<R, M, N>
       case "match": return operators.match(indexName) as OperatorsForIndex<R, M, N>
