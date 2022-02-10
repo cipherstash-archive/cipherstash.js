@@ -36,6 +36,14 @@ export function makeId(): Buffer {
   return uuidv4({}, Buffer.alloc(16))
 }
 
+export function maybeGenerateId(doc: any): any {
+  if (doc.id) {
+    return doc
+  } else {
+    return { id: idBufferToString(makeId()), ...doc }
+  }
+}
+
 /**
  * Like JSON.stringify(...) but handles bigints and prettifies the output.
  *

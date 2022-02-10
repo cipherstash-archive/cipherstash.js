@@ -1,7 +1,7 @@
 import { StashRecord, Mappings, MappingsMeta, HasID } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { StashInternal } from "./stash-internal"
-import { idBufferToString, idToBuffer, makeId } from "./utils"
+import { maybeGenerateId, idToBuffer } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./grpc/get-helper"
@@ -79,7 +79,7 @@ export class CollectionInternal<
 
   public async put(doc: R): AsyncResult<string, DocumentPutFailure> {
     const collectionId = idToBuffer(this.id)
-    doc = this.maybeGenerateId(doc)
+    doc = maybeGenerateId(doc)
     const docWithBufferId = {
       ...doc,
       id: idToBuffer(doc.id as string),
@@ -209,15 +209,6 @@ export class CollectionInternal<
         })) : []
       }
     })
-  }
-
-  private maybeGenerateId(doc: R): R {
-    if (doc.id) {
-      return doc
-    } else {
-      const id = idBufferToString(makeId())
-      return { id: id, ...doc }
-    }
   }
 }
 
