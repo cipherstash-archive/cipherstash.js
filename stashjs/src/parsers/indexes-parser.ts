@@ -17,12 +17,12 @@ const decoder = <R extends StashRecord>(): IndexDefinitionDecoder<R> => ({
 })
 
 export const ExactIndex = D.struct({
-  matcher: D.literal("exact"),
+  kind: D.literal("exact"),
   field: D.string
 })
 
 export const RangeIndex = D.struct({
-  matcher: D.literal("range"),
+  kind: D.literal("range"),
   field: D.string
 })
 
@@ -39,21 +39,21 @@ export const Tokenizer = D.sum('kind')({
 })
 
 export const MatchIndex = D.struct({
-  matcher: D.literal("match"),
+  kind: D.literal("match"),
   fields: D.array(D.string),
   tokenFilters: D.array(TokenFilter),
   tokenizer: Tokenizer
 })
 
 export const DynamicMatchIndex = D.struct({
-  matcher: D.literal("dynamic-match"),
+  kind: D.literal("dynamic-match"),
   fields: D.array(D.string),
   tokenFilters: D.array(TokenFilter),
   tokenizer: Tokenizer
 })
 
 export const FieldDynamicMatchIndex = D.struct({
-  matcher: D.literal("field-dynamic-match"),
+  kind: D.literal("field-dynamic-match"),
   fields: D.array(D.string),
   tokenFilters: D.array(TokenFilter),
   tokenizer: Tokenizer

@@ -6,7 +6,7 @@ import { parse } from 'path/posix'
 describe("Index definition: Exact", () => {
   it("parses valid index definition", () => {
     const def = {
-      "matcher": "exact",
+      "kind": "exact",
       "field": "title"
     }
 
@@ -16,7 +16,7 @@ describe("Index definition: Exact", () => {
 
   it("parses invalid index definition", () => {
     const def = {
-      "matcher": "garbage",
+      "kind": "garbage",
       "field": "title"
     }
 
@@ -28,7 +28,7 @@ describe("Index definition: Exact", () => {
 describe("Index definition: Range", () => {
   it("parses valid index definition", () => {
     const def = {
-      "matcher": "range",
+      "kind": "range",
       "field": "title"
     }
 
@@ -38,7 +38,7 @@ describe("Index definition: Range", () => {
 
   it("parses invalid index definition", () => {
     const def = {
-      "matcher": "garbage",
+      "kind": "garbage",
       "field": "title"
     }
 
@@ -50,7 +50,7 @@ describe("Index definition: Range", () => {
 describe("Index definition: Match", () => {
   it("parses valid index definition", () => {
     const def = {
-      "matcher": "match",
+      "kind": "match",
       "fields": ["title"],
       "tokenFilters": [
         { "kind": "downcase" },
@@ -65,7 +65,7 @@ describe("Index definition: Match", () => {
 
   it("parses invalid index definition", () => {
     const def = {
-      "matcher": "match",
+      "kind": "match",
       "fields": "title",
       "tokenFilters": [
         { "kind": "downcase" },
@@ -82,11 +82,11 @@ describe("Index definition: Match", () => {
 describe("Entire indexes definition", () => {
   it("can be parsed", () => {
     const indexes = {
-      "exactTitle": { "matcher": "exact", "field": "title" },
-      "runningTime": { "matcher": "range", "field": "runningTime" },
-      "year": { "matcher": "range", "field": "year" },
+      "exactTitle": { "kind": "exact", "field": "title" },
+      "runningTime": { "kind": "range", "field": "runningTime" },
+      "year": { "kind": "range", "field": "year" },
       "title": {
-        "matcher": "match",
+        "kind": "match",
         "fields": ["title"],
         "tokenFilters": [
           { "kind": "downcase" },
