@@ -1,12 +1,5 @@
 import { GluegunCommand } from 'gluegun'
-import {
-  Stash,
-  StashProfile,
-  profileStore,
-  describeError,
-  Result,
-  errors
-} from '@cipherstash/stashjs'
+import { Stash, StashProfile, profileStore, describeError, Result, errors } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
@@ -26,9 +19,7 @@ const command: GluegunCommand = {
       }
 
       if (!profile.ok) {
-        print.error(
-          `Could not load profile. Reason: "${describeError(profile.error)}"`
-        )
+        print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
         process.exit(1)
         return
       }
@@ -45,9 +36,7 @@ const command: GluegunCommand = {
         })
       }
     } catch (error) {
-      print.error(
-        `Could not list collections. Reason: "${describeError(error)}"`
-      )
+      print.error(`Could not list collections. Reason: "${describeError(error)}"`)
     }
   }
 }
