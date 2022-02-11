@@ -18,6 +18,14 @@ export function Ok<V>(value: V): Result<V, never> {
   return { tag: 'Result.Ok', ok: true, value: value }
 }
 
+export function isOk<V>(result: any): result is { tag: 'Result.Ok', ok: true, value: V } {
+  return result?.ok === true
+}
+
+export function isErr<E>(result: any): result is { tag: 'Result.Err', ok: false, error: E } {
+  return result?.ok === false
+}
+
 /**
  * Produces a failure result.
  *
