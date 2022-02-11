@@ -54,15 +54,15 @@ describe('CollectionSchema', () => {
 
     test('produces a schema with mappings', () => {
       expect(schema.mappings).toStrictEqual({
-        email: { matcher: "exact", field: "email" },
-        expired: { matcher: "exact", field: "expired" },
-        age: { matcher: "exact", field: "age" },
-        dob: { matcher: "exact", field: "dob" },
-        dobRange: { matcher: "range", field: "dob" },
-        city: { matcher: "exact", field: "address.city" },
-        ageRange: { matcher: "range", field: "age" },
+        email: { kind: "exact", field: "email" },
+        expired: { kind: "exact", field: "expired" },
+        age: { kind: "exact", field: "age" },
+        dob: { kind: "exact", field: "dob" },
+        dobRange: { kind: "range", field: "dob" },
+        city: { kind: "exact", field: "address.city" },
+        ageRange: { kind: "range", field: "age" },
         notesAndDescription: {
-          matcher: "match",
+          kind: "match",
           fields: ["notes", "description"],
           options: {
             tokenFilters: [
@@ -73,7 +73,7 @@ describe('CollectionSchema', () => {
           }
         },
         allStringFields1: {
-          matcher: "dynamic-match",
+          kind: "dynamic-match",
           options: {
             tokenFilters: [
               {
@@ -90,7 +90,7 @@ describe('CollectionSchema', () => {
           },
         },
         "allStringFields2": {
-          matcher: "field-dynamic-match",
+          kind: "field-dynamic-match",
           options: {
             tokenFilters: [
               {
