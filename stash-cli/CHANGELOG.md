@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- Ability to import sources from a file in a JSON array via `stash import`
+
 ## [0.3.1]
 
 ## Added
