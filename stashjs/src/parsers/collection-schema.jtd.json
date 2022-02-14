@@ -1,5 +1,8 @@
 {
   "definitions": {
+    "typeDef": {
+      "values": { "enum": ["number", "bigint", "date", "string", "boolean"] }
+    },
     "indexDef": {
       "discriminator": "kind",
       "mapping": {
@@ -44,5 +47,12 @@
     }
   },
 
-  "values": { "ref": "indexDef" }
+  "properties": {
+    "type": {
+      "values": { "ref": "typeDef" }
+    },
+    "indexes": {
+      "values": { "ref": "indexDef" }
+    }
+  }
 }
