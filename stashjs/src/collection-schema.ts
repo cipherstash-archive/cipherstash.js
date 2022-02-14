@@ -1,6 +1,7 @@
 import { StashRecord, Mappings, MappingsMeta, makeMappingsDSL, MappingsDSL, MappingOn } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder, OperatorsForIndex, operators } from "./dsl/query-dsl"
 import { makeId, idBufferToString } from "./utils"
+import { CollectionSchemaDefinition } from "./parsers/collection-schema-parser"
 import * as crypto from 'crypto'
 
 /**
@@ -31,6 +32,8 @@ export class CollectionSchema<
    * const schema = CollectionSchema.define<Employee>("employees").indexedWith(mappings => ({ ... }))
    * // or
    * const schema = CollectionSchema.define<Employee>("employees").notIndexed()
+   * // or
+   * const schema = CollectionSchema.define<Employee>("employees").fromJSON({ ... })
    * ```
    *
    * @param collectionName the name of the collection
@@ -66,6 +69,29 @@ export class CollectionSchema<
           })) as MM
         )
       },
+
+      fromCollectionSchemeDefinition(def: CollectionSchemaDefinition) {
+        type M = Mappings<R>
+        type MM = MappingsMeta<M>
+        return new CollectionSchema<R, M, MM>(
+          collectionName,
+          def.indexes as M,
+          Object.fromEntries(Object.keys(def.indexes).map((indexName) => {
+            return [
+              indexName, {
+                $indexName: indexName,
+                // Keep the generated UUID as a string
+                // because we'll use it later to key analysis objects
+                //$indexId: idBufferToString(makeId()),
+                $indexId: idBufferToString(makeId()),
+                $prfKey: crypto.randomBytes(16),
+                $prpKey: crypto.randomBytes(16)
+              }
+            ]
+          })) as MM
+        )
+      },
+
       /**
        * Defines a named Collection *without* any mappings.
        *

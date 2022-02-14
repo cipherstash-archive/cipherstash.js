@@ -111,3 +111,6 @@ export { makeAuthStrategy } from './auth/make-auth-strategy'
 export { Auth0DeviceCodeStrategy } from './auth/auth0-device-code-strategy'
 export { Auth0AccessTokenStrategy } from './auth/auth0-access-token-strategy'
 export { Auth0Machine2MachineStrategy } from './auth/auth0-machine-2-machine-strategy'
+
+
+export { typecheckCollectionSchemaDefinition } from './parsers/collection-schema-parser'
