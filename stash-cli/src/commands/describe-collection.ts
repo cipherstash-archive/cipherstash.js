@@ -51,7 +51,7 @@ const command: GluegunCommand = {
 
       Object.entries(collection.schema.mappings).forEach(([indexName, mapping]) => {
         mappings[indexName] = {
-          indexType: mapping.matcher,
+          indexType: mapping.kind,
           fields: describeFields(mapping),
           operators: describeOperators(mapping)
         }
