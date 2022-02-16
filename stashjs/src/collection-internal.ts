@@ -3,7 +3,7 @@ import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { StashInternal } from "./stash-internal"
 import { maybeGenerateId, idToBuffer } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
-import { convertQueryReplyToUserRecords } from "./grpc/query-helper"
+import { convertQueryReplyToQueryResult } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./grpc/get-helper"
 import { CollectionSchema } from "./collection-schema"
 import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer, AnalyzedQuery } from "./analyzer"
@@ -152,14 +152,7 @@ export class CollectionInternal<
             this.stash.api.query.query
           )
         ),
-        ([_, cipher, reply]) => Ok.Async({
-          took: (new Date().getTime() - timerStart) / 1000,
-          documents: convertQueryReplyToUserRecords(cipher)<R & HasID>(reply!),
-          aggregates: reply!.aggregates ? reply!.aggregates.map(agg => ({
-            name: agg.name! as Aggregate,
-            value: BigInt(agg.value!.toString())
-          })) : []
-        })
+        ([_, cipher, reply]) => convertQueryReplyToQueryResult<R & HasID>(cipher, timerStart, reply!)
       )(Unit)
     )
   }
@@ -176,14 +169,7 @@ export class CollectionInternal<
             this.stash.api.query.query
           )
         ),
-        ([_, cipher, reply]) => Ok.Async({
-          took: (new Date().getTime() - timerStart) / 1000,
-          documents: convertQueryReplyToUserRecords(cipher)<R & HasID>(reply!),
-          aggregates: reply!.aggregates ? reply!.aggregates.map(agg => ({
-            name: agg.name! as Aggregate,
-            value: BigInt(agg.value!.toString())
-          })) : []
-        })
+        ([_, cipher, reply]) => convertQueryReplyToQueryResult<R & HasID>(cipher, timerStart, reply!)
       )(Unit)
     )
   }

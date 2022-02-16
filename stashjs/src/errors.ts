@@ -87,7 +87,7 @@ export const DocumentGetAllFailure: (cause: DocumentGetAllFailure["cause"]) => D
 export type DocumentPutFailure = StashJSError<'DocumentPutFailure', EncryptionFailure | GRPCError | AuthenticationFailure>
 export const DocumentPutFailure: (cause: DocumentPutFailure["cause"]) => DocumentPutFailure = (cause) => ({ tag: 'DocumentPutFailure', cause })
 
-export type DocumentQueryFailure = StashJSError<'DocumentQueryFailure', EncryptionFailure | GRPCError | AuthenticationFailure>
+export type DocumentQueryFailure = StashJSError<'DocumentQueryFailure', DecryptionFailure | GRPCError | AuthenticationFailure>
 export const DocumentQueryFailure: (cause: DocumentQueryFailure["cause"]) => DocumentQueryFailure = (cause) => ({ tag: 'DocumentQueryFailure', cause })
 
 
