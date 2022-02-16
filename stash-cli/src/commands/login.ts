@@ -31,7 +31,7 @@ import {
 
 const command: GluegunCommand = {
   name: 'login',
-  description: 'Login to the a workspace',
+  description: 'Login to the workspace',
   alias: 'l',
 
   run: async (toolbox: Toolbox) => {
@@ -40,7 +40,7 @@ const command: GluegunCommand = {
 
     if (options.help) {
       // TODO: It would be neat if we could read this summary from the docs directly
-      print.info("Usage: stash login [--workspace <workspace> --profile <profile> --help]")
+      print.info("Usage: stash login [--workspace <workspace>] [--profile <profile>] [--help]")
       print.info("")
       print.info("Login to the given workspace\n")
       print.info("If this is a first time login, you must provide a workspace option")
