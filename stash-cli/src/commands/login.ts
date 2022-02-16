@@ -28,12 +28,31 @@ import {
 // new login to workspace foo that will be saved in profile bar
 // stash login --workspace foo --profile bar
 
+
 const command: GluegunCommand = {
   name: 'login',
+  description: 'Login to the a workspace',
+  alias: 'l',
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
     const options = parameters.options
+
+    if (options.help) {
+      // TODO: It would be neat if we could read this summary from the docs directly
+      print.info("Usage: stash login [--workspace <workspace> --profile <profile> --help]")
+      print.info("")
+      print.info("Login to the given workspace\n")
+      print.info("If this is a first time login, you must provide a workspace option")
+      print.info("")
+      print.info("    stash login --workspace ABCD1234")
+      print.info("")
+      print.info("Otherwise, stash will attempt to perform a fresh login with your default profile")
+      print.info("See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html")
+      print.info("")
+      process.exit(1)
+      return
+    }
 
     if (isNewLogin(options)) {
       const basicProfile = buildBasicStashProfile(options)
