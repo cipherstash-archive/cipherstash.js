@@ -1,7 +1,7 @@
-import { Stash } from "@cipherstash/stashjs"
+import { HasID, QueryResult, Stash } from "@cipherstash/stashjs"
 import { movieSchema, Movie } from "./example-schema";
 
-function displayResults(result: any, name: string) {
+function displayResults(result: QueryResult<Movie & HasID>, name: string) {
   result.documents.forEach((movie: Movie) => {
     console.log(movie)
   })
@@ -30,6 +30,7 @@ async function queryCollection() {
     displayResults(queryResult, "All")
 
   } catch (err) {
+    console.error(err)
     console.error(`Could not query collection! Reason: ${JSON.stringify(err)}`)
   }
 }

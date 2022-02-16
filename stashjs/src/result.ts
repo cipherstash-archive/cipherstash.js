@@ -122,6 +122,11 @@ export function gather<V, E>(results: Array<Result<V, E>>): Result<Array<V>, E> 
   return results.reduce<Result<Array<V>, E>>(concat, Ok<Array<V>>([]))
 }
 
+export async function gatherAsync<V, E>(asyncResults: Array<AsyncResult<V, E>>): AsyncResult<Array<V>, E> {
+  const results = await Promise.all(asyncResults)
+  return results.reduce<Result<Array<V>, E>>(concat, Ok<Array<V>>([]))
+}
+
 export function gatherTuple2<V1, E1, V2, E2>(results: [Result<V1, E1>, Result<V2, E2>]): Result<[V1, V2], E1 | E2> {
   return (gatherTupleImpl(results) as any) as Result<[V1, V2], E1 | E2>
 }
