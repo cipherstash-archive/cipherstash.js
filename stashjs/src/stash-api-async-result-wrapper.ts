@@ -5,6 +5,7 @@ import { AsyncResult, Err, fromPromise, fromPromiseFn2, Ok } from "./result"
 import { AuthenticationFailure, GRPCError } from "./errors"
 import { grpcMetadata } from "./auth/grpc-metadata"
 import { AuthStrategy } from "./auth/auth-strategy"
+import { stringify } from "./utils"
 
 /**
  * Creates a wrapper for the generated GRPC API that:
@@ -22,22 +23,22 @@ export function makeAsyncResultApiWrapper(stub: V1.APIClient, authStrategy: Auth
 
   return {
     collection: {
-      create: secureEndpoint<V1.Collection.CreateRequest, V1.Collection.CreateReply>(stub.createCollection.bind(stub)),
-      info: secureEndpoint<V1.Collection.InfoRequest, V1.Collection.InfoReply>(stub.collectionInfo.bind(stub)),
-      list: secureEndpoint<V1.Collection.ListRequest, V1.Collection.ListReply>(stub.collectionList.bind(stub)),
-      delete: secureEndpoint<V1.Collection.DeleteRequest, V1.Collection.InfoReply>(stub.deleteCollection.bind(stub))
+      create: requestLogger("collection.create")(secureEndpoint<V1.Collection.CreateRequest, V1.Collection.CreateReply>(stub.createCollection.bind(stub))),
+      info: requestLogger("collection.info")(secureEndpoint<V1.Collection.InfoRequest, V1.Collection.InfoReply>(stub.collectionInfo.bind(stub))),
+      list: requestLogger("collection.list")(secureEndpoint<V1.Collection.ListRequest, V1.Collection.ListReply>(stub.collectionList.bind(stub))),
+      delete: requestLogger("collection.delete")(secureEndpoint<V1.Collection.DeleteRequest, V1.Collection.InfoReply>(stub.deleteCollection.bind(stub)))
     },
     document: {
-      get: secureEndpoint<V1.Document.GetRequest, V1.Document.GetReply>(stub.get.bind(stub)),
-      getAll: secureEndpoint<V1.Document.GetAllRequest, V1.Document.GetAllReply>(stub.getAll.bind(stub)),
-      put: secureEndpoint<V1.Document.PutRequest, V1.Document.PutReply>(stub.put.bind(stub)),
-      delete: secureEndpoint<V1.Document.DeleteRequest, V1.Document.DeleteReply>(stub.delete.bind(stub)),
+      get: requestLogger("document.get")(secureEndpoint<V1.Document.GetRequest, V1.Document.GetReply>(stub.get.bind(stub))),
+      getAll: requestLogger("document.getAll")(secureEndpoint<V1.Document.GetAllRequest, V1.Document.GetAllReply>(stub.getAll.bind(stub))),
+      put: requestLogger("document.put")(secureEndpoint<V1.Document.PutRequest, V1.Document.PutReply>(stub.put.bind(stub))),
+      delete: requestLogger("document.delete")(secureEndpoint<V1.Document.DeleteRequest, V1.Document.DeleteReply>(stub.delete.bind(stub))),
 
       // `putStream` is a bit different. See the comments on the helper functions down below.
       putStream: authenticatePutStream(authStrategy)(stub.putStream.bind(stub))
     },
     query: {
-      query: secureEndpoint<V1.Query.QueryRequest, V1.Query.QueryReply>(stub.query.bind(stub))
+      query: requestLogger("query.query")(secureEndpoint<V1.Query.QueryRequest, V1.Query.QueryReply>(stub.query.bind(stub)))
     }
   }
 }
@@ -46,6 +47,27 @@ const secureWith =
   (authStrategy: AuthStrategy) =>
     <Req, Reply>(fn: (req: Req, metadata: Metadata, callback: (error?: ServiceError, result?: Reply | undefined) => void) => ClientUnaryCall) =>
       makeAuthenticator2(authStrategy)(fromPromiseFn2(promisify<Req, Metadata, Reply | undefined>(fn), GRPCError))
+
+const requestLogger =
+  (endpoint: string) => {
+    if (process.env['CS_DEBUG'] ===  'yes') {
+      return <Request, Response>(fn: (request: Request) => AsyncResult<Response, GRPCError>): (request: Request) => AsyncResult<Response, GRPCError> =>
+        async (request) => {
+          const timerBegin = process.hrtime.bigint()
+          const response = await fn(request)
+          const timerEnd = process.hrtime.bigint()
+          const durationMS = Number((timerEnd - timerBegin) / 1000000n)
+          if (response.ok) {
+            console.log(endpoint, "OK", stringify({ durationMS, request, response: response.value }))
+          } else {
+            console.log(endpoint, "ERR", stringify({ durationMS, request, response: response.error }))
+          }
+          return response
+        }
+      } else {
+        return <Request, Response>(fn: (request: Request) => AsyncResult<Response, GRPCError>): (request: Request) => AsyncResult<Response, GRPCError> => (request) => fn(request)
+      }
+    }
 
 // Type of a gRPC endpoint that accepts two arguments: the request & metadata
 type EndpointFn2<Request, Response> = (request: Request, metadata: Metadata) => AsyncResult<Response, GRPCError>
