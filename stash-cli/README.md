@@ -23,3 +23,9 @@ stash list-collections
 # Query data
 stash query --collection movies --where 'year >= :year' --var year=1995
 ```
+
+## Using
+
+If this is your first time working with stash-cli, check out [the getting started guide](https://docs.cipherstash.com/tutorials/getting-started/index.html).
+
+If you have used stash-cli before, check out [the reference documentation](https://docs.cipherstash.com/reference/stash-cli/index.html) for details on each subcommand.
