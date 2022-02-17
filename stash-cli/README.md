@@ -14,7 +14,7 @@ Once you have the necessary system-level dependencies installed, you can get goi
 # Install stash-cli
 npm install -g @cipherstash/stash-cli
 
-# Log stash-cli in
+# Get an access token for your workspace
 stash login --workspace $WORKSPACE_ID
 
 # Show all collections
