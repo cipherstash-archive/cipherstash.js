@@ -15,6 +15,7 @@ Once you have the necessary system-level dependencies installed, you can get goi
 npm install -g @cipherstash/stash-cli
 
 # Get an access token for your workspace
+# Set up a workspace by following https://docs.cipherstash.com/tutorials/getting-started/index.html
 stash login --workspace $WORKSPACE_ID
 
 # Show all collections
