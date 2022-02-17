@@ -1,4 +1,4 @@
-# 🧺 stash-cli, the CipherStash CLI
+# 🪄  stash-cli, the CipherStash CLI
 
 stash-cli is a CLI for working with CipherStash.
 
