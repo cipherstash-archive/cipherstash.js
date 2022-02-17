@@ -37,11 +37,14 @@ export function makeId(): Buffer {
   return uuidv4({}, Buffer.alloc(16))
 }
 
-export function maybeGenerateId(doc: any): any {
-  if (doc.id) {
-    return doc
+export function maybeGenerateId<D>(doc: D): D & { id: Buffer } {
+  const id = (doc as any).id
+  if (id instanceof Buffer) {
+    return doc as D & { id: Buffer }
+  } else if (id instanceof String) {
+    return { id: Buffer.from(id, 'utf-8'), ...doc }
   } else {
-    return { id: idBufferToString(makeId()), ...doc }
+    return { id: makeId(), ...doc }
   }
 }
 
