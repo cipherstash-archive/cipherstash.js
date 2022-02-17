@@ -5,7 +5,7 @@ import { AnalysisConfig, AnalysisResult } from "./analysis-runner"
 import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
-import { idToBuffer, makeId, maybeGenerateId } from "./utils"
+import {  maybeGenerateId } from "./utils"
 import { makeAuthStrategy } from './auth/make-auth-strategy'
 import { Memo, withFreshCredentials } from "./auth/auth-strategy"
 import { AsyncResult, Err, Ok } from "./result"
@@ -30,7 +30,8 @@ if (!isMainThread) {
     }
 
     const analyzer = getRecordAnalyzer(config.schema)
-    const analyzedRecord = analyzer(maybeGenerateId(record))
+    const recordWithId = maybeGenerateId(record)
+    const analyzedRecord = analyzer(recordWithId)
     const vectors = convertAnalyzedRecordToVectors(analyzedRecord)
 
     const cipher = await cipherMemo.freshValue()
@@ -38,7 +39,7 @@ if (!isMainThread) {
       const encryptedSource = await cipher.value.encrypt(record)
       if (encryptedSource.ok) {
         const result = {
-          docId: record.id ? idToBuffer(record.id) : makeId(),
+          docId: recordWithId.id,
           vectors,
           encryptedSource: encryptedSource.value.result
         }
