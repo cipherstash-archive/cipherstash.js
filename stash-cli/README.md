@@ -33,7 +33,21 @@ If you have used stash-cli before, check out [the reference documentation](https
 
 ## Developing
 
-Ensure you have Node.js (>= 16.x.x) and pnpm (>= 6.26.0) installed, and run:
+Ensure you have these dependencies installed:
+
+- Node.js >= 16.x.x
+- pnpm >= 6.26.0
+- Rust >= 1.56.1
+
+One of the easiest ways to do this [is with asdf](http://asdf-vm.com/guide/getting-started.html), and a `.tool-versions` that looks like this:
+
+```
+nodejs 16.14.0
+pnpm 6.26.0
+rust 1.56.1
+```
+
+Then run:
 
 ``` bash
 # Install (dev) dependencies
