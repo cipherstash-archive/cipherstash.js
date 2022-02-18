@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Ability to import sources from a file in a JSON array via `stash import`
 - Added `create-collection` command
+- Documentation for installing stash-cli, with pointers to more documentation
 
 ## [0.3.1]
 
