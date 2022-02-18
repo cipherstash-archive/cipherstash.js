@@ -196,7 +196,7 @@ const buildTextProcessingPipeline: (options: MatchOptions) => TextProcessor = op
 }
 
 const loadTextProcessor = (filter: TokenFilter | Tokenizer): TextProcessor => {
-  switch (filter.processor) {
+  switch (filter.kind) {
     case "standard": return standardTokenizer
     case "ngram": return ngramsTokenizer({ tokenLength: filter.tokenLength })
     case "downcase": return downcaseFilter
