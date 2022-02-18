@@ -7,12 +7,15 @@ import {
   CollectionSchema,
   typecheckCollectionSchemaDefinition,
   Mappings,
+  StashProfile,
+  describeError,
+  profileStore,
+  errors,
   StashRecord,
   Result,
   Err,
   Ok
 } from '@cipherstash/stashjs'
-
 
 const command: GluegunCommand = {
   name: 'create-collection',
@@ -26,7 +29,28 @@ const command: GluegunCommand = {
       process.exit(1)
     }
 
-    const connection = await StashInternal.connect()
+    const profileName: string | undefined = parameters.options.profile
+    let profile: Result<StashProfile, errors.LoadProfileFailure>
+
+    try {
+      if (profileName) {
+        profile = await profileStore.loadProfile(profileName)
+      } else {
+        profile = await profileStore.loadDefaultProfile()
+      }
+
+      if (!profile.ok) {
+        print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
+        process.exit(1)
+        return
+      }
+    } catch (error) {
+      print.error(`Unexpected error while loading profile. Reason: "${describeError(error)}"`)
+      process.exit(1)
+      return
+    }
+
+    const connection = await StashInternal.connect(profile.value)
     if (!connection.ok) {
       print.error(`Authentication failed - please try to login again with "stash login"`)
       process.exit(1)
@@ -35,14 +59,16 @@ const command: GluegunCommand = {
     const stash = connection.value
     const collectionName = parameters.first
 
-    let schema = await (options.schema ? buildCollectionSchema(collectionName, options.schema) : Ok.Async(CollectionSchema.define(collectionName).notIndexed()))
+    let schema = await (options.schema
+      ? buildCollectionSchema(collectionName, options.schema)
+      : Ok.Async(CollectionSchema.define(collectionName).notIndexed()))
     if (schema.ok) {
       const created = await stash.createCollection(schema.value)
       if (created.ok) {
         print.highlight(`The ${collectionName} collection has been created`)
         process.exit(0)
       } else {
-        print.error(`Failed to create collection: ${created.error}`)
+        print.error(`Failed to create collection: ${JSON.stringify(created.error)}`)
         process.exit(1)
       }
     } else {
@@ -52,13 +78,18 @@ const command: GluegunCommand = {
   }
 }
 
-function buildCollectionSchema(collectionName: string, schemaFile: string): Result<CollectionSchema<StashRecord, Mappings<StashRecord>, any>, string> {
-  if (!fs.existsSync(schemaFile)) {
+function buildCollectionSchema(
+  collectionName: string,
+  schemaFile: string
+): Result<CollectionSchema<StashRecord, Mappings<StashRecord>, any>, string> {
+  if (fs.existsSync(schemaFile)) {
     let content: string
     try {
-      content = fs.readFileSync(schemaFile, { encoding: "utf8" })
+      content = fs.readFileSync(schemaFile, { encoding: 'utf8' })
     } catch (err) {
-      return Err(`Failed to read schema from file ${schemaFile}. Please check the file exists and you have permissions to read it.`)
+      return Err(
+        `Failed to read schema from file ${schemaFile}. Please check the file exists and you have permissions to read it.`
+      )
     }
     let schemaJSON
     try {
