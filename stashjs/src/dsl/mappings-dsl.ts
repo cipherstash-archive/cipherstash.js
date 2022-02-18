@@ -72,8 +72,7 @@ export type MatchMapping<
 >  = {
   kind: "match",
   fields: Array<F>,
-  options: MatchOptions
-}
+} & MatchOptions
 
 /**
  * A dynamic version of match mapping. This mapping matches all string fields in
@@ -85,8 +84,7 @@ export type MatchMapping<
  */
 export type DynamicMatchMapping = {
   kind: "dynamic-match",
-  options: MatchOptions
-}
+} & MatchOptions
 
 /**
  * A dynamic version of match mapping. This mapping matches all string fields in
@@ -98,8 +96,7 @@ export type DynamicMatchMapping = {
  */
 export type FieldDynamicMatchMapping = {
   kind: "field-dynamic-match",
-  options: MatchOptions
-}
+} & MatchOptions
 
 /**
  * Guard function to check for exact mappings
@@ -235,19 +232,19 @@ export type MatchFn<R extends StashRecord> = <F extends FieldOfType<R, MatchMapp
 ) => MatchMapping<R, F>
 
 export function makeMatchFn<R extends StashRecord>(): MatchFn<R> {
-  return (fields, options) => ({ kind: "match", fields, options })
+  return (fields, options) => ({ kind: "match", fields, ...options })
 }
 
 export type DynamicMatchFn = (options: MatchOptions) => DynamicMatchMapping
 
 export function makeDynamicMatchFn(): DynamicMatchFn {
-  return (options) => ({ kind: "dynamic-match", options })
+  return (options) => ({ kind: "dynamic-match", ...options })
 }
 
 export type FieldDynamicMatchFn = (options: MatchOptions) => FieldDynamicMatchMapping
 
 export function makeFieldDynamicMatchFn(): FieldDynamicMatchFn {
-  return (options) => ({ kind: "field-dynamic-match", options })
+  return (options) => ({ kind: "field-dynamic-match", ...options })
 }
 
 export type MappingsDSL<R extends StashRecord> = {
