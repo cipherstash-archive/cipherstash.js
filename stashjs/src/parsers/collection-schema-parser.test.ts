@@ -1,5 +1,5 @@
 import { isRight } from 'fp-ts/lib/Either'
-import { ExactIndex, MatchIndex, parseIndexDefinition, RangeIndex, typecheckCollectionSchemaDefinition } from './collection-schema-parser'
+import { ExactIndexDecoder, MatchIndexDecoder, parseIndexDefinition, RangeIndexDecoder, typecheckCollectionSchemaDefinition } from './collection-schema-parser'
 import { isOk } from '../result'
 
 describe("Index definition: Exact", () => {
@@ -9,7 +9,7 @@ describe("Index definition: Exact", () => {
       "field": "title"
     }
 
-    const parsed = ExactIndex.decode(def)
+    const parsed = ExactIndexDecoder.decode(def)
     expect(isRight(parsed)).toBe(true)
   })
 
@@ -19,7 +19,7 @@ describe("Index definition: Exact", () => {
       "field": "title"
     }
 
-    const parsed = ExactIndex.decode(def)
+    const parsed = ExactIndexDecoder.decode(def)
     expect(isRight(parsed)).toBe(false)
   })
 })
@@ -31,7 +31,7 @@ describe("Index definition: Range", () => {
       "field": "title"
     }
 
-    const parsed = RangeIndex.decode(def)
+    const parsed = RangeIndexDecoder.decode(def)
     expect(isRight(parsed)).toBe(true)
   })
 
@@ -41,7 +41,7 @@ describe("Index definition: Range", () => {
       "field": "title"
     }
 
-    const parsed = RangeIndex.decode(def)
+    const parsed = RangeIndexDecoder.decode(def)
     expect(isRight(parsed)).toBe(false)
   })
 })
@@ -58,7 +58,7 @@ describe("Index definition: Match", () => {
       "tokenizer": { "kind": "standard" }
     }
 
-    const parsed = MatchIndex.decode(def)
+    const parsed = MatchIndexDecoder.decode(def)
     expect(isRight(parsed)).toBe(true)
   })
 
@@ -74,7 +74,7 @@ describe("Index definition: Match", () => {
       "tokenizer": { "kind": "standard" }
     }
 
-    const parsed = MatchIndex.decode(def)
+    const parsed = MatchIndexDecoder.decode(def)
     expect(isRight(parsed)).toBe(false)
   })
 })
