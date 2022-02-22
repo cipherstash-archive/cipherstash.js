@@ -20,7 +20,7 @@ async function queryCollection() {
     //let queryResult = await movies.query(movie => movie.title.match("The Matrix"))
     //displayResults(queryResult, "Match: 'The Matrix'")
 
-    let queryResult = await movies.query(movie => movie.year.gt(1995), { limit: 5, order: [{byIndex: "year", direction: "ASC"}] })
+    let queryResult = await movies.query(movie => movie.year.gt(1920), { limit: 5, order: [{byIndex: "year", direction: "ASC"}] })
     displayResults(queryResult, "Range: After 1995")
 
       /*let queryResult = await movies.query({ limit: 10, offset: 40, order: [{byIndex: "year", direction: "ASC"}] })
