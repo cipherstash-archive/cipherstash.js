@@ -36,6 +36,7 @@ import { Range as QueryRange } from './generated/stash/GRPC/V1/Queries/Range'
 import { AggregateResult as QueryAggregateResult } from './generated/stash/GRPC/V1/Queries/AggregateResult'
 
 import { Index__Output as IndexIndex } from './generated/stash/GRPC/V1/Indexes/Index'
+import { Index as IndexNew } from './generated/stash/GRPC/V1/Indexes/Index'
 
 import { protoDefsBuffer  } from './generated/stashjs-api-v1'
 
@@ -99,7 +100,8 @@ export namespace V1  {
   }
 
   export namespace Index {
-    export type Index = IndexIndex
+    export type IndexOutput = IndexIndex
+    export type Index = IndexNew
   }
 }
 

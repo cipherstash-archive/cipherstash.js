@@ -6,9 +6,9 @@ import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { maybeGenerateId } from "./utils"
+import { Memo } from "./auth/auth-strategy"
 import { AsyncResult, Err, Ok } from "./result"
 import { AnalysisFailure } from "./errors"
-import { Memo } from './auth/auth-strategy'
 import { StashProfile } from './stash-profile'
 
 if (!isMainThread) {
