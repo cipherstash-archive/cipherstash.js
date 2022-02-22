@@ -7,7 +7,7 @@ export type Movie = {
   runningTime: number
 }
 
-export const movieSchema = CollectionSchema.define<Movie>("movies").indexedWith(mapping => ({
+export const movieSchema = CollectionSchema.define<Movie>("movies-dan-1").indexedWith(mapping => ({
   exactTitle: mapping.Exact("title"),
   title: mapping.Match(["title"], {
     tokenFilters: [downcase, ngram({ tokenLength: 3 })],

@@ -17,17 +17,19 @@ async function queryCollection() {
     const stash = await Stash.connect()
     const movies = await stash.loadCollection(movieSchema)
 
-    //let queryResult = await movies.query(movie => movie.title.match("The Matrix"))
-    //displayResults(queryResult, "Match: 'The Matrix'")
+    //console.log("GET", await movies.get("f38fd75e-1826-4632-a4ea-a5fa14662d12"))
 
-    let queryResult = await movies.query(movie => movie.year.gt(1995), { limit: 5, order: [{byIndex: "year", direction: "ASC"}] })
+    let queryResult = await movies.query(movie => movie.title.match("arab"))
+    displayResults(queryResult, "Match: 'The Matrix'")
+
+      /*let queryResult = await movies.query(movie => movie.year.gt(1995), { limit: 5, order: [{byIndex: "year", direction: "ASC"}] })
     displayResults(queryResult, "Range: After 1995")
 
       /*let queryResult = await movies.query({ limit: 10, offset: 40, order: [{byIndex: "year", direction: "ASC"}] })
     displayResults(queryResult, "All: Offset 40, Order by year DESC")*/
 
-      /*let queryResult = await movies.query({})
-    displayResults(queryResult, "All")*/
+    queryResult = await movies.query({})
+    displayResults(queryResult, "All")
 
   } catch (err) {
     console.error(err)
