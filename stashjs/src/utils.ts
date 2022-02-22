@@ -1,21 +1,36 @@
 import { v4 as uuidv4, parse as parseUUID, stringify as stringifyUUID } from 'uuid'
 import stringifyObject from 'stringify-object'
+import { unreachable } from './type-utils'
 
-export function idToBuffer(id: string): Buffer
-export function idToBuffer(id: Buffer): Buffer
-export function idToBuffer(id: Uint8Array): Buffer
-export function idToBuffer(id: string | Buffer | Uint8Array): Buffer {
+export function normalizeId(id: string): Uint8Array
+export function normalizeId(id: Buffer): Uint8Array
+export function normalizeId(id: Uint8Array): Uint8Array
+export function normalizeId(id: string | Buffer | Uint8Array): Uint8Array  {
   if (typeof id === 'string') {
-    return parseUUID(id) as unknown as Buffer
-    // return Buffer.from(parseUUID(id) as Array<number>)
+    return parseUUID(id) as Uint8Array
   } else if (id instanceof Buffer) {
+    return new Uint8Array(id)
+  } else if (id instanceof Uint8Array) {
     return id
   } else {
-    return Buffer.from(id)
+    throw unreachable("expected valid UUID (as a string), or a Buffer, or a Uint8Array")
   }
 }
 
-export function idBufferToString(id: Buffer): string {
+export function maybeGenerateId<D>(doc: D): Omit<D, 'id'> & { id: Uint8Array } {
+  const id = (doc as any).id
+  if (typeof id === 'undefined') {
+     return { ...doc, id: makeId() }
+  } else {
+    return { ...doc, id: normalizeId(id) }
+  }
+}
+
+export function makeId(): Uint8Array {
+  return new Uint8Array(uuidv4({}, Buffer.alloc(16)))
+}
+
+export function idBufferToString(id: Uint8Array): string {
   return stringifyUUID(id!)
 }
 
@@ -33,20 +48,6 @@ export function refStringToBuffer(ref: string): Buffer {
   return Buffer.from(ref, 'hex');
 }
 
-export function makeId(): Buffer {
-  return uuidv4({}, Buffer.alloc(16))
-}
-
-export function maybeGenerateId<D>(doc: D): D & { id: Buffer } {
-  const id = (doc as any).id
-  if (id instanceof Buffer) {
-    return doc as D & { id: Buffer }
-  } else if (id instanceof String) {
-    return { ...doc, id: Buffer.from(id, 'utf-8')}
-  } else {
-    return { ...doc, id: makeId() }
-  }
-}
 
 /**
  * Like JSON.stringify(...) but handles bigints and prettifies the output.
@@ -63,6 +64,8 @@ export function stringify(item: any): string {
 function objectify(item: any): any {
   if (Array.isArray(item)) {
     return item.map(elem => objectify(elem))
+  } else if (item instanceof Uint8Array) {
+    return (new Buffer(item)).toString('hex')
   } else if (Buffer.isBuffer(item)) {
     return item.toString('hex')
   } else if (typeof item == 'bigint') {

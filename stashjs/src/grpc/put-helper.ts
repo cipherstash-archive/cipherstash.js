@@ -1,7 +1,7 @@
 import { V1 } from "@cipherstash/stashjs-grpc";
 import { AnalyzedRecord } from "../analyzer";
 import { StashRecord, Mappings, MappingsMeta } from "../dsl/mappings-dsl";
-import { idToBuffer } from "../utils"
+import { normalizeId } from "../utils"
 
 export function convertAnalyzedRecordToVectors<
   R extends StashRecord,
@@ -13,11 +13,11 @@ export function convertAnalyzedRecordToVectors<
   return Object.entries(analyzedRecord.indexEntries).map(
     ([indexId, terms]) => {
       return {
-        indexId: idToBuffer(indexId),
+        indexId: normalizeId(indexId),
         terms: terms.map((term) => {
           return {
             term,
-            link: idToBuffer(analyzedRecord.recordId!),
+            link: normalizeId(analyzedRecord.recordId!),
           }
         })
       }

@@ -7,7 +7,7 @@ import { encodeTerm } from "./encoders/term-encoder";
 import { extractStringFields, extractStringFieldsWithPath } from "./string-field-extractor";
 import { TextProcessor, textPipeline, standardTokenizer, ngramsTokenizer, downcaseFilter, upcaseFilter } from "./text-processors";
 import { FieldOfType, FieldType, unreachable } from "./type-utils";
-import { idToBuffer } from "./utils";
+import { normalizeId } from "./utils";
 import { ORE } from "@cipherstash/ore-rs"
 
 /**
@@ -133,7 +133,7 @@ function flattenCondition<
     const indexMeta = meta[condition.indexName]!
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     return [{
-      indexId: idToBuffer(indexMeta.$indexId),
+      indexId: normalizeId(indexMeta.$indexId),
       exact: encodeExact(condition, encrypt),
       condition: "exact"
     }]
@@ -141,7 +141,7 @@ function flattenCondition<
     const indexMeta = meta[condition.indexName]!
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     return [{
-      indexId: idToBuffer(indexMeta.$indexId),
+      indexId: normalizeId(indexMeta.$indexId),
       range: encodeRange(condition, encrypt),
       condition: "range"
     }]
@@ -151,7 +151,7 @@ function flattenCondition<
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     return pipeline([condition.value]).map(term => ({
-      indexId: idToBuffer(indexMeta.$indexId),
+      indexId: normalizeId(indexMeta.$indexId),
       exact: encodeMatch(term, encrypt),
       condition: "exact"
     }))
