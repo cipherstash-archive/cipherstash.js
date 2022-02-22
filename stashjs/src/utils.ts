@@ -6,6 +6,7 @@ export function idToBuffer(id: Buffer): Buffer
 export function idToBuffer(id: Uint8Array): Buffer
 export function idToBuffer(id: string | Buffer | Uint8Array): Buffer {
   if (typeof id === 'string') {
+    console.log("ID", parseUUID(id))
     return parseUUID(id) as unknown as Buffer
     // return Buffer.from(parseUUID(id) as Array<number>)
   } else if (id instanceof Buffer) {
