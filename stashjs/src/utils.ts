@@ -42,9 +42,9 @@ export function maybeGenerateId<D>(doc: D): D & { id: Buffer } {
   if (id instanceof Buffer) {
     return doc as D & { id: Buffer }
   } else if (id instanceof String) {
-    return { id: Buffer.from(id, 'utf-8'), ...doc }
+    return { ...doc, id: Buffer.from(id, 'utf-8')}
   } else {
-    return { id: makeId(), ...doc }
+    return { ...doc, id: makeId() }
   }
 }
 
