@@ -64,46 +64,40 @@ describe('CollectionSchema', () => {
         notesAndDescription: {
           kind: "match",
           fields: ["notes", "description"],
-          options: {
-            tokenFilters: [
-              { processor: "downcase" },
-              { processor: "ngram", "tokenLength": 3 }
-            ],
-            tokenizer: { processor: "standard" }
-          }
+          tokenFilters: [
+            { kind: "downcase" },
+            { kind: "ngram", "tokenLength": 3 }
+          ],
+          tokenizer: { kind: "standard" }
         },
         allStringFields1: {
           kind: "dynamic-match",
-          options: {
-            tokenFilters: [
-              {
-                processor: "downcase",
-              },
-              {
-                processor: "ngram",
-                tokenLength: 3,
-              },
-            ],
-            "tokenizer": {
-              processor: "standard",
+          tokenFilters: [
+            {
+              kind: "downcase",
             },
+            {
+              kind: "ngram",
+              tokenLength: 3,
+            },
+          ],
+          "tokenizer": {
+            kind: "standard",
           },
         },
         "allStringFields2": {
           kind: "field-dynamic-match",
-          options: {
-            tokenFilters: [
-              {
-                processor: "downcase",
-              },
-              {
-                processor: "ngram",
-                tokenLength: 3,
-              },
-            ],
-            "tokenizer": {
-              processor: "standard",
+          tokenFilters: [
+            {
+              kind: "downcase",
             },
+            {
+              kind: "ngram",
+              tokenLength: 3,
+            },
+          ],
+          "tokenizer": {
+            kind: "standard",
           },
         },
       })

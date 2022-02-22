@@ -1,24 +1,24 @@
 export type NgramTokenizerConfig = { tokenLength: number }
-export type NgramTokenizer = { processor: "ngram" } & NgramTokenizerConfig
+export type NgramTokenizer = { kind: "ngram" } & NgramTokenizerConfig
 
-export type StandardTokenizer = { processor: "standard" }
+export type StandardTokenizer = { kind: "standard" }
 
-export type DowncaseFilter = { processor: "downcase" }
-export type UpcaseFilter = { processor: "upcase" }
+export type DowncaseFilter = { kind: "downcase" }
+export type UpcaseFilter = { kind: "upcase" }
 
 export type TokenFilter =
   | NgramTokenizer
-  | DowncaseFilter 
+  | DowncaseFilter
   | UpcaseFilter
 
 export type Tokenizer =
   | StandardTokenizer
   | NgramTokenizer
 
-export const downcase: DowncaseFilter = { processor: "downcase" }
-export const upcase: UpcaseFilter = { processor: "upcase" }
+export const downcase: DowncaseFilter = { kind: "downcase" }
+export const upcase: UpcaseFilter = { kind: "upcase" }
 
 export const ngram: (config: NgramTokenizerConfig) => NgramTokenizer =
-  (config) => ({ processor: "ngram", ...config })
+  (config) => ({ kind: "ngram", ...config })
 
-export const standard: StandardTokenizer = ({ processor: "standard" })
+export const standard: StandardTokenizer = ({ kind: "standard" })

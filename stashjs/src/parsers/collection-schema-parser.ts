@@ -1,13 +1,14 @@
 import * as D from 'io-ts/Decoder'
 import { Err, Ok, Result, gather } from '../result'
-import { Mappings, StashRecord } from '../dsl/mappings-dsl'
+import { DynamicMatchMapping, ExactMapping, ExactMappingFieldType, FieldDynamicMatchMapping, Mappings, MatchMapping, MatchMappingFieldType, RangeMapping, RangeMappingFieldType, StashRecord } from '../dsl/mappings-dsl'
 import { isRight } from 'fp-ts/lib/Either'
+import { DowncaseFilter, NgramTokenizer, StandardTokenizer, UpcaseFilter } from '../dsl/filters-and-tokenizers-dsl'
 
 type IndexDefinitionDecoder<R extends StashRecord> = D.Decoder<object, Mappings<R>>
 
 const decoder = <R extends StashRecord>(): IndexDefinitionDecoder<R> => ({
     decode: input => {
-      const result = Indexes.decode(input)
+      const result = IndexesDecoder.decode(input)
       if (isRight(result)) {
         return D.success(result.right as Mappings<R>)
       } else {
@@ -16,53 +17,55 @@ const decoder = <R extends StashRecord>(): IndexDefinitionDecoder<R> => ({
     }
 })
 
-export const ExactIndex = D.struct({
+export const TokenFilterDecoder = D.sum('kind')({
+  downcase: D.struct<DowncaseFilter>({ kind: D.literal('downcase') }),
+  upcase: D.struct<UpcaseFilter>({ kind: D.literal('upcase') }),
+  ngram: D.struct<NgramTokenizer>({ kind: D.literal('ngram'), tokenLength: D.number }),
+})
+
+export const TokenizerDecoder = D.sum('kind')({
+  standard: D.struct<StandardTokenizer>({ kind: D.literal('standard') }),
+  ngram: D.struct<NgramTokenizer>({ kind: D.literal('ngram'), tokenLength: D.number }),
+})
+
+// NOTE: the types ExactMapping, RangeMapping and MatchMapping take type
+// arguments that we cannot know at deserialisation time. Which is why we
+// perform some runtime type checking (see: function
+// typecheckCollectionSchemaDefinition).
+
+export const ExactIndexDecoder = D.struct<ExactMapping<any, any>>({
   kind: D.literal("exact"),
   field: D.string
 })
 
-export const RangeIndex = D.struct({
+export const RangeIndexDecoder = D.struct<RangeMapping<any, any>>({
   kind: D.literal("range"),
   field: D.string
 })
 
-export const TokenFilter = D.sum('kind')({
-  downcase: D.struct({ kind: D.literal('downcase') }),
-  upcase: D.struct({ kind: D.literal('upcase') }),
-  standard: D.struct({ kind: D.literal('standard') }),
-  ngram: D.struct({ kind: D.literal('ngram'), tokenLength: D.number }),
-})
-
-export const Tokenizer = D.sum('kind')({
-  standard: D.struct({ kind: D.literal('standard') }),
-  ngram: D.struct({ kind: D.literal('ngram'), tokenLength: D.number }),
-})
-
-export const MatchIndex = D.struct({
+export const MatchIndexDecoder = D.struct<MatchMapping<any, any>>({
   kind: D.literal("match"),
   fields: D.array(D.string),
-  tokenFilters: D.array(TokenFilter),
-  tokenizer: Tokenizer
+  tokenFilters: D.array(TokenFilterDecoder),
+  tokenizer: TokenizerDecoder
 })
 
-export const DynamicMatchIndex = D.struct({
+export const DynamicMatchIndexDecoder = D.struct<DynamicMatchMapping>({
   kind: D.literal("dynamic-match"),
-  fields: D.array(D.string),
-  tokenFilters: D.array(TokenFilter),
-  tokenizer: Tokenizer
+  tokenFilters: D.array(TokenFilterDecoder),
+  tokenizer: TokenizerDecoder
 })
 
-export const FieldDynamicMatchIndex = D.struct({
+export const FieldDynamicMatchIndexDecoder = D.struct<FieldDynamicMatchMapping>({
   kind: D.literal("field-dynamic-match"),
-  fields: D.array(D.string),
-  tokenFilters: D.array(TokenFilter),
-  tokenizer: Tokenizer
+  tokenFilters: D.array(TokenFilterDecoder),
+  tokenizer: TokenizerDecoder
 })
 
-const IndexDecoder = D.union(ExactIndex, RangeIndex, MatchIndex, DynamicMatchIndex, FieldDynamicMatchIndex)
+const IndexDecoder = D.union(ExactIndexDecoder, RangeIndexDecoder, MatchIndexDecoder, DynamicMatchIndexDecoder, FieldDynamicMatchIndexDecoder)
 type Index = D.TypeOf<typeof IndexDecoder>
 
-export const Indexes = D.record(IndexDecoder)
+export const IndexesDecoder = D.record(IndexDecoder)
 
 export const parseIndexDefinition: <R extends StashRecord>(document: object) => Result<Mappings<R>, string> = <R extends StashRecord>(document: object) => {
   const parsed = decoder<R>().decode(document)
@@ -83,15 +86,15 @@ export const FieldTypeDecoder = D.union(
 
 export const TypeDecoder: D.Decoder<unknown, unknown> = D.lazy('TypeDecoder', () => D.record(D.union(FieldTypeDecoder, TypeDecoder)))
 
-export const CollectionSchemaDef = D.struct({
+export const CollectionSchemaDefDecoder = D.struct({
   type: TypeDecoder,
-  indexes: Indexes
+  indexes: IndexesDecoder
 })
 
 export const parseCollectionSchemaDefinition: (
   document: object
 ) => Result<CollectionSchemaDefinition, string> = (document) => {
-  const parsed = CollectionSchemaDef.decode(document)
+  const parsed = CollectionSchemaDefDecoder.decode(document)
   if (isRight(parsed)) {
     return Ok(parsed.right)
   } else {
@@ -114,20 +117,27 @@ export const typecheckCollectionSchemaDefinition: (
   }
 }
 
+export type CollectionSchemaDefinition = D.TypeOf<typeof CollectionSchemaDefDecoder>
 
-export type CollectionSchemaDefinition = D.TypeOf<typeof CollectionSchemaDef>
+type TypeName<T> =
+  T extends string ? "string" :
+  T extends number ? "number" :
+  T extends boolean ? "boolean" :
+  T extends bigint ? "bigint" :
+  T extends Date ? "date" :
+  never
 
-const EXACT_TYPES = ["string", "number", "bigint", "date", "boolean"]
-const RANGE_TYPES = ["number", "bigint", "date", "boolean"]
-const MATCH_TYPES = ["string"]
+const EXACT_TYPES: Array<TypeName<ExactMappingFieldType>> = ["string", "number", "bigint", "date", "boolean"]
+const RANGE_TYPES: Array<TypeName<RangeMappingFieldType>> = ["number", "bigint", "date", "boolean"]
+const MATCH_TYPES: Array<TypeName<MatchMappingFieldType>> = ["string"]
 
 function typecheckIndex(recordType: unknown, index: Index): Result<void | Array<void>, string> {
   switch (index.kind) {
     case "exact": return fieldExists("exact", recordType, index.field.split("."), EXACT_TYPES)
     case "range": return fieldExists("range", recordType, index.field.split("."), RANGE_TYPES)
     case "match": return gather(index.fields.map(field => fieldExists("match", recordType, field.split("."), MATCH_TYPES)))
-    case "dynamic-match": return gather(index.fields.map(field => fieldExists("dynamic-match", recordType, field.split("."),MATCH_TYPES)))
-    case "field-dynamic-match": return gather(index.fields.map(field => fieldExists("field-dynamic-match", recordType, field.split("."), MATCH_TYPES)))
+    case "dynamic-match": return Ok(void 0)
+    case "field-dynamic-match": return Ok(void 0)
   }
 }
 
@@ -139,7 +149,6 @@ function fieldExists(indexType: string, recordType: any, path: Array<string>, ex
       return Err(`field ${path} not found in type`)
     }
   }
-
 
   if (expectedTypes.includes(currentType)) {
     return Ok(void 0)

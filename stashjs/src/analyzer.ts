@@ -53,7 +53,7 @@ export function buildRecordAnalyzer<
 
     if (isMatchMapping<R, FieldOfType<R, MatchMappingFieldType>>(mapping)) {
       const fieldExtractors = mapping.fields.map(f => buildFieldExtractor(f))
-      const pipeline = buildTextProcessingPipeline(mapping.options)
+      const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
       return (record: R) => ({
         indexId: meta.$indexId,
@@ -62,7 +62,7 @@ export function buildRecordAnalyzer<
     }
 
     if (isDynamicMatchMapping(mapping)) {
-      const pipeline = buildTextProcessingPipeline(mapping.options)
+      const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
       return (record: R) => ({
         indexId: meta.$indexId,
@@ -71,7 +71,7 @@ export function buildRecordAnalyzer<
     }
 
     if (isFieldDynamicMatchMapping(mapping)) {
-      const pipeline = buildTextProcessingPipeline(mapping.options)
+      const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
       return (record: R) => ({
         indexId: meta.$indexId,
@@ -148,7 +148,7 @@ function flattenCondition<
   } else if (isMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     const mapping = mappings[condition.indexName]! as MatchMapping<R, FieldOfType<R, MatchMappingFieldType>>
-    const pipeline = buildTextProcessingPipeline(mapping.options)
+    const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     return pipeline([condition.value]).map(term => ({
       indexId: idToBuffer(indexMeta.$indexId),
@@ -158,7 +158,7 @@ function flattenCondition<
   } else if (isDynamicMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     const mapping = mappings[condition.indexName]! as DynamicMatchMapping
-    const pipeline = buildTextProcessingPipeline(mapping.options)
+    const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     return pipeline([condition.value]).map(term => ({
       indexId: Buffer.from(indexMeta.$indexId, 'hex'),
@@ -168,7 +168,7 @@ function flattenCondition<
   } else if (isFieldDynamicMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     const mapping = mappings[condition.indexName]! as FieldDynamicMatchMapping
-    const pipeline = buildTextProcessingPipeline(mapping.options)
+    const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     return pipeline([condition.value]).map(term => ({
       indexId: Buffer.from(indexMeta.$indexId, 'hex'),
@@ -196,7 +196,7 @@ const buildTextProcessingPipeline: (options: MatchOptions) => TextProcessor = op
 }
 
 const loadTextProcessor = (filter: TokenFilter | Tokenizer): TextProcessor => {
-  switch (filter.processor) {
+  switch (filter.kind) {
     case "standard": return standardTokenizer
     case "ngram": return ngramsTokenizer({ tokenLength: filter.tokenLength })
     case "downcase": return downcaseFilter
