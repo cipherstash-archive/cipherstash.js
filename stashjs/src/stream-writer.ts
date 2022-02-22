@@ -5,8 +5,9 @@ import { AnalysisRunner, AnalysisResult } from "./analysis-runner"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { StashInternal } from "./stash-internal"
 import { AsyncResult, Err, fromPromise, Ok } from "./result"
-import { StreamingPutFailure, wrap } from "./errors"
+import { StreamingPutFailure } from "./errors"
 import { makeAsyncResultApiWrapper } from "./stash-api-async-result-wrapper"
+import { maybeGenerateId } from "./utils"
 
 export class StreamWriter<
   R extends StashRecord,
@@ -80,41 +81,33 @@ export class StreamWriter<
     }
   }
 
+
   private async writeStreamingPutBegin(stream: ClientWritableStream<V1.Document.StreamingPutRequest>, collectionId: Buffer): AsyncResult<void, StreamingPutFailure> {
     const promise = new Promise<void>(async (resolve, reject) => {
-      while (!stream.write({ begin: { collectionId }}, () => { resolve(void 0) })) {
-        const wait = await this.waitForDrain(stream)
-        if (!wait.ok) {
-          return reject(wait.error)
-        }
+      if (!stream.write({ begin: { collectionId }}, (err: any) => reject(err))) {
+        stream.once('error', (err: any) => reject(err))
+        stream.once('drain', () => resolve(void 0))
+      } else {
+        process.nextTick(() => resolve(void 0))
       }
-      resolve(void 0)
     })
 
     return fromPromise(promise, (err: any) => err)
   }
 
   private async writeOneStreamingPutRequest(stream: ClientWritableStream<V1.Document.StreamingPutRequest>, analysisResult: AnalysisResult): AsyncResult<void, StreamingPutFailure> {
-    const payload = this.toStreamingPutRequest(analysisResult)
+    let payload = this.toStreamingPutRequest(analysisResult)
+    payload.document!.source = maybeGenerateId(payload.document?.source)
     const promise = new Promise<void>(async (resolve, reject) => {
-      while (!stream.write(payload, () => { resolve(void 0) })) {
-        const wait = await this.waitForDrain(stream)
-        if (!wait.ok) {
-          return reject(wait.error)
-        }
+      if (!stream.write(payload, (err: any) => reject(err))) {
+        stream.once('error', (err: any) => reject(err))
+        stream.once('drain', () => resolve(void 0))
+      } else {
+        process.nextTick(() => resolve(void 0))
       }
-      resolve(void 0)
     })
 
     return fromPromise(promise, (err: any) => err)
   }
-
-  private async waitForDrain(stream: ClientWritableStream<V1.Document.StreamingPutRequest>): AsyncResult<void, StreamingPutFailure> {
-    const promise = new Promise<void>((resolve, reject) => {
-      stream.once('drain', () => resolve(void 0))
-      stream.once('error', reject)
-    })
-
-    return fromPromise(promise, (err: unknown) => StreamingPutFailure(wrap(err)))
-  }
 }
+
