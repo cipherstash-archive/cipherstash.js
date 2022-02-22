@@ -8,10 +8,13 @@ async function queryCollection() {
     const movies = await stash.loadCollection(movieSchema)
 
     let queryResult = await movies.query(
-      movie => movie.title.match("the big"),
-      { limit: 10 }
+      movie => movie.year.lte(1960), {
+        aggregation: [{ofIndex: "exactTitle", aggregate: "count"}],
+        skipResults: true
+      }
     )
-    displayResults(queryResult, "Match: 'the big'")
+    displayResults(queryResult, "Range: Before 1960")
+
 
   } catch (err) {
     console.error(err)
