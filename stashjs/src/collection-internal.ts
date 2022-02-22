@@ -1,7 +1,7 @@
 import { StashRecord, Mappings, MappingsMeta, HasID } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { StashInternal } from "./stash-internal"
-import { maybeGenerateId, idToBuffer } from "./utils"
+import { maybeGenerateId, normalizeId } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToQueryResult } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./grpc/get-helper"
@@ -11,6 +11,7 @@ import { StreamWriter } from "./stream-writer"
 import { V1 } from "@cipherstash/stashjs-grpc"
 import { AsyncResult, convertErrorsTo, Ok, parallel, sequence, Unit } from "./result"
 import { DocumentDeleteFailure, DocumentGetAllFailure, DocumentGetFailure, DocumentPutFailure, DocumentQueryFailure, StreamingPutFailure } from "./errors"
+import { stringify as stringifyUUID } from 'uuid'
 
 const DEFAULT_QUERY_LIMIT = 50;
 
@@ -43,8 +44,8 @@ export class CollectionInternal<
   }
 
   public async get(id: string | Buffer): AsyncResult<R & HasID | null, DocumentGetFailure> {
-    const docId = id instanceof Buffer ? id : idToBuffer(id)
-    const collectionId = idToBuffer(this.id)
+    const docId = id instanceof Buffer ? id : normalizeId(id)
+    const collectionId = normalizeId(this.id)
 
     return convertErrorsTo(
       DocumentGetFailure,
@@ -60,10 +61,10 @@ export class CollectionInternal<
 
   public async getAll(ids: Array<string | Buffer>): AsyncResult<Array<R>, DocumentGetAllFailure> {
     const docIds = ids.map((id) => {
-      return (id instanceof Buffer) ? id : idToBuffer(id)
+      return (id instanceof Buffer) ? id : normalizeId(id)
     })
 
-    const collectionId = idToBuffer(this.id)
+    const collectionId = normalizeId(this.id)
 
     return convertErrorsTo(
       DocumentGetAllFailure,
@@ -78,21 +79,17 @@ export class CollectionInternal<
   }
 
   public async put(doc: R): AsyncResult<string, DocumentPutFailure> {
-    const collectionId = idToBuffer(this.id)
-    doc = maybeGenerateId(doc)
-    const docWithBufferId = {
-      ...doc,
-      id: idToBuffer(doc.id as string),
-    } as R
-    const vectors = convertAnalyzedRecordToVectors(this.analyzeRecord(docWithBufferId))
+    const collectionId = normalizeId(this.id)
+    const docWithId = maybeGenerateId(doc)
+    const vectors = convertAnalyzedRecordToVectors(this.analyzeRecord(docWithId as any as R))
 
     return convertErrorsTo(
       DocumentPutFailure,
       await sequence(
           _ => this.stash.sourceDataCipherSuiteMemo.freshValue(),
          cipher => cipher.encrypt(doc),
-         source => this.stash.api.document.put({ collectionId, vectors, source: { id: docWithBufferId.id, source: source.result } }),
-         _ => Ok.Async(doc.id as string)
+         source => this.stash.api.document.put({ collectionId, vectors, source: { id: docWithId.id, source: source.result } }),
+         _ => Ok.Async(stringifyUUID(docWithId.id))
       )(Unit)
     )
   }
@@ -113,8 +110,8 @@ export class CollectionInternal<
   }
 
   public async delete(id: string | Buffer): AsyncResult<null, DocumentDeleteFailure> {
-    const docId = id instanceof Buffer ? id : idToBuffer(id)
-    const collectionId = idToBuffer(this.id)
+    const docId = id instanceof Buffer ? id : normalizeId(id)
+    const collectionId = normalizeId(this.id)
 
     return convertErrorsTo(
       DocumentDeleteFailure,
@@ -127,7 +124,7 @@ export class CollectionInternal<
 
   public async putStream(records: AsyncIterator<R>): AsyncResult<V1.Document.StreamingPutReply, StreamingPutFailure> {
     const streamWriter: StreamWriter<R, M, MM> = new StreamWriter(
-      idToBuffer(this.id),
+      normalizeId(this.id),
       this.stash,
       this.schema
     )
@@ -179,18 +176,18 @@ export class CollectionInternal<
     const constraints = query.constraints
 
     return Ok.Async({
-      collectionId: idToBuffer(this.id),
+      collectionId: normalizeId(this.id),
       query: {
         limit: options.limit || DEFAULT_QUERY_LIMIT,
         constraints,
         aggregates: options.aggregation ? options.aggregation.map(agg => ({
-          indexId: idToBuffer(this.schema.meta[agg.ofIndex]!.$indexId),
+          indexId: normalizeId(this.schema.meta[agg.ofIndex]!.$indexId),
           type: agg.aggregate
         })) : [],
         skipResults: typeof options.skipResults == "boolean" ? options.skipResults : false,
         offset: options.offset,
         ordering: options.order ? options.order.map(o => ({
-          indexId: idToBuffer(this.schema.meta[o.byIndex]!.$indexId),
+          indexId: normalizeId(this.schema.meta[o.byIndex]!.$indexId),
           direction: o.direction
         })) : []
       }

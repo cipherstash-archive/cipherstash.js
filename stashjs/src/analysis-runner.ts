@@ -10,7 +10,7 @@ import { StashProfile } from './stash-profile';
 require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
 
 export type AnalysisResult = {
-  docId: Buffer,
+  docId: Uint8Array,
   vectors: Array<V1.Document.Vector>,
   encryptedSource: Buffer
 }

@@ -19,7 +19,7 @@ export class StreamWriter<
   private api: ReturnType<typeof makeAsyncResultApiWrapper>
 
   constructor(
-    private collectionId: Buffer,
+    private collectionId: Uint8Array,
     stash: StashInternal,
     schema: CollectionSchema<R, M, MM>,
   ) {
@@ -82,7 +82,7 @@ export class StreamWriter<
   }
 
 
-  private async writeStreamingPutBegin(stream: ClientWritableStream<V1.Document.StreamingPutRequest>, collectionId: Buffer): AsyncResult<void, StreamingPutFailure> {
+  private async writeStreamingPutBegin(stream: ClientWritableStream<V1.Document.StreamingPutRequest>, collectionId: Uint8Array): AsyncResult<void, StreamingPutFailure> {
     const promise = new Promise<void>(async (resolve, reject) => {
       if (!stream.write({ begin: { collectionId }}, (err: any) => reject(err))) {
         stream.once('error', (err: any) => reject(err))
