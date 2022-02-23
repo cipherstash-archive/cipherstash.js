@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/ore-rs",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "Node bindings for ore.rs",
   "main": "dist/index.js",
   "scripts": {
