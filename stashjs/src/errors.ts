@@ -130,7 +130,7 @@ export const OAuthFailure: (cause: unknown) => OAuthFailure = (cause) => {
 export type IllegalStateError = StashJSError<'IllegalStateError'>
 export const IllegalStateError: (message: string) => IllegalStateError = (message) => ({ tag: 'IllegalStateError', message })
 
-export type AuthenticationFailure = StashJSError<'AuthenticationFailure', OAuthFailure | AWSFederationFailure | SaveProfileFailure | IllegalStateError>
+export type AuthenticationFailure = StashJSError<'AuthenticationFailure', OAuthFailure | AWSFederationFailure | SaveProfileFailure | IllegalStateError | KMSError>
 export const AuthenticationFailure: (cause: AuthenticationFailure["cause"], message?: string) => AuthenticationFailure = (cause, message) => ({ tag: 'AuthenticationFailure', cause, message })
 
 export type ConnectionFailure = StashJSError<'ConnectionFailure', LoadProfileFailure | AuthenticationFailure | KMSError>

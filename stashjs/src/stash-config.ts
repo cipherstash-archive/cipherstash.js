@@ -59,9 +59,9 @@ export type StashConfiguration = {
 }
 
 export function loadProfileFromEnv(): StashProfile {
-  return {
-    name: `${getVar('CS_SERVICE_FQDN')}-${getVar('CS_WORKSPACE')}`,
-    config: {
+  return new StashProfile(
+    `${getVar('CS_SERVICE_FQDN')}-${getVar('CS_WORKSPACE')}`,
+    {
       service: {
         workspace: getVar('CS_WORKSPACE'),
         host: getVar('CS_SERVICE_FQDN'),
@@ -102,7 +102,7 @@ export function loadProfileFromEnv(): StashProfile {
         }
       },
     }
-  }
+  )
 }
 
 function getVar(envVar: string, fallback?: string): string {

@@ -24,7 +24,7 @@ export class StreamWriter<
     schema: CollectionSchema<R, M, MM>,
   ) {
     this.analysisRunner = new AnalysisRunner({ profile: stash.profile, schema })
-    this.api = makeAsyncResultApiWrapper(stash.stub, stash.authStrategy)
+    this.api = makeAsyncResultApiWrapper(stash.stub, stash.profile)
    }
 
   /**

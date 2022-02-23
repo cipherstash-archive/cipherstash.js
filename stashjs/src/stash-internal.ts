@@ -2,9 +2,8 @@ import { V1 } from '@cipherstash/stashjs-grpc'
 
 import { CipherSuite, makeCipherSuite, makeNodeCachingMaterialsManager, MakeRefFn } from './crypto/cipher'
 import { CollectionSchema } from './collection-schema'
-import { AuthStrategy, Memo, withFreshCredentials } from './auth/auth-strategy'
+import { Memo } from './auth/auth-strategy'
 import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
-import { makeAuthStrategy } from './auth/make-auth-strategy'
 import { CollectionInternal, CollectionMetadata } from './collection-internal'
 import { idBufferToString, idToBuffer, refBufferToString } from './utils'
 import { loadProfileFromEnv } from './stash-config'
@@ -13,7 +12,7 @@ import { KMS } from '@aws-sdk/client-kms'
 import { StashProfile } from './stash-profile'
 import { profileStore } from './auth/profile-store'
 import { AsyncResult, sequence, gather, Err, Ok, Unit, convertErrorsTo, parallel, toAsync, gatherTuple2 } from './result'
-import { CollectionCreationFailure, ConnectionFailure, DecryptionFailure, EncryptionFailure, KMSError, CollectionLoadFailure, CollectionListFailure, CollectionDeleteFailure, LoadProfileFailure } from './errors'
+import { CollectionCreationFailure, ConnectionFailure, DecryptionFailure, AuthenticationFailure, EncryptionFailure, CollectionLoadFailure, CollectionListFailure, CollectionDeleteFailure, LoadProfileFailure } from './errors'
 
 import { makeAsyncResultApiWrapper } from './stash-api-async-result-wrapper'
 
@@ -35,11 +34,10 @@ export class StashInternal {
   private constructor(
     public readonly stub: V1.APIClient,
     public readonly api: ReturnType<typeof makeAsyncResultApiWrapper>,
-    public readonly authStrategy: AuthStrategy,
     public readonly profile: StashProfile,
     private readonly makeRef: MakeRefFn
   ) {
-    this.sourceDataCipherSuiteMemo = withFreshCredentials<CipherSuite>(this.authStrategy, ({ awsConfig }) => {
+    this.sourceDataCipherSuiteMemo = profile.withFreshKMSCredentials<CipherSuite>((awsConfig) => {
       return Ok.Async(makeCipherSuite(
         makeNodeCachingMaterialsManager(
           this.profile.config.keyManagement.key.arn,
@@ -66,33 +64,30 @@ export class StashInternal {
     if (!profile.ok) {
       return Err(ConnectionFailure(profile.error))
     }
-    const authStrategy = makeAuthStrategy(profile.value)
-    const initialised = await authStrategy.initialise()
-    if (!initialised.ok) {
-      return Err(ConnectionFailure(initialised.error))
-    }
-    const authDetails = await authStrategy.getAuthenticationDetails()
-    if (authDetails.ok) {
-      const refGenerator = await makeRefGenerator(
-        new KMS(authDetails.value.awsConfig),
+    const refGenerator = await profile.value.withFreshKMSCredentials<MakeRefFn>(async (awsConfig) => {
+      const result = await makeRefGenerator(
+        new KMS(awsConfig),
         profile.value.config.keyManagement.key.namingKey
       )
-      if (refGenerator.ok) {
-        const stub = V1.connect(profile.value.config.service.host, profile.value.config.service.port)
-        return Ok(
-          new StashInternal(
-            stub,
-            makeAsyncResultApiWrapper(stub, authStrategy),
-            authStrategy,
-            profile.value,
-            refGenerator.value
-          )
-        )
+      if (result.ok) {
+        return Ok(result.value)
       } else {
-        return Err(ConnectionFailure(KMSError(refGenerator.error)))
+        return Err(AuthenticationFailure(result.error))
       }
+    }).freshValue()
+
+    if (refGenerator.ok) {
+      const stub = V1.connect(profile.value.config.service.host, profile.value.config.service.port)
+      return Ok(
+        new StashInternal(
+          stub,
+          makeAsyncResultApiWrapper(stub, profile.value),
+          profile.value,
+          refGenerator.value
+        )
+      )
     } else {
-      return Err(ConnectionFailure(authDetails.error))
+      return Err(ConnectionFailure(refGenerator.error))
     }
   }
 

@@ -1,23 +1,19 @@
-import { AWSClientConfig } from '../aws'
 import { AsyncResult, Err, Ok } from '../result'
 import { AuthenticationFailure } from '../errors'
 
-export type AuthenticationDetails = {
-  authToken: string
-  awsConfig: AWSClientConfig
-}
+export type MemoBuilder<A, R> = (input: A) => AsyncResult<R, AuthenticationFailure>
 
-export type MemoBuilder<R> = (input: AuthenticationDetails) => AsyncResult<R, AuthenticationFailure>
-
-export interface AuthStrategy {
+export interface AuthStrategy<A> {
   /**
-   * Initialise the strategy. This can be used to perform authentication without
-   * having to wait for a request which will make the first call to
-   * `authenticatedRequest` faster.
+   * Indicate whether the credentials are still "fresh", that is, unexpired
+   * according to the validity period indicated when the token was initially
+   * acquired.
    *
-   * This is also a good place to schedule a token expiry handler.
+   * Note that no actual validation of the token with the IdP is performed,
+   * so performance is good, but if the token can be revoked, authenticated
+   * operations may still fail.
    */
-  initialise(): AsyncResult<void, AuthenticationFailure>
+  stillFresh(): boolean
 
   /**
    * Gets the authentication details from the strategy.
@@ -26,18 +22,7 @@ export interface AuthStrategy {
    * details have expired, it *must* attempt to re-authenticate before returning
    * the result.
    */
-  getAuthenticationDetails(): AsyncResult<AuthenticationDetails, AuthenticationFailure>
-
-
-  /**
-   * Returns true if the credentials managed by this AuthStrategy have not expired.
-   * If there are multiple sets of credentials (i.e. Auth0 access token + federated
-   * AWS credentials) then this must return false if *any* of them have expired.
-   *
-   * If the authentication state name is anything other than "authenticated" then this
-   * method must return false.
-   */
-  isFresh(): boolean
+  getAuthenticationDetails(): AsyncResult<A, AuthenticationFailure>
 }
 
 /**
@@ -56,12 +41,12 @@ export interface AuthStrategy {
  *                  credentials will build a new value
  * @returns a Memo<T>
  */
-export function withFreshCredentials<R>(authStrategy: AuthStrategy, builder: MemoBuilder<R>): Memo<R> {
+export function withFreshCredentials<A, R>(builder: MemoBuilder<A, R>, authStrategy: AuthStrategy<A>): Memo<R> {
   let value: R
 
   return {
-    async freshValue() {
-      if (value && authStrategy.isFresh()) {
+    async freshValue(): AsyncResult<R, AuthenticationFailure> {
+      if (value && authStrategy.stillFresh()) {
         return Ok(value)
       } else {
         const authDetails = await authStrategy.getAuthenticationDetails()

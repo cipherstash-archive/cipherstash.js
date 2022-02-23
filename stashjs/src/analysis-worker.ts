@@ -5,11 +5,11 @@ import { AnalysisConfig, AnalysisResult } from "./analysis-runner"
 import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
-import {  maybeGenerateId } from "./utils"
-import { makeAuthStrategy } from './auth/make-auth-strategy'
-import { Memo, withFreshCredentials } from "./auth/auth-strategy"
+import { maybeGenerateId } from "./utils"
 import { AsyncResult, Err, Ok } from "./result"
 import { AnalysisFailure } from "./errors"
+import { Memo } from './auth/auth-strategy'
+import { StashProfile } from './stash-profile'
 
 if (!isMainThread) {
   const recordAnalyzerCache: { [collectionName: string]: any } = {}
@@ -17,9 +17,8 @@ if (!isMainThread) {
 
   async function performAnalyis(config: AnalysisConfig, record: StashRecord): AsyncResult<AnalysisResult, AnalysisFailure> {
     if (!cipherMemo) {
-      const authStrategy = await makeAuthStrategy(config.profile)
-      await authStrategy.initialise()
-      cipherMemo = withFreshCredentials<CipherSuite>(authStrategy, ({ awsConfig }) => {
+      const profile = new StashProfile(config.profile.name, config.profile.config)
+      cipherMemo = profile.withFreshKMSCredentials<CipherSuite>((awsConfig) => {
         return Ok.Async(makeCipherSuite(
           makeNodeCachingMaterialsManager(
             config.profile.config.keyManagement.key.arn,
