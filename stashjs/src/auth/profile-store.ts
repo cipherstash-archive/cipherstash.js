@@ -3,6 +3,7 @@ import { StashConfiguration } from '../stash-config'
 import * as lockfile from 'lockfile'
 import { StashProfile } from '../stash-profile'
 import { Result, AsyncResult, Err, Ok } from '../result'
+import { OauthAuthenticationInfo } from './oauth-utils'
 import { LoadProfileNamesFailure, SetDefaultProfileFailure, SaveProfileFailure, LoadProfileFailure, MissingConfigDir, IOError, NoDefaultProfileSet, MissingProfile, MalformedConfigFile } from '../errors'
 
 export type ConfigurationTemplate = Omit<StashConfiguration, 'keyManagement' | 'service' | 'key' > & {
@@ -145,10 +146,6 @@ class Store implements ProfileStore {
       return Err(LoadProfileFailure(MissingProfile(profileName)))
     }
 
-    if (!this.profileAuthTokenFilePath(profileName)) {
-      return Err(LoadProfileFailure(MissingProfile(profileName)))
-    }
-
     try {
       const configBuffer = await fs.promises.readFile(this.profileConfigFilePath(profileName))
       const config = parseConfig(this.profileConfigFilePath(profileName), configBuffer)
@@ -156,17 +153,7 @@ class Store implements ProfileStore {
         return Err(LoadProfileFailure(config.error))
       }
 
-      const credsBuffer = await fs.promises.readFile(this.profileAuthTokenFilePath(profileName))
-      const oauthCreds = parseConfig(this.profileAuthTokenFilePath(profileName), credsBuffer)
-      if (!oauthCreds.ok) {
-        return Err(LoadProfileFailure(oauthCreds.error))
-      }
-
-      return Ok({
-        name: sanitiseProfileName(profileName),
-        config: config.value,
-        oauthCreds: oauthCreds.value
-      })
+      return Ok(new StashProfile(sanitiseProfileName(profileName), config.value))
     } catch (error) {
       return Err(LoadProfileFailure(IOError(error)))
     }
@@ -176,7 +163,6 @@ class Store implements ProfileStore {
     try {
       await fs.promises.mkdir(this.configDir(profile.name), { recursive: true })
       await fs.promises.writeFile(this.profileConfigFilePath(profile.name), stringify(profile.config))
-      await fs.promises.writeFile(this.profileAuthTokenFilePath(profile.name), stringify(profile.oauthCreds))
 
       const profileNames = await this.loadProfileNames()
       if (profileNames.ok && profileNames.value.length === 1) {
@@ -192,7 +178,38 @@ class Store implements ProfileStore {
     }
   }
 
-  public configDir(profileName: string) {
+  /**
+   * Give a shot at reading a cached access token.
+   *
+   * Because this is purely a cache for performance optimisation purposes, it
+   * is never an error if the token cannot be read for any reason, and so we'll
+   * always "succeed" (in the sense of returning an AuthInfo object).
+   */
+  public async readAccessToken(profileName: string): AsyncResult<OauthAuthenticationInfo, never> {
+    try {
+      const tokenInfo = parseConfig(this.accessTokenFilePath(profileName), fs.readFileSync(this.profileConfigFilePath(profileName)))
+      if (!tokenInfo.ok) {
+        return Ok(nullAccessToken)
+      }
+
+      return Ok(tokenInfo.value)
+    } catch (error) {
+      return Ok(nullAccessToken)
+    }
+  }
+
+  public async writeAccessToken(profileName: string, tokenInfo: OauthAuthenticationInfo): AsyncResult<void, SaveProfileFailure> {
+    try {
+      await fs.promises.mkdir(this.configDir(profileName), { recursive: true })
+      await fs.promises.writeFile(this.accessTokenFilePath(profileName), stringify(tokenInfo))
+
+      return Ok(void 0)
+    } catch (error) {
+      return Err(SaveProfileFailure(IOError(error)))
+    }
+  }
+
+  public configDir(profileName: string): string {
     return [dir, sanitiseProfileName(profileName)].join('/')
   }
 
@@ -200,12 +217,12 @@ class Store implements ProfileStore {
     return `${dir}/config.json`
   }
 
-  private profileAuthTokenFilePath(profileName: string): string {
-    return `${this.configDir(profileName)}/auth-token.json`
-  }
-
   private profileConfigFilePath(profileName: string): string {
     return `${this.configDir(profileName)}/profile-config.json`
+  }
+
+  private accessTokenFilePath(profileName: string): string {
+    return [this.configDir(profileName), "auth-token.json"].join('/')
   }
 }
 
@@ -254,6 +271,14 @@ class StoreWithReadWriteLock implements ProfileStore {
     return this.lock(() => this.store.saveProfile(profile))
   }
 
+  public readAccessToken(profileName: string) {
+    return this.lock(() => this.store.readAccessToken(profileName))
+  }
+
+  public writeAccessToken(profileName: string, tokenInfo: OauthAuthenticationInfo) {
+    return this.lock(() => this.store.writeAccessToken(profileName, tokenInfo))
+  }
+
   private async lock<T>(callback: () => Promise<T>): Promise<T> {
     return await new Promise<T>((resolve, reject) => {
       lockfile.lock(this.configLockFile, { retries: 1000, retryWait: 5 }, async (err) => {
@@ -298,5 +323,7 @@ function parseConfig(fileName: string, buffer: Buffer): Result<any, MalformedCon
     return Err(MalformedConfigFile(fileName))
   }
 }
+
+const nullAccessToken: OauthAuthenticationInfo = { accessToken: "", refreshToken: "", expiry: 0 }
 
 export const profileStore = new StoreWithReadWriteLock(new Store())

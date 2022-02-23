@@ -10,7 +10,7 @@ import { getClient } from '@aws-crypto/client-node'
 import { KMS as KMSv3 } from "@aws-sdk/client-kms"
 import * as crypto from 'crypto'
 import { deserialize, serialize } from '../serializer'
-import { AWSClientConfig } from '../aws'
+import { AWSClientConfig } from '../auth/aws-client-config'
 import { AsyncResult, Ok, Err, fromPromise } from '../result'
 import { DecryptionFailure, EncryptionFailure, KMSError  } from '../errors'
 

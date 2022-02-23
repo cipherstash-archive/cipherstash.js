@@ -6,7 +6,7 @@ import { join } from 'path'
 import { Worker } from "worker_threads"
 import { EventEmitter } from "events"
 import { AsyncQueue } from "./async-queue";
-import { StashProfile } from "./stash-profile";
+import { StashProfile } from './stash-profile';
 require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
 
 export type AnalysisResult = {

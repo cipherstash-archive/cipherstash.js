@@ -1,107 +1,38 @@
 import { OauthAuthenticationInfo, stashOauth } from './oauth-utils'
-import { AuthenticationState } from './authentication-state'
-import { AuthenticationDetails, AuthStrategy } from './auth-strategy'
+import { AuthStrategy } from './auth-strategy'
 import { Auth0Machine2Machine, StashConfiguration } from '../stash-config'
-import { AuthenticationFailure, IllegalStateError } from '../errors'
+import { AuthenticationFailure } from '../errors'
 import { AsyncResult, Err, Ok } from '../result'
-import { AWSClientConfig, awsConfig } from '../aws'
 
 export type StashProfileAuth0Machine2Machine = {
   config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0Machine2Machine }
 }
 
-export class Auth0Machine2MachineStrategy implements AuthStrategy {
-  private state: AuthenticationState = { name: "unauthenticated" }
+export class Auth0Machine2MachineStrategy implements AuthStrategy<OauthAuthenticationInfo> {
+  private oauthCreds: OauthAuthenticationInfo = { accessToken: "", refreshToken: "", expiry: 0 }
 
   constructor(private profile: StashProfileAuth0Machine2Machine) {}
 
-  public async initialise(): AsyncResult<void, AuthenticationFailure> {
-    const authenticated = await this.authenticate()
-    if (authenticated.ok) {
-      this.scheduleTokenRefresh()
-      return Ok(void 0)
-    } else {
-      return Err(authenticated.error)
-    }
+  public stillFresh(): boolean {
+    return !this.needsRefresh()
   }
 
-  public isFresh(): boolean {
-    if (this.state.name !== "authenticated") {
-      return false
-    }
-
-    const now = (new Date()).getTime()
-
-    const awsConfigExpiration = this.state.awsConfig.credentials!.expiration
-    // If we don't have an expiration it means we are not federating and the creds do not expire.
-    const awsCredsAreFresh = !awsConfigExpiration || awsConfigExpiration.getTime() > now
-    const auth0CredsAreFresh = this.state.oauthInfo.expiry > now
-
-    return awsCredsAreFresh && auth0CredsAreFresh
-  }
-
-  public async getAuthenticationDetails(): AsyncResult<AuthenticationDetails, AuthenticationFailure> {
-    if (this.state.name === "authenticated") {
-      return Ok({
-        authToken: this.state.oauthInfo.accessToken,
-        awsConfig: this.state.awsConfig
-      })
-    } else {
-      return Err(AuthenticationFailure(IllegalStateError("Authentication details were requested but StashJS is not currently authenticated")))
-    }
-  }
-
-  private async scheduleTokenRefresh(): Promise<void> {
-    if (this.state.name == "authenticated") {
-      const { refreshToken, expiry } = this.state.oauthInfo
-      const timeout = setTimeout(async () => {
-        try {
-          await this.performTokenRefreshAndUpdateState(refreshToken)
-        } finally {
-          this.scheduleTokenRefresh()
-        }
-      }, (expiry * 1000) - (EXPIRY_BUFFER_SECONDS * 1000) - Date.now())
-      timeout.unref()
-    } else if (this.state.name == "authentication-expired") {
-      const { refreshToken } = this.state.oauthInfo
-      try {
-        await this.performTokenRefreshAndUpdateState(refreshToken)
-      } finally {
-        this.scheduleTokenRefresh()
+  public async getAuthenticationDetails(): AsyncResult<OauthAuthenticationInfo, AuthenticationFailure> {
+    if (this.needsRefresh()) {
+      const tokenResult = await this.acquireAccessToken()
+      if (!tokenResult.ok) {
+        return Err(tokenResult.error)
       }
     }
+
+    return Ok(this.oauthCreds)
   }
 
-  private async performTokenRefreshAndUpdateState(refreshToken: string): Promise<void> {
-    const oauthInfo = await stashOauth.performTokenRefresh(
-      this.profile.config.identityProvider.host,
-      refreshToken,
-      this.profile.config.identityProvider.clientId
-    )
-
-    if (oauthInfo.ok) {
-      const aws = await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.value.accessToken)
-      if (aws.ok) {
-        this.state = {
-          name: "authenticated",
-          oauthInfo: oauthInfo.value,
-          awsConfig: aws.value
-        }
-      } else {
-        this.state = {
-          name: "authentication-failed",
-          error: AuthenticationFailure(aws.error)
-        }
-      }
-    } else {
-      this.state = {
-        name: "authentication-failed",
-        error: oauthInfo.error
-      }
-    }
+  private needsRefresh(): boolean {
+    return (Date.now() / 1000 - EXPIRY_BUFFER_SECONDS) > this.oauthCreds.expiry
   }
 
-  private async authenticate(): AsyncResult<SuccessfulAuthentication, AuthenticationFailure> {
+  private async acquireAccessToken(): AsyncResult<void, AuthenticationFailure> {
     const oauthInfo = await stashOauth.authenticateViaClientCredentials(
       this.profile.config.identityProvider.host,
       this.profile.config.service.host,
@@ -110,21 +41,10 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy {
     )
 
     if (oauthInfo.ok) {
-      const aws = await awsConfig(this.profile.config.keyManagement.awsCredentials, oauthInfo.value.accessToken)
-      if (aws.ok) {
-        this.state = {
-          name: "authenticated",
-          oauthInfo: oauthInfo.value,
-          awsConfig: aws.value
-        }
-        return Ok(this.state)
-      } else {
-        this.state = { name: "authentication-failed", error: AuthenticationFailure(aws.error) }
-        return Err(AuthenticationFailure(aws.error))
-      }
+      this.oauthCreds = oauthInfo.value
+      return Ok(void 0)
     } else {
-        this.state = { name: "authentication-failed", error: oauthInfo.error }
-        return Err(oauthInfo.error)
+      return Err(oauthInfo.error)
     }
   }
  }
@@ -132,14 +52,3 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy {
 /* Refresh tokens before the expiry to avoid API errors due
  * to race conditions. Expiry buffer is in seconds */
 const EXPIRY_BUFFER_SECONDS = 20
-
-export type ClientCredentials = {
-  clientId: string,
-  clientSecret: string
-}
-
-export type SuccessfulAuthentication = {
-  readonly name: "authenticated",
-  readonly oauthInfo: OauthAuthenticationInfo,
-  readonly awsConfig: AWSClientConfig
-}
