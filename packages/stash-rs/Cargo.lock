@@ -280,8 +280,8 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "ore-encoding-rs"
-version = "0.23.0"
-source = "git+https://github.com/cipherstash/ore_encoding.rs#2244e6d0648b4b002905489086fc22a6a89668de"
+version = "0.23.1"
+source = "git+https://github.com/cipherstash/ore_encoding.rs#fe0e94b1aa14fcbaa314fed811118d7be3cb92d8"
 dependencies = [
  "num",
  "siphasher",
