@@ -76,35 +76,31 @@ const command: GluegunCommand = {
       }
     )
 
-    const profile: StashProfile = {
-      name: workspace,
-      config: {
-        service: {
-          workspace,
-          host: serviceHost,
-          port: servicePort
-        },
-        identityProvider: {
-          kind: 'Auth0-DeviceCode',
-          host: identityProviderHost,
-          clientId: identityProviderClientId
-        },
-        keyManagement: {
-          kind: 'AWS-KMS',
-          awsCredentials: {
-            kind: 'Federated',
-            region: response.data.keyRegion,
-            roleArn: response.data.keyRoleArn
-          },
-          key: {
-            arn: response.data.keyId,
-            namingKey: response.data.namingKey,
-            region: response.data.keyRegion
-          }
-        }
+    const profile: StashProfile = new StashProfile(workspace, {
+      service: {
+        workspace,
+        host: serviceHost,
+        port: servicePort
       },
-      oauthCreds: authInfo.value
-    }
+      identityProvider: {
+        kind: 'Auth0-DeviceCode',
+        host: identityProviderHost,
+        clientId: identityProviderClientId
+      },
+      keyManagement: {
+        kind: 'AWS-KMS',
+        awsCredentials: {
+          kind: 'Federated',
+          region: response.data.keyRegion,
+          roleArn: response.data.keyRoleArn
+        },
+        key: {
+          arn: response.data.keyId,
+          namingKey: response.data.namingKey,
+          region: response.data.keyRegion
+        }
+      }
+    })
 
     await profileStore.saveProfile(profile)
 
