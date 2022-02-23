@@ -1,11 +1,13 @@
 import { V1 } from "@cipherstash/stashjs-grpc"
+import { OauthAuthenticationInfo } from './auth/oauth-utils'
 import { ClientUnaryCall, ClientWritableStream, Metadata, ServiceError } from "@grpc/grpc-js"
 import { promisify } from "util"
 import { AsyncResult, Err, fromPromise, fromPromiseFn2, Ok } from "./result"
 import { AuthenticationFailure, GRPCError } from "./errors"
 import { grpcMetadata } from "./auth/grpc-metadata"
-import { AuthStrategy } from "./auth/auth-strategy"
 import { stringify } from "./utils"
+import { Memo } from './auth/auth-strategy'
+import { StashProfile } from './stash-profile'
 
 /**
  * Creates a wrapper for the generated GRPC API that:
@@ -18,8 +20,9 @@ import { stringify } from "./utils"
  *
  * @returns an object containing an enhanced API
  */
-export function makeAsyncResultApiWrapper(stub: V1.APIClient, authStrategy: AuthStrategy) {
-  const secureEndpoint = secureWith(authStrategy)
+export function makeAsyncResultApiWrapper(stub: V1.APIClient, profile: StashProfile) {
+  const credsGenerator: Memo<OauthAuthenticationInfo> = profile.withFreshDataServiceCredentials(async (creds) => Ok(creds))
+  const secureEndpoint = secureWith(credsGenerator)
 
   return {
     collection: {
@@ -35,7 +38,7 @@ export function makeAsyncResultApiWrapper(stub: V1.APIClient, authStrategy: Auth
       delete: requestLogger("document.delete")(secureEndpoint<V1.Document.DeleteRequest, V1.Document.DeleteReply>(stub.delete.bind(stub))),
 
       // `putStream` is a bit different. See the comments on the helper functions down below.
-      putStream: authenticatePutStream(authStrategy)(stub.putStream.bind(stub))
+      putStream: authenticatePutStream(credsGenerator)(stub.putStream.bind(stub))
     },
     query: {
       query: requestLogger("query.query")(secureEndpoint<V1.Query.QueryRequest, V1.Query.QueryReply>(stub.query.bind(stub)))
@@ -44,9 +47,9 @@ export function makeAsyncResultApiWrapper(stub: V1.APIClient, authStrategy: Auth
 }
 
 const secureWith =
-  (authStrategy: AuthStrategy) =>
+  (credsGenerator: Memo<OauthAuthenticationInfo>) =>
     <Req, Reply>(fn: (req: Req, metadata: Metadata, callback: (error?: ServiceError, result?: Reply | undefined) => void) => ClientUnaryCall) =>
-      makeAuthenticator2(authStrategy)(fromPromiseFn2(promisify<Req, Metadata, Reply | undefined>(fn), GRPCError))
+      makeAuthenticator2(credsGenerator)(fromPromiseFn2(promisify<Req, Metadata, Reply | undefined>(fn), GRPCError))
 
 const requestLogger =
   (endpoint: string) => {
@@ -73,12 +76,12 @@ const requestLogger =
 type EndpointFn2<Request, Response> = (request: Request, metadata: Metadata) => AsyncResult<Response, GRPCError>
 
 const makeAuthenticator2 =
-  (authStrategy: AuthStrategy) =>
+  (credsGenerator: Memo<OauthAuthenticationInfo>) =>
     <Request, Response>(fn: EndpointFn2<Request, Response>): (request: Request) => AsyncResult<Response, GRPCError> =>
       async (request) => {
-        const authDetails = await authStrategy.getAuthenticationDetails()
+        const authDetails = await credsGenerator.freshValue()
         if (authDetails.ok) {
-          return fn(request, grpcMetadata(authDetails.value.authToken))
+          return fn(request, grpcMetadata(authDetails.value.accessToken))
         } else {
           return Err(GRPCError(authDetails.error))
         }
@@ -135,13 +138,13 @@ type PutStreamResult = {
 //
 // It's different enough that we have to special-case the handling of `putStream`.
 const authenticatePutStream =
-  (authStrategy: AuthStrategy) =>
+  (credsGenerator: Memo<OauthAuthenticationInfo>) =>
     (fn: V1.APIClient["putStream"]): () => AsyncResult<PutStreamResult, GRPCError | AuthenticationFailure> =>
       async () => {
-        const authDetails = await authStrategy.getAuthenticationDetails()
+        const authDetails = await credsGenerator.freshValue()
         if (authDetails.ok) {
           const [reply, callback] = capturePutStreamReply()
-          const stream = fn(grpcMetadata(authDetails.value.authToken), callback)
+          const stream = fn(grpcMetadata(authDetails.value.accessToken), callback)
           return Ok({ stream, reply })
         } else {
           return Err(GRPCError(authDetails.error))
