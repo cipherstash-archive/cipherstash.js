@@ -1,20 +1,10 @@
 import { GluegunCommand } from 'gluegun'
-import * as open from 'open'
 import { Options } from 'gluegun/build/types/domain/options'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 import { AxiosResponse } from 'axios'
 import { makeHttpsClient } from '../https-client'
-import { isInteractive } from '../terminal'
 
-import {
-  profileStore,
-  defaults,
-  stashOauth,
-  OauthAuthenticationInfo,
-  StashProfile,
-  makeAuthStrategy,
-  errors
-} from '@cipherstash/stashjs'
+import { profileStore, defaults, StashProfile, errors, Ok } from '@cipherstash/stashjs'
 
 // A first time login (saves a profile for that workspace + credentials)
 // stash login --workspace foo
@@ -28,7 +18,6 @@ import {
 // new login to workspace foo that will be saved in profile bar
 // stash login --workspace foo --profile bar
 
-
 const command: GluegunCommand = {
   name: 'login',
   description: 'Login to the workspace',
@@ -40,16 +29,16 @@ const command: GluegunCommand = {
 
     if (options.help) {
       // TODO: It would be neat if we could read this summary from the docs directly
-      print.info("Usage: stash login [--workspace <workspace>] [--profile <profile>] [--help]")
-      print.info("")
-      print.info("Login to the given workspace\n")
-      print.info("If this is a first time login, you must provide a workspace option")
-      print.info("")
-      print.info("    stash login --workspace ABCD1234")
-      print.info("")
-      print.info("Otherwise, stash will attempt to perform a fresh login with your default profile")
-      print.info("See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html")
-      print.info("")
+      print.info('Usage: stash login [--workspace <workspace>] [--profile <profile>] [--help]')
+      print.info('')
+      print.info('Login to the given workspace\n')
+      print.info('If this is a first time login, you must provide a workspace option')
+      print.info('')
+      print.info('    stash login --workspace ABCD1234')
+      print.info('')
+      print.info('Otherwise, stash will attempt to perform a fresh login with your default profile')
+      print.info('See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html')
+      print.info('')
       process.exit(1)
       return
     }
@@ -57,33 +46,7 @@ const command: GluegunCommand = {
     if (isNewLogin(options)) {
       const basicProfile = buildBasicStashProfile(options)
 
-      const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
-        basicProfile.config.identityProvider.host,
-        basicProfile.config.identityProvider.clientId,
-        basicProfile.config.service.host,
-        basicProfile.config.service.workspace
-      )
-
-      if (!pollingInfo.ok) {
-        print.error('An error occurred and "stash login" could not complete successfully')
-        print.error(`Reason: ${errors.toErrorMessage(pollingInfo.error)}`)
-        process.exit(1)
-        return
-      }
-
-      print.info(`Visit ${pollingInfo.value.verificationUri} to complete authentication`)
-      print.info('Waiting for authentication...')
-
-      if (!isInteractive()) {
-        await open(pollingInfo.value.verificationUri)
-      }
-
-      const authInfo = await stashOauth.pollForDeviceCodeAcceptance(
-        basicProfile.config.identityProvider.host,
-        basicProfile.config.identityProvider.clientId,
-        pollingInfo.value.deviceCode,
-        pollingInfo.value.interval
-      )
+      const authInfo = await basicProfile.withFreshDataServiceCredentials(async creds => Ok(creds)).freshValue()
 
       if (!authInfo.ok) {
         print.error('An error occurred and "stash login" could not complete successfully')
@@ -115,9 +78,16 @@ const command: GluegunCommand = {
         return
       }
 
-      const saved = await profileStore.saveProfile(buildCompletedStashProfile(basicProfile, authInfo.value, response))
+      const saved = await profileStore.saveProfile(buildCompletedStashProfile(basicProfile, response))
       if (saved.ok) {
-        print.info(`Workspace configuration and authentication details have been saved in dir ~/.cipherstash`)
+        const savedToken = await profileStore.writeAccessToken(basicProfile.name, authInfo.value)
+        if (savedToken.ok) {
+          print.info(
+            `Workspace configuration and authentication details have been saved in ~/.cipherstash/${basicProfile.name}`
+          )
+        } else {
+          print.error(`Failed to store cached authentication details: ${savedToken.error.message}`)
+        }
       } else {
         print.error(`Failed to save profile: ${saved.error.message}`)
       }
@@ -126,8 +96,9 @@ const command: GluegunCommand = {
         ? await profileStore.loadProfile(options.profile)
         : await profileStore.loadDefaultProfile()
       if (profile.ok) {
-        const authStrategy = makeAuthStrategy(profile.value)
-        const login = await authStrategy.initialise()
+        const login = await profile.value
+          .withFreshDataServiceCredentials(async ({ accessToken }) => Ok(accessToken))
+          .freshValue()
         if (login.ok) {
           print.info(`Login successful`)
         } else {
@@ -144,98 +115,57 @@ function isNewLogin(options: Options): boolean {
   return !!options.workspace
 }
 
-// This utility deeply checks that T is assignment-compatible with Target.
-// Field types that are not assignment compatible will be converted to `never`.
-type AssignableTo<Target, T> = T extends Target
-  ? T
-  : T extends object
-  ? {
-      [F in keyof T]: F extends keyof Target ? AssignableTo<Target[F], T[F]> : never
-    }
-  : never
-
-// Represents the default parts of the profile that can be determined before
-// querying the Console API.
-//
-// TODO: we should remove the federated key details from StashConfiguration and
-// store them seperately like we do for access tokens. StashConfiguration should
-// be *static*.
-type BasicStashProfile = AssignableTo<
-  StashProfile,
-  {
-    name: StashProfile['name']
-    config: {
-      service: StashProfile['config']['service']
-      identityProvider: {
-        kind: 'Auth0-DeviceCode'
-        host: string
-        clientId: string
-      }
-      keyManagement: {
-        kind: StashProfile['config']['keyManagement']['kind']
-        awsCredentials: {
-          kind: StashProfile['config']['keyManagement']['awsCredentials']['kind']
-        }
-      }
-    }
-  }
->
-
-function buildBasicStashProfile(options: Options): BasicStashProfile {
+function buildBasicStashProfile(options: Options): StashProfile {
   const serviceHost: string = options.serviceHost || defaults.service.host
   const servicePort: number = options.servicePort || 443
   const identityProviderHost: string = options.identityProviderHost || defaults.identityProvider.host
   const identityProviderClientId: string = options.identityProviderClientId || defaults.identityProvider.clientId
   const workspace: string = options.workspace
 
-  return {
-    name: options.profile || workspace,
-    config: {
-      service: {
-        workspace,
-        host: serviceHost,
-        port: servicePort
+  return new StashProfile(options.profile || workspace, {
+    service: {
+      workspace,
+      host: serviceHost,
+      port: servicePort
+    },
+    identityProvider: {
+      kind: 'Auth0-DeviceCode',
+      host: identityProviderHost,
+      clientId: identityProviderClientId
+    },
+    keyManagement: {
+      kind: 'AWS-KMS',
+      awsCredentials: {
+        kind: 'Federated',
+        region: '',
+        roleArn: ''
       },
-      identityProvider: {
-        kind: 'Auth0-DeviceCode',
-        host: identityProviderHost,
-        clientId: identityProviderClientId
-      },
-      keyManagement: {
-        kind: 'AWS-KMS',
-        awsCredentials: {
-          kind: 'Federated'
-        }
+      key: {
+        arn: '',
+        namingKey: '',
+        region: ''
       }
     }
-  }
+  })
 }
 
-function buildCompletedStashProfile(
-  basicProfile: BasicStashProfile,
-  oauthCreds: OauthAuthenticationInfo,
-  response: AxiosResponse<any, any>
-): StashProfile {
-  return {
-    name: basicProfile.name,
-    oauthCreds: oauthCreds,
-    config: {
-      ...basicProfile.config,
-      keyManagement: {
-        kind: 'AWS-KMS',
-        awsCredentials: {
-          kind: 'Federated',
-          region: response.data.keyRegion,
-          roleArn: response.data.keyRoleArn
-        },
-        key: {
-          arn: response.data.keyId,
-          namingKey: response.data.namingKey,
-          region: response.data.keyRegion
-        }
+function buildCompletedStashProfile(basicProfile: StashProfile, response: AxiosResponse<any, any>): StashProfile {
+  return new StashProfile(basicProfile.name, {
+    ...basicProfile.config,
+    keyManagement: {
+      kind: 'AWS-KMS',
+      awsCredentials: {
+        kind: 'Federated',
+        region: response.data.keyRegion,
+        roleArn: response.data.keyRoleArn
+      },
+      key: {
+        arn: response.data.keyId,
+        namingKey: response.data.namingKey,
+        region: response.data.keyRegion
       }
     }
-  }
+  })
 }
 
 export default command
