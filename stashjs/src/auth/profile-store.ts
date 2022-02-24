@@ -187,7 +187,7 @@ class Store implements ProfileStore {
    */
   public async readAccessToken(profileName: string): AsyncResult<OauthAuthenticationInfo, never> {
     try {
-      const tokenInfo = parseConfig(this.accessTokenFilePath(profileName), fs.readFileSync(this.profileConfigFilePath(profileName)))
+      const tokenInfo = parseConfig(this.accessTokenFilePath(profileName), fs.readFileSync(this.accessTokenFilePath(profileName)))
       if (!tokenInfo.ok) {
         return Ok(nullAccessToken)
       }
