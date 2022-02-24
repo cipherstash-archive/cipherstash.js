@@ -21,7 +21,7 @@ import { StashProfile } from './stash-profile'
  * @returns an object containing an enhanced API
  */
 export function makeAsyncResultApiWrapper(stub: V1.APIClient, profile: StashProfile) {
-  const credsGenerator: Memo<OauthAuthenticationInfo> = profile.withFreshDataServiceCredentials(async (creds) => Ok(creds))
+  const credsGenerator: Memo<OauthAuthenticationInfo> = profile.withFreshDataServiceCredentials<OauthAuthenticationInfo>(async (creds) => Ok(creds))
   const secureEndpoint = secureWith(credsGenerator)
 
   return {

@@ -18,7 +18,7 @@ if (!isMainThread) {
   async function performAnalyis(config: AnalysisConfig, record: StashRecord): AsyncResult<AnalysisResult, AnalysisFailure> {
     if (!cipherMemo) {
       const profile = new StashProfile(config.profile.name, config.profile.config)
-      cipherMemo = profile.withFreshKMSCredentials<CipherSuite>((awsConfig) => {
+      cipherMemo = profile.withFreshKMSCredentials<CipherSuite>(async (awsConfig) => {
         return Ok.Async(makeCipherSuite(
           makeNodeCachingMaterialsManager(
             config.profile.config.keyManagement.key.arn,
