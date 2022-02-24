@@ -37,7 +37,7 @@ export class StashInternal {
     public readonly profile: StashProfile,
     private readonly makeRef: MakeRefFn
   ) {
-    this.sourceDataCipherSuiteMemo = profile.withFreshKMSCredentials<CipherSuite>((awsConfig) => {
+    this.sourceDataCipherSuiteMemo = profile.withFreshKMSCredentials<CipherSuite>(async (awsConfig) => {
       return Ok.Async(makeCipherSuite(
         makeNodeCachingMaterialsManager(
           this.profile.config.keyManagement.key.arn,

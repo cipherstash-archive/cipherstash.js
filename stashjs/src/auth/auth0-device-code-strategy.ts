@@ -23,7 +23,7 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
 
   public async getAuthenticationDetails(): AsyncResult<OauthAuthenticationInfo, AuthenticationFailure> {
     if (!this.cacheRead) {
-      this.readCachedToken()
+      await this.readCachedToken()
     }
 
     if (this.needsRefresh()) {

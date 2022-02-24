@@ -39,25 +39,24 @@ export class AWSClientConfigFederatedStrategy implements AuthStrategy<AWSClientC
     }
 
     const client = new STS({ region: this.credSource.region })
-    return client.assumeRoleWithWebIdentity({
-      RoleArn: this.credSource.roleArn,
-      WebIdentityToken: tokenResult.value.accessToken,
-      // TODO: This should possibly be the user ID (sub from the access token)
-      RoleSessionName: "stash-client"
-    }).then((result) => {
-      const { Credentials: credentials }: AssumeRoleWithWebIdentityCommandOutput = result
+    try {
+      const { Credentials: credentials } = await client.assumeRoleWithWebIdentity({
+        RoleArn: this.credSource.roleArn,
+        WebIdentityToken: tokenResult.value.accessToken,
+        // TODO: This should possibly be the user ID (sub from the access token)
+        RoleSessionName: "stash-client"
+      })
+
       if (credentials) {
         this.awsConfig = this.toAwsConfig(this.credSource.region, credentials)
-        if (typeof credentials.Expiration === "number") {
-          this.expiryDate = new Date(1000 * credentials.Expiration)
-        }
+        this.expiryDate = credentials.Expiration!
         return(Ok(void 0))
       } else {
         return Err(AuthenticationFailure(AWSFederationFailure(undefined, "STS Token Exchange failed")))
       }
-    }).catch((error) => {
+    } catch(error) {
       return Err(AuthenticationFailure(AWSFederationFailure(error)))
-    })
+    }
   }
 
   private toAwsConfig(region: string, credentials: AssumeRoleWithWebIdentityCommandOutput['Credentials']): AWSClientConfig {

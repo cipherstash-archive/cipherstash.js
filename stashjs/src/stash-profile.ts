@@ -48,7 +48,7 @@ export class StashProfile {
   private makeKMSCredentialsAuthStrategy(): AuthStrategy<AWSClientConfig> {
     switch (this.config.keyManagement.awsCredentials.kind) {
       case "Explicit": return new AWSClientConfigExplicitStrategy(this.config.keyManagement.awsCredentials)
-      case "Federated": return new AWSClientConfigFederatedStrategy(this.config.keyManagement.awsCredentials, this.withFreshDataServiceCredentials(async (creds) => Ok(creds)))
+      case "Federated": return new AWSClientConfigFederatedStrategy(this.config.keyManagement.awsCredentials, this.withFreshDataServiceCredentials<OauthAuthenticationInfo>(async (creds) => Ok(creds)))
     }
   }
 }
