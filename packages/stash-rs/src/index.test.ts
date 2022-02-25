@@ -195,3 +195,9 @@ describe("encodeString", () => {
     expect(ORE.encodeString(s1)).toEqual(ORE.encodeString(s2))
   })
 })
+
+describe("encodeRangeBetween", () => {
+  test('correct min and max generated in range', () => {
+    expect(ORE.encodeRangeBetween(1, 100)).toEqual({ min: 1, max: 100})
+  })
+})
