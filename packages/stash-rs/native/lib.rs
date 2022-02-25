@@ -170,7 +170,7 @@ fn encode_range_eq(mut cx: FunctionContext) -> JsResult<JsObject> {
 
 fn encode_range_between(mut cx: FunctionContext) -> JsResult<JsObject> {
     let value1 = cx.argument::<JsNumber>(0)?;
-    let value2 = cx.argument::<JsNumber>(0)?;
+    let value2 = cx.argument::<JsNumber>(1)?;
     let OreRange{ min, max } = encode_between(
         OrePlaintext(value1.value(&mut cx).to_bits()),
         OrePlaintext(value2.value(&mut cx).to_bits()),
