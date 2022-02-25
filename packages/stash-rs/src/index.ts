@@ -17,7 +17,7 @@ const {
 
 export type Key = Buffer
 export type CipherText = Buffer
-export type OrePlainText = number
+export type OrePlainText = Buffer
 export type OreRange = { min: OrePlainText, max: OrePlainText }
 
 export type ORECipher = {
@@ -25,13 +25,13 @@ export type ORECipher = {
    * Encrypt the given `PlainText` outputting a "full" CipherText (i.e. a
    * `Buffer` containing both the Left and Right components).
    */
-  encrypt: (input: number) => CipherText,
+  encrypt: (input: OrePlainText) => CipherText,
 
   /*
    * Encrypt the given `PlainText` outputting only a Left CipherText (i.e. a
    * `Buffer` containing just the Left component).
    */
-  encryptLeft: (input: number) => CipherText
+  encryptLeft: (input: OrePlainText) => CipherText
 }
 
 export type Ordering = -1 | 0 | 1
@@ -73,12 +73,12 @@ export interface ORE {
   encode: (input: number | Buffer | string) => OrePlainText
 
 
-  encodeRangeLt: (value: OrePlainText) => OreRange
-  encodeRangeLte: (value: OrePlainText) => OreRange
-  encodeRangeGt: (value: OrePlainText) => OreRange
-  encodeRangeGte: (value: OrePlainText) => OreRange
-  encodeRangeEq: (value: OrePlainText) => OreRange
-  encodeRangeBetween: (min: OrePlainText, max: OrePlainText) => OreRange
+  encodeRangeLt: (value: number) => OreRange
+  encodeRangeLte: (value: number) => OreRange
+  encodeRangeGt: (value: number) => OreRange
+  encodeRangeGte: (value: number) => OreRange
+  encodeRangeEq: (value: number) => OreRange
+  encodeRangeBetween: (min: number, max: number) => OreRange
 
   /**
    * Initialize a new ORE cipher with a key pair (both keys must be 16-byte
@@ -119,13 +119,12 @@ export const ORE: ORE = {
   encodeRangeLt,
   encodeRangeLte,
 
-
   init: (k1: Key, k2: Key): ORECipher => {
     let cipher = initCipher(k1, k2);
     return {
-      encrypt: (input: number): CipherText => encrypt(cipher, input),
+      encrypt: (input: OrePlainText): CipherText => encrypt(cipher, input),
 
-      encryptLeft: (input: number): CipherText => encryptLeft(cipher, input)
+      encryptLeft: (input: OrePlainText): CipherText => encryptLeft(cipher, input)
     }
   },
 
