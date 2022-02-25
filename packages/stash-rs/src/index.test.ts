@@ -18,6 +18,12 @@ describe("Init", () => {
   })
 })
 
+describe("encode number", () => {
+  test("0", () => {
+    expect(ORE.encode(0)).toEqual(Buffer.from([0, 0, 0, 0, 0, 0, 0, 0x80]));
+  })
+})
+
 describe("Encrypt", () => {
   test("encrypt number", () => {
     let ore = ORE.init(k1, k2);
@@ -198,6 +204,6 @@ describe("encodeString", () => {
 
 describe("encodeRangeBetween", () => {
   test('correct min and max generated in range', () => {
-    expect(ORE.encodeRangeBetween(1, 100)).toEqual({ min: 1, max: 100})
+    expect(ORE.encodeRangeBetween(1, 100)).toEqual({ min: ORE.encode(1), max: ORE.encode(100)})
   })
 })
