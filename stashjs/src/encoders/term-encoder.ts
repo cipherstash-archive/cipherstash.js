@@ -1,4 +1,4 @@
-import { ORE } from '@cipherstash/ore-rs'
+import { ORE, OrePlainText } from '@cipherstash/ore-rs'
 import { unreachable } from "../type-utils"
 import { utcDateWithResolution } from './date-encoding-helpers'
 import { MappableFieldType } from '../dsl/mappings-dsl'
@@ -10,7 +10,7 @@ type TermEncoder<InputT extends MappableFieldType, OutputT> = (input: InputT) =>
 export type EqualityPreservingEncoder<InputT extends MappableFieldType> = TermEncoder<InputT, number>
 export type OrderPreservingEncoder<InputT extends MappableFieldType> = TermEncoder<InputT, number>
 
-export function encodeTerm<T extends number | boolean | bigint | string | Date>(term: T): number {
+export function encodeTerm<T extends number | boolean | bigint | string | Date>(term: T): OrePlainText {
   if (typeof term == 'number') {
     return ORE.encodeNumber(term)
   } else if (typeof term == 'boolean') {

@@ -8,7 +8,7 @@ import { extractStringFields, extractStringFieldsWithPath } from "./string-field
 import { TextProcessor, textPipeline, standardTokenizer, ngramsTokenizer, downcaseFilter, upcaseFilter } from "./text-processors";
 import { FieldOfType, FieldType, unreachable } from "./type-utils";
 import { normalizeId } from "./utils";
-import { ORE } from "@cipherstash/ore-rs"
+import { ORE, OrePlainText } from "@cipherstash/ore-rs"
 
 /**
  * Builds and returns a function that will analyze a record using the mapping
@@ -283,8 +283,8 @@ type RangeMinMaxHelper = {
     >(
     condition: RangeCondition<R, M, N> & { op: op }
   ) => {
-    min: number,
-    max: number
+    min: OrePlainText,
+    max: OrePlainText
   }
 }
 
@@ -300,12 +300,12 @@ export type AnalyzedRecord<
   }
 
 const rangeMinMax: RangeMinMaxHelper = {
-  between: ({ min, max }) => ORE.encodeRangeBetween(encodeTerm(min), encodeTerm(max)),
-  lt: ({ value }) => ORE.encodeRangeLt(encodeTerm(value)),
-  lte: ({ value }) => ORE.encodeRangeLte(encodeTerm(value)),
-  gt: ({ value }) => ORE.encodeRangeGt(encodeTerm(value)),
-  gte: ({ value }) => ORE.encodeRangeGte(encodeTerm(value)),
-  eq: ({ value }) => ORE.encodeRangeEq(encodeTerm(value)),
+  between: ({ min, max }) => ORE.encodeRangeBetween(min, max),
+  lt: ({ value }) => ORE.encodeRangeLt(value),
+  lte: ({ value }) => ORE.encodeRangeLte(value),
+  gt: ({ value }) => ORE.encodeRangeGt(value),
+  gte: ({ value }) => ORE.encodeRangeGte(value),
+  eq: ({ value }) => ORE.encodeRangeEq(value),
 }
 
 type MappingAnalyzers<R> = ((record: R) => {
@@ -313,4 +313,4 @@ type MappingAnalyzers<R> = ((record: R) => {
   encryptedTerms: Buffer[];
 })[]
 
-type EncryptFn = (input: number) => Buffer
+type EncryptFn = (input: OrePlainText) => Buffer
