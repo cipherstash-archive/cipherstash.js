@@ -47,10 +47,11 @@ fn init(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
     return Ok(cx.boxed(ore));
 }
 
-fn encrypt_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
+fn encrypt(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
-    let input: u64 = cx.argument::<JsNumber>(1)?.value(&mut cx).to_bits();
+    let arg = cx.argument::<JsBuffer>(1)?;
+    let input: u64 = u64_from_buffer(&cx, arg);
 
     let result = input
         .encrypt(&mut ore.0)
@@ -60,10 +61,11 @@ fn encrypt_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     Ok(JsBuffer::external(&mut cx, result))
 }
 
-fn encrypt_num_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
+fn encrypt_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
-    let input: u64 = cx.argument::<JsNumber>(1)?.value(&mut cx).to_bits();
+    let arg = cx.argument::<JsBuffer>(1)?;
+    let input: u64 = u64_from_buffer(&cx, arg);
 
     let result = input
         .encrypt_left(&mut ore.0)
@@ -94,45 +96,84 @@ fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
     }
 }
 
-fn encode_num(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let input = cx.argument::<JsNumber>(0)?.value(&mut cx);
-    let output = f64::from_bits(OrePlaintext::<u64>::from(input).0);
-    Ok(cx.number(output))
+fn buffer_from_u64<'a>(cx: &mut FunctionContext<'a>, n: u64) -> Handle<'a, JsBuffer> {
+    let bytes = n.to_ne_bytes();
+    let mut buf = match cx.buffer(8) {
+        Ok(b) => b,
+        Err(e) => panic!("Failed to allocate buffer: {:?}", e)
+    };
+
+    cx.borrow_mut(&mut buf, |data| {
+        let slice = data.as_mut_slice::<u8>();
+        for i in 0..8 {
+            slice[i] = bytes[i];
+        };
+    });
+
+    buf
 }
 
-fn encode_string(mut cx: FunctionContext) -> JsResult<JsNumber> {
+fn u64_from_buffer<'a>(cx: &FunctionContext<'a>, buf: Handle<'a, JsBuffer>) -> u64 {
+    cx.borrow(&buf, |data| {
+        let slice = data.as_slice::<u8>();
+        if slice.len() != 8 {
+            panic!("Invalid plaintext buffer length");
+        }
+
+        let slice8: [u8; 8] = [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7]];
+        u64::from_ne_bytes(slice8)
+    })
+}
+
+fn encode_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
+    let input = cx.argument::<JsNumber>(0)?.value(&mut cx);
+    let output = OrePlaintext::<u64>::from(input).0;
+    Ok(buffer_from_u64(&mut cx, output))
+}
+
+fn encode_string(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let input = cx.argument::<JsString>(0)?.value(&mut cx);
     // Unicode normalization FTW (NFC)
     //                    👇👇👇
     let normalized = input.nfc().collect::<String>();
     let output = siphash(normalized.as_bytes());
-    Ok(cx.number(f64::from_bits(output)))
+    Ok(buffer_from_u64(&mut cx, output))
 }
 
-fn encode_buffer(mut cx: FunctionContext) -> JsResult<JsNumber> {
+fn encode_buffer(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let input = cx.argument::<JsBuffer>(0)?;
+    let mut buf = match cx.buffer(8) {
+        Ok(b) => b,
+        Err(e) => panic!("Failed to allocate buffer: {:?}", e)
+    };
 
     let result = cx.borrow(&input, |data| {
-        let slice = data.as_slice::<u8>();
-        if slice.len() != 8 {
-            return Err("Invalid buffer length");
+        let input_slice = data.as_slice::<u8>();
+        if input_slice.len() != 8 {
+            return Err("Invalid input buffer length");
         }
 
-        let slice_8_bytes: [u8; 8] = [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7]];
-        Ok(f64::from_ne_bytes(slice_8_bytes))
+        cx.borrow_mut(&mut buf, |data| {
+            let output_slice = data.as_mut_slice::<u8>();
+            for i in 0..8 {
+                output_slice[i] = input_slice[i];
+            };
+        });
+
+        Ok(buf)
     })
     .or_else(|e| cx.throw_error(e));
 
     match result {
-        Ok(num) => Ok(cx.number(num)),
+        Ok(buf) => Ok(buf),
         Err(err) => Err(err)
     }
 }
 
 fn make_range_object(mut cx: FunctionContext, min: OrePlaintext<u64>, max: OrePlaintext<u64>) -> JsResult<JsObject> {
     let obj = cx.empty_object();
-    let js_min = cx.number(f64::from_bits(min.0));
-    let js_max = cx.number(f64::from_bits(max.0));
+    let js_min = buffer_from_u64(&mut cx, min.0);
+    let js_max = buffer_from_u64(&mut cx, max.0);
     obj.set(&mut cx, "min", js_min)?;
     obj.set(&mut cx, "max", js_max)?;
     Ok(obj)
@@ -140,31 +181,31 @@ fn make_range_object(mut cx: FunctionContext, min: OrePlaintext<u64>, max: OrePl
 
 fn encode_range_lt(mut cx: FunctionContext) -> JsResult<JsObject> {
     let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_lt(OrePlaintext(value.value(&mut cx).to_bits()));
+    let OreRange{ min, max } = encode_lt(OrePlaintext::<u64>::from(value.value(&mut cx)));
     make_range_object(cx, min, max)
 }
 
 fn encode_range_lte(mut cx: FunctionContext) -> JsResult<JsObject> {
     let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_lte(OrePlaintext(value.value(&mut cx).to_bits()));
+    let OreRange{ min, max } = encode_lte(OrePlaintext::<u64>::from(value.value(&mut cx)));
     make_range_object(cx, min, max)
 }
 
 fn encode_range_gt(mut cx: FunctionContext) -> JsResult<JsObject> {
     let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_gt(OrePlaintext(value.value(&mut cx).to_bits()));
+    let OreRange{ min, max } = encode_gt(OrePlaintext::<u64>::from(value.value(&mut cx)));
     make_range_object(cx, min, max)
 }
 
 fn encode_range_gte(mut cx: FunctionContext) -> JsResult<JsObject> {
     let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_gte(OrePlaintext(value.value(&mut cx).to_bits()));
+    let OreRange{ min, max } = encode_gte(OrePlaintext::<u64>::from(value.value(&mut cx)));
     make_range_object(cx, min, max)
 }
 
 fn encode_range_eq(mut cx: FunctionContext) -> JsResult<JsObject> {
     let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_eq( OrePlaintext(value.value(&mut cx).to_bits()));
+    let OreRange{ min, max } = encode_eq(OrePlaintext::<u64>::from(value.value(&mut cx)));
     make_range_object(cx, min, max)
 }
 
@@ -172,8 +213,8 @@ fn encode_range_between(mut cx: FunctionContext) -> JsResult<JsObject> {
     let value1 = cx.argument::<JsNumber>(0)?;
     let value2 = cx.argument::<JsNumber>(1)?;
     let OreRange{ min, max } = encode_between(
-        OrePlaintext(value1.value(&mut cx).to_bits()),
-        OrePlaintext(value2.value(&mut cx).to_bits()),
+        OrePlaintext::<u64>::from(value1.value(&mut cx)),
+        OrePlaintext::<u64>::from(value2.value(&mut cx)),
     );
     make_range_object(cx, min, max)
 }
@@ -192,8 +233,8 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("encodeRangeBetween", encode_range_between)?;
 
     cx.export_function("initCipher", init)?;
-    cx.export_function("encrypt", encrypt_num)?;
-    cx.export_function("encryptLeft", encrypt_num_left)?;
+    cx.export_function("encrypt", encrypt)?;
+    cx.export_function("encryptLeft", encrypt_left)?;
 
     cx.export_function("compare", compare)?;
     Ok(())
