@@ -163,7 +163,11 @@ export const wrap
     } else if ((thrown as any)?.tag === 'NativeError') {
       return thrown as any as NativeError
     } else {
-      return { tag: 'NativeError', cause: new Error(`${thrown}`) }
+      try {
+        return { tag: 'NativeError', cause: new Error(`${JSON.stringify(thrown)}`) }
+      } catch(error) {
+        return { tag: 'NativeError', cause: new Error(`${thrown}`) }
+      }
     }
   }
 
