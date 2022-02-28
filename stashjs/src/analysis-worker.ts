@@ -44,9 +44,11 @@ if (!isMainThread) {
         }
         return Ok(result)
       } else {
+        console.error(`AnalysisFailure for ${JSON.stringify(record)}: ${JSON.stringify(encryptedSource.error)}`)
         return Err(AnalysisFailure(encryptedSource.error))
       }
     } else {
+      console.error(`cryptoAnalysisFailure for ${JSON.stringify(record)}: ${JSON.stringify(cipher.error)}`)
       return Err(AnalysisFailure(cipher.error))
     }
   }
