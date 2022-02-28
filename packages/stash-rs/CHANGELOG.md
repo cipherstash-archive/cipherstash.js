@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0]
+
+Rework the type of `OrePlainText` so that it is distinct from the types of data
+that are commonly encoded as plain texts.
+
 ## [0.1.0]
 
 First public release!
