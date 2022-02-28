@@ -63,7 +63,7 @@
     "@aws-sdk/client-kms": "^3.38.0",
     "@aws-sdk/client-sts": "^3.34.0",
     "@cfworker/json-schema": "^1.12.1",
-    "@cipherstash/ore-rs": "^0.4.1",
+    "@cipherstash/ore-rs": "^0.5.0",
     "@cipherstash/stashjs-grpc": "workspace:*",
     "@grpc/grpc-js": "^1.5.5",
     "@grpc/proto-loader": "^0.6.2",
