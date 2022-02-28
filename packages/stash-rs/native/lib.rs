@@ -51,7 +51,10 @@ fn encrypt(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
     let arg = cx.argument::<JsBuffer>(1)?;
-    let input: u64 = u64_from_buffer(&cx, arg);
+    let input: u64 = match u64_from_buffer(&cx, arg) {
+        Ok(u) => u,
+        Err(e) => return cx.throw_error(e)
+    };
 
     let result = input
         .encrypt(&mut ore.0)
@@ -65,7 +68,10 @@ fn encrypt_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
     let arg = cx.argument::<JsBuffer>(1)?;
-    let input: u64 = u64_from_buffer(&cx, arg);
+    let input: u64 = match u64_from_buffer(&cx, arg) {
+        Ok(u) => u,
+        Err(e) => return cx.throw_error(e)
+    };
 
     let result = input
         .encrypt_left(&mut ore.0)
@@ -96,11 +102,11 @@ fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
     }
 }
 
-fn buffer_from_u64<'a>(cx: &mut FunctionContext<'a>, n: u64) -> Handle<'a, JsBuffer> {
+fn buffer_from_u64<'a>(cx: &mut FunctionContext<'a>, n: u64) -> Result<Handle<'a, JsBuffer>, String> {
     let bytes = n.to_ne_bytes();
     let mut buf = match cx.buffer(8) {
         Ok(b) => b,
-        Err(e) => panic!("Failed to allocate buffer: {:?}", e)
+        Err(e) => return Err(format!("Failed to allocate buffer: {:?}", e))
     };
 
     cx.borrow_mut(&mut buf, |data| {
@@ -110,25 +116,25 @@ fn buffer_from_u64<'a>(cx: &mut FunctionContext<'a>, n: u64) -> Handle<'a, JsBuf
         };
     });
 
-    buf
+    Ok(buf)
 }
 
-fn u64_from_buffer<'a>(cx: &FunctionContext<'a>, buf: Handle<'a, JsBuffer>) -> u64 {
+fn u64_from_buffer<'a>(cx: &FunctionContext<'a>, buf: Handle<'a, JsBuffer>) -> Result<u64, String> {
     cx.borrow(&buf, |data| {
         let slice = data.as_slice::<u8>();
         if slice.len() != 8 {
-            panic!("Invalid plaintext buffer length");
+            return Err(format!("Invalid plaintext buffer length {} (expected 8)", slice.len()));
         }
 
         let slice8: [u8; 8] = [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7]];
-        u64::from_ne_bytes(slice8)
+        Ok(u64::from_ne_bytes(slice8))
     })
 }
 
 fn encode_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let input = cx.argument::<JsNumber>(0)?.value(&mut cx);
     let output = OrePlaintext::<u64>::from(input).0;
-    Ok(buffer_from_u64(&mut cx, output))
+    buffer_from_u64(&mut cx, output).or_else(|e| cx.throw_error(e))
 }
 
 fn encode_string(mut cx: FunctionContext) -> JsResult<JsBuffer> {
@@ -137,14 +143,14 @@ fn encode_string(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     //                    👇👇👇
     let normalized = input.nfc().collect::<String>();
     let output = siphash(normalized.as_bytes());
-    Ok(buffer_from_u64(&mut cx, output))
+    buffer_from_u64(&mut cx, output).or_else(|e| cx.throw_error(e))
 }
 
 fn encode_buffer(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let input = cx.argument::<JsBuffer>(0)?;
     let mut buf = match cx.buffer(8) {
         Ok(b) => b,
-        Err(e) => panic!("Failed to allocate buffer: {:?}", e)
+        Err(e) => return cx.throw_error(format!("Failed to allocate buffer: {:?}", e))
     };
 
     let result = cx.borrow(&input, |data| {
@@ -172,8 +178,8 @@ fn encode_buffer(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 
 fn make_range_object(mut cx: FunctionContext, min: OrePlaintext<u64>, max: OrePlaintext<u64>) -> JsResult<JsObject> {
     let obj = cx.empty_object();
-    let js_min = buffer_from_u64(&mut cx, min.0);
-    let js_max = buffer_from_u64(&mut cx, max.0);
+    let js_min = buffer_from_u64(&mut cx, min.0).or_else(|e| cx.throw_error(e))?;
+    let js_max = buffer_from_u64(&mut cx, max.0).or_else(|e| cx.throw_error(e))?;
     obj.set(&mut cx, "min", js_min)?;
     obj.set(&mut cx, "max", js_max)?;
     Ok(obj)
