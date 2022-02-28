@@ -68,10 +68,7 @@ fn encrypt_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let cipher = cx.argument::<BoxedCipher>(0)?;
     let ore = &mut *cipher.borrow_mut();
     let arg = cx.argument::<JsBuffer>(1)?;
-    let input: u64 = match u64_from_buffer(&cx, arg) {
-        Ok(u) => u,
-        Err(e) => return cx.throw_error(e)
-    };
+    let input: u64 = u64_from_buffer(&cx, arg).or_else(|e| return cx.throw_error(e))?;
 
     let result = input
         .encrypt_left(&mut ore.0)
