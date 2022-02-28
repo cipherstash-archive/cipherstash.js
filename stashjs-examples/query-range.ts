@@ -11,7 +11,7 @@ async function queryCollection() {
       movie => movie.year.lte(1920),
       { limit: 5, order: [{byIndex: "year", direction: "ASC"}] }
     )
-    displayResults(queryResult, "Range: Before 1960")
+    displayResults(queryResult, "Range: 1920 or earlier")
 
   } catch (err) {
     console.error(err)
