@@ -59,11 +59,19 @@ class StashOauth {
     const promise = makeOauthClient(idpHost).post('/oauth/token', querystring.stringify(params))
     const response = await fromPromise(promise, OAuthFailure)
     if (response.ok) {
-      const unpacked = this.unpackResponse(camelcaseKeys(JSON.parse(response.value.data)))
-      if (unpacked.ok) {
-        return Ok(unpacked.value)
+      if (response.value.status >= 200 && response.value.status < 400) {
+        try {
+          const unpacked = this.unpackResponse(camelcaseKeys(JSON.parse(response.value.data)))
+          if (unpacked.ok) {
+            return Ok(unpacked.value)
+          } else {
+            return Err(AuthenticationFailure(OAuthFailure(unpacked.error), 'Failed to unpack response from Auth0'))
+          }
+        } catch(error) {
+          return Err(AuthenticationFailure(OAuthFailure(error), `Failed to parse response from Auth0 (response body: ${response.value.data})`))
+        }
       } else {
-        return Err(AuthenticationFailure(OAuthFailure(unpacked.error), 'Failed to unpack response from Auth0'))
+        return Err(AuthenticationFailure(OAuthFailure(`Authentication failed - returned status ${response.value.status}`)))
       }
     } else {
       return Err(AuthenticationFailure(OAuthFailure(response.error), 'Token refresh failed'))
