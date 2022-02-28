@@ -8,10 +8,13 @@ async function queryCollection() {
     const movies = await stash.loadCollection(movieSchema)
 
     let queryResult = await movies.query(
-      movie => movie.year.lte(1920),
-      { limit: 5, order: [{byIndex: "year", direction: "ASC"}] }
+      movie => movie.year.lte(1960), {
+        aggregation: [{ofIndex: "exactTitle", aggregate: "count"}],
+        skipResults: true
+      }
     )
-    displayResults(queryResult, "Range: 1920 or earlier")
+    displayResults(queryResult, "Range: Before 1960")
+
 
   } catch (err) {
     console.error(err)
