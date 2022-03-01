@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1]
+
+Add `cargo-cp-artifact` as a dependency so that installation does not silently fail.
+
 ## [0.5.0]
 
 Rework the type of `OrePlainText` so that it is distinct from the types of data
