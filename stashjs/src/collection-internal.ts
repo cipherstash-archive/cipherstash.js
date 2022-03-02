@@ -137,7 +137,7 @@ export class CollectionInternal<
   ): AsyncResult<QueryResult<R & HasID>, DocumentQueryFailure> {
     const options = queryOptions ? queryOptions : {}
     const query = this.analyzeQuery(callback(this.schema.makeQueryBuilder()))
-    const timerStart = new Date().getTime()
+    const timerStart = process.hrtime.bigint()
 
     return convertErrorsTo(
       DocumentQueryFailure,
@@ -155,7 +155,7 @@ export class CollectionInternal<
   }
 
   private async queryWithoutConstraints(options: QueryOptions<R, M>): AsyncResult<QueryResult<R & HasID>, DocumentQueryFailure> {
-    const timerStart = new Date().getTime()
+    const timerStart = process.hrtime.bigint()
     return convertErrorsTo(
       DocumentQueryFailure,
       await sequence(

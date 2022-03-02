@@ -48,6 +48,19 @@ export function refStringToBuffer(ref: string): Buffer {
   return Buffer.from(ref, 'hex');
 }
 
+const NANOSECONDS_PER_SECOND = 1000000000n
+/**
+ * Given two timestamps produced by calling process.hrtime.bigint(), return
+ * a number (float!) representing the number of seconds (or part thereof)
+ * between those two timestamps.
+ */
+export function durationSeconds(timeStart: bigint, timeEnd: bigint): number {
+  const diff = timeEnd - timeStart
+  const seconds = diff / NANOSECONDS_PER_SECOND
+  const nanos   = diff % NANOSECONDS_PER_SECOND
+
+  return Number(seconds) + Number(nanos) / Number(NANOSECONDS_PER_SECOND)
+}
 
 /**
  * Like JSON.stringify(...) but handles bigints and prettifies the output.
