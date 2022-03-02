@@ -59,6 +59,9 @@ export class StreamWriter<
       stream.end()
 
       const message = await reply
+
+      stream.removeAllListeners()
+
       if (message.ok) {
         return Ok(message.value)
       } else {
