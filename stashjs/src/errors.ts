@@ -15,6 +15,7 @@ export type ErrorTag =
   | 'CollectionListFailure'
   | 'ConnectionFailure'
   | 'DecryptionFailure'
+  | 'DeleteProfileFailure'
   | 'DocumentDeleteFailure'
   | 'DocumentGetFailure'
   | 'DocumentGetAllFailure'
@@ -109,6 +110,9 @@ export const IOError: (cause: unknown) => IOError = (cause) => ({ tag: 'IOError'
 export type LoadProfileFailure = StashJSError<'LoadProfileFailure', MissingConfigDir | NoDefaultProfileSet | MissingProfile | MalformedConfigFile | IOError>
 export const LoadProfileFailure: (cause: LoadProfileFailure["cause"]) => LoadProfileFailure = (cause) => ({ tag: 'LoadProfileFailure', cause })
 
+export type DeleteProfileFailure = StashJSError<'DeleteProfileFailure', MissingConfigDir | MissingProfile | NoDefaultProfileSet | IOError>
+export const DeleteProfileFailure: (cause: DeleteProfileFailure["cause"]) => DeleteProfileFailure = (cause) => ({ tag: 'DeleteProfileFailure', cause })
+
 export type LoadProfileNamesFailure = StashJSError<'LoadProfileNamesFailure', MissingConfigDir | IOError>
 export const LoadProfileNamesFailure: (cause: LoadProfileNamesFailure["cause"]) => LoadProfileNamesFailure = (cause) => ({ tag: 'LoadProfileNamesFailure', cause, message: "Could not load available profile names" })
 
@@ -182,6 +186,7 @@ export const wrap
       case 'CollectionListFailure': return "Failed to list collections"
       case 'ConnectionFailure': return "Failed to connect to StashJS service"
       case 'DecryptionFailure': return "Failed to decrypt"
+      case 'DeleteProfileFailure': return "Failed to delete profile config or auth token"
       case 'DocumentDeleteFailure': return "Failed to delete document from a collection"
       case 'DocumentGetFailure': return "Failed to get document from collection"
       case 'DocumentGetAllFailure': return "Failed to get all documents from collection"
