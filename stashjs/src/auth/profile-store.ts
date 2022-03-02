@@ -4,7 +4,7 @@ import * as lockfile from 'lockfile'
 import { StashProfile } from '../stash-profile'
 import { Result, AsyncResult, Err, Ok } from '../result'
 import { OauthAuthenticationInfo } from './oauth-utils'
-import { LoadProfileNamesFailure, SetDefaultProfileFailure, SaveProfileFailure, LoadProfileFailure, MissingConfigDir, IOError, NoDefaultProfileSet, MissingProfile, MalformedConfigFile } from '../errors'
+import { LoadProfileNamesFailure, SetDefaultProfileFailure, SaveProfileFailure, LoadProfileFailure, DeleteProfileFailure, MissingConfigDir, IOError, NoDefaultProfileSet, MissingProfile, MalformedConfigFile } from '../errors'
 
 export type ConfigurationTemplate = Omit<StashConfiguration, 'keyManagement' | 'service' | 'key' > & {
   service: { host: string }
@@ -209,6 +209,23 @@ class Store implements ProfileStore {
     }
   }
 
+  public async deleteAccessToken(profileName: string): AsyncResult<void, DeleteProfileFailure> {
+    if (!fs.existsSync(dir)) {
+      return Err(DeleteProfileFailure(MissingConfigDir))
+    }
+
+    if (!fs.existsSync(this.configDir(profileName))) {
+      return Err(DeleteProfileFailure(MissingProfile(profileName)))
+    }
+
+    try {
+      fs.unlinkSync(this.accessTokenFilePath(profileName))
+      return Ok(void 1)
+    } catch (error) {
+      return Err(DeleteProfileFailure(IOError(error)))
+    }
+  }
+
   public configDir(profileName: string): string {
     return [dir, sanitiseProfileName(profileName)].join('/')
   }
@@ -277,6 +294,10 @@ class StoreWithReadWriteLock implements ProfileStore {
 
   public writeAccessToken(profileName: string, tokenInfo: OauthAuthenticationInfo) {
     return this.lock(() => this.store.writeAccessToken(profileName, tokenInfo))
+  }
+
+  public async deleteAccessToken(profileName: string): AsyncResult<void, DeleteProfileFailure> {
+    return this.lock(() => this.store.deleteAccessToken(profileName))
   }
 
   private async lock<T>(callback: () => Promise<T>): Promise<T> {
