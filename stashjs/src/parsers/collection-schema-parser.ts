@@ -1,8 +1,13 @@
 import * as D from 'io-ts/Decoder'
+import * as DE from 'io-ts/DecodeError'
+import * as E from 'fp-ts/Either'
+import { pipe } from 'fp-ts/function'
 import { Err, Ok, Result, gather } from '../result'
 import { DynamicMatchMapping, ExactMapping, ExactMappingFieldType, FieldDynamicMatchMapping, Mappings, MatchMapping, MatchMappingFieldType, RangeMapping, RangeMappingFieldType, StashRecord } from '../dsl/mappings-dsl'
 import { isRight } from 'fp-ts/lib/Either'
 import { DowncaseFilter, NgramTokenizer, StandardTokenizer, UpcaseFilter } from '../dsl/filters-and-tokenizers-dsl'
+
+export type CollectionSchemaDefinition = D.TypeOf<typeof CollectionSchemaDefDecoder>
 
 type IndexDefinitionDecoder<R extends StashRecord> = D.Decoder<object, Mappings<R>>
 
@@ -17,13 +22,13 @@ const decoder = <R extends StashRecord>(): IndexDefinitionDecoder<R> => ({
     }
 })
 
-export const TokenFilterDecoder = D.sum('kind')({
+const TokenFilterDecoder = D.sum('kind')({
   downcase: D.struct<DowncaseFilter>({ kind: D.literal('downcase') }),
   upcase: D.struct<UpcaseFilter>({ kind: D.literal('upcase') }),
   ngram: D.struct<NgramTokenizer>({ kind: D.literal('ngram'), tokenLength: D.number }),
 })
 
-export const TokenizerDecoder = D.sum('kind')({
+const TokenizerDecoder = D.sum('kind')({
   standard: D.struct<StandardTokenizer>({ kind: D.literal('standard') }),
   ngram: D.struct<NgramTokenizer>({ kind: D.literal('ngram'), tokenLength: D.number }),
 })
@@ -33,30 +38,30 @@ export const TokenizerDecoder = D.sum('kind')({
 // perform some runtime type checking (see: function
 // typecheckCollectionSchemaDefinition).
 
-export const ExactIndexDecoder = D.struct<ExactMapping<any, any>>({
+const ExactIndexDecoder = D.struct<ExactMapping<any, any>>({
   kind: D.literal("exact"),
   field: D.string
 })
 
-export const RangeIndexDecoder = D.struct<RangeMapping<any, any>>({
+const RangeIndexDecoder = D.struct<RangeMapping<any, any>>({
   kind: D.literal("range"),
   field: D.string
 })
 
-export const MatchIndexDecoder = D.struct<MatchMapping<any, any>>({
+const MatchIndexDecoder = D.struct<MatchMapping<any, any>>({
   kind: D.literal("match"),
   fields: D.array(D.string),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
 })
 
-export const DynamicMatchIndexDecoder = D.struct<DynamicMatchMapping>({
+const DynamicMatchIndexDecoder = D.struct<DynamicMatchMapping>({
   kind: D.literal("dynamic-match"),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
 })
 
-export const FieldDynamicMatchIndexDecoder = D.struct<FieldDynamicMatchMapping>({
+const FieldDynamicMatchIndexDecoder = D.struct<FieldDynamicMatchMapping>({
   kind: D.literal("field-dynamic-match"),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
@@ -65,9 +70,9 @@ export const FieldDynamicMatchIndexDecoder = D.struct<FieldDynamicMatchMapping>(
 const IndexDecoder = D.union(ExactIndexDecoder, RangeIndexDecoder, MatchIndexDecoder, DynamicMatchIndexDecoder, FieldDynamicMatchIndexDecoder)
 type Index = D.TypeOf<typeof IndexDecoder>
 
-export const IndexesDecoder = D.record(IndexDecoder)
+const IndexesDecoder = D.record(IndexDecoder)
 
-export const parseIndexDefinition: <R extends StashRecord>(document: object) => Result<Mappings<R>, string> = <R extends StashRecord>(document: object) => {
+const parseIndexDefinition: <R extends StashRecord>(document: object) => Result<Mappings<R>, string> = <R extends StashRecord>(document: object) => {
   const parsed = decoder<R>().decode(document)
   if (isRight(parsed)) {
     return Ok(parsed.right)
@@ -76,7 +81,7 @@ export const parseIndexDefinition: <R extends StashRecord>(document: object) => 
   }
 }
 
-export const FieldTypeDecoder = D.union(
+const FieldTypeDecoder = D.union(
   D.literal('string'),
   D.literal('number'),
   D.literal('bigint'),
@@ -84,29 +89,57 @@ export const FieldTypeDecoder = D.union(
   D.literal('boolean'),
 )
 
-export const TypeDecoder: D.Decoder<unknown, unknown> = D.lazy('TypeDecoder', () => D.record(D.union(FieldTypeDecoder, TypeDecoder)))
+const TypeDecoder: D.Decoder<unknown, unknown> = D.lazy('TypeDecoder', () => D.record(D.union(FieldTypeDecoder, TypeDecoder)))
 
-export const CollectionSchemaDefDecoder = D.struct({
+const CollectionSchemaDefDecoder = D.struct({
   type: TypeDecoder,
   indexes: IndexesDecoder
 })
 
-export const parseCollectionSchemaDefinition: (
-  document: object
-) => Result<CollectionSchemaDefinition, string> = (document) => {
-  const parsed = CollectionSchemaDefDecoder.decode(document)
-  if (isRight(parsed)) {
-    return Ok(parsed.right)
+export const parseCollectionSchemaJSON: (s: string) => Result<CollectionSchemaDefinition, string> = (s) => {
+  const parsedAndTypeChecked = CollectionSchemaDefinitionFromJSON.decode(s)
+  if (isRight(parsedAndTypeChecked)) {
+    return Ok(parsedAndTypeChecked.right)
   } else {
-    return Err(D.draw(parsed.left))
+    return Err(draw(parsedAndTypeChecked.left))
   }
 }
+
+const JSONDecoder: D.Decoder<string, object> = pipe(
+  D.string,
+  D.parse(s => {
+    try {
+      return D.success(JSON.parse(s))
+    } catch (err: any) {
+      return D.failure(s, `Input is not valid JSON: ${err?.message}`)
+    }
+  })
+)
+
+const CollectionSchemaDefinitionFromJSON: D.Decoder<string, CollectionSchemaDefinition> = pipe(
+  JSONDecoder,
+  D.parse(json => {
+    try {
+      return CollectionSchemaDefDecoder.decode(json)
+    } catch (err: any) {
+      return D.failure(json, `Collection schema is not valid JSON: ${err?.message}`)
+    }
+  }),
+  D.parse((cs) => {
+    const checked = typecheckCollectionSchemaDefinition(cs)
+    if (checked.ok) {
+      return D.success(checked.value)
+    } else {
+      return D.failure(cs, checked.error)
+    }
+  })
+)
 
 // This should check the index definitions against the record type to ensure it makes sense.
 // Indexed fields MUST:
 //    - exist on the type
 //    - be of a type that is compitible with the index type
-export const typecheckCollectionSchemaDefinition: (
+const typecheckCollectionSchemaDefinition: (
   def: CollectionSchemaDefinition
 ) => Result<CollectionSchemaDefinition, string> = (def) => {
   const checked = gather(Object.values(def.indexes).map(index => typecheckIndex(def.type, index)))
@@ -117,7 +150,6 @@ export const typecheckCollectionSchemaDefinition: (
   }
 }
 
-export type CollectionSchemaDefinition = D.TypeOf<typeof CollectionSchemaDefDecoder>
 
 type TypeName<T> =
   T extends string ? "string" :
@@ -156,3 +188,86 @@ function fieldExists(indexType: string, recordType: any, path: Array<string>, ex
     return Err( `index type "${indexType}" works on fields of type "${expectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
   }
 }
+
+export const PRIVATE = {
+  fieldExists,
+  typecheckIndex,
+  typecheckCollectionSchemaDefinition,
+  parseCollectionSchemaJSON,
+  parseIndexDefinition,
+  ExactIndexDecoder,
+  MatchIndexDecoder,
+  RangeIndexDecoder
+}
+
+//----------------------------------------------------------------------------
+// The following code is lifted from io-ts (MIT licensed)
+//
+// It's more generic than what we need as it supports rendering out all parse
+// errors into a tree but our parser only ever returns one error at a time.
+//----------------------------------------------------------------------------
+
+interface Tree<A> {
+  readonly value: A
+  readonly forest: ReadonlyArray<Tree<A>>
+}
+
+const empty: Array<never> = []
+
+const make = <A>(value: A, forest: ReadonlyArray<Tree<A>> = empty): Tree<A> => ({
+  value,
+  forest
+})
+
+const drawTree = (tree: Tree<string>): string => tree.value + drawForest('\n', tree.forest)
+
+const drawForest = (indentation: string, forest: ReadonlyArray<Tree<string>>): string => {
+  let r = ''
+  const len = forest.length
+  let tree: Tree<string>
+  for (let i = 0; i < len; i++) {
+    tree = forest[i]!
+    const isLast = i === len - 1
+    r += indentation + (isLast ? '└' : '├') + '─ ' + tree.value
+    r += drawForest(indentation + (len > 1 && !isLast ? '│  ' : '   '), tree.forest)
+  }
+  return r
+}
+
+const toTree: (e: DE.DecodeError<string>) => Tree<string> = DE.fold({
+  Leaf: (_input, error) => make(error),
+  Key: (key, kind, errors) => make(`${kind} property ${JSON.stringify(key)}`, toForest(errors)),
+  Index: (index, kind, errors) => make(`${kind} index ${index}`, toForest(errors)),
+  Member: (index, errors) => make(`member ${index}`, toForest(errors)),
+  Lazy: (id, errors) => make(`lazy type ${id}`, toForest(errors)),
+  Wrap: (error, errors) => make(error, toForest(errors))
+})
+
+const toForest = (e: D.DecodeError): ReadonlyArray<Tree<string>> => {
+  const stack = []
+  let focus = e
+  const res = []
+  while (true) {
+    switch (focus._tag) {
+      case 'Of':
+        res.push(toTree(focus.value))
+        const tmp = stack.pop()
+        if (tmp === undefined) {
+          return res
+        } else {
+          focus = tmp
+        }
+        break
+      case 'Concat':
+        stack.push(focus.right)
+        focus = focus.left
+        break
+    }
+  }
+}
+
+export const draw = (e: D.DecodeError): string => toForest(e).map(drawTree).join('\n')
+
+export const stringify: <A>(e: E.Either<D.DecodeError, A>) => string =
+  /*#__PURE__*/
+  E.fold(draw, (a) => JSON.stringify(a, null, 2))

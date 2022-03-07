@@ -106,4 +106,6 @@ export * as errors from './errors'
 
 export * from './result'
 
-export { typecheckCollectionSchemaDefinition } from './parsers/collection-schema-parser'
+export {
+  CollectionSchemaDefinition
+} from './parsers/collection-schema-parser'
