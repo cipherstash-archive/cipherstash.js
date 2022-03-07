@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 
 - collection name is a positional argument in create-collection command. Update help & error message to reflect that
+- schema parsing and validation are now performed in one atomic step
 
 ## Added
 
