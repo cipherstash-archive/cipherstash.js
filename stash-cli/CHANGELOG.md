@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+
+- collection name is a positional argument in create-collection command. Update help & error message to reflect that
+
 ## Added
 
 - Ability to import sources from a file in a JSON array via `stash import`

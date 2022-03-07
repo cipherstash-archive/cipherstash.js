@@ -25,7 +25,7 @@ const command: GluegunCommand = {
     const options = parameters.options
 
     if (options.help) {
-      print.info('Usage: stash create-collection [--profile <profile>] [--schema <schema>] [--help]')
+      print.info('Usage: stash create-collection <collection-name> [--profile <profile>] [--schema <schema>] [--help]')
       print.info('')
       print.info('Creates a collection in the workspace of the profile\n')
       print.info('See also https://docs.cipherstash.com/reference/stash-cli/stash-create-collection.html')
@@ -35,7 +35,7 @@ const command: GluegunCommand = {
     }
 
     if (!parameters.first) {
-      print.error(`expected parameter --name`)
+      print.error(`expected collection name`)
       process.exit(1)
     }
 
