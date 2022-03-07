@@ -1,6 +1,9 @@
 import { isRight } from 'fp-ts/lib/Either'
-import { ExactIndexDecoder, MatchIndexDecoder, parseIndexDefinition, RangeIndexDecoder, typecheckCollectionSchemaDefinition } from './collection-schema-parser'
-import { isOk } from '../result'
+import { parseCollectionSchemaJSON, PRIVATE } from './collection-schema-parser'
+
+const { ExactIndexDecoder, MatchIndexDecoder, RangeIndexDecoder, parseIndexDefinition } = PRIVATE
+
+import { isErr, isOk } from '../result'
 
 describe("Index definition: Exact", () => {
   it("parses valid index definition", () => {
@@ -80,6 +83,7 @@ describe("Index definition: Match", () => {
 })
 
 describe("Entire indexes definition", () => {
+
   it("can be parsed", () => {
     const indexes = {
       "exactTitle": { "kind": "exact", "field": "title" },
@@ -101,10 +105,21 @@ describe("Entire indexes definition", () => {
   })
 })
 
+describe("Parsing", () => {
+  it("returns an appropriate error when input is not a valid JSON string", () => {
+    const parsed = parseCollectionSchemaJSON("{ not valid JSON }")
+    if (isErr(parsed)) {
+      expect(parsed.error).toMatch(/^Input is not valid JSON: /)
+    } else {
+      fail("expected parsing to fail")
+    }
+  })
+})
+
 describe("Typechecking", () => {
   describe("when there are no type errors", () => {
     it("type checking should succeed", () => {
-      const schema = {
+      const schema = JSON.stringify({
         "type": {
           "title": "string",
           "runningTime": "number",
@@ -124,16 +139,16 @@ describe("Typechecking", () => {
             "tokenizer": { "kind": "standard" }
           }
         }
-      }
+      })
 
-      const checked = typecheckCollectionSchemaDefinition(schema)
+      const checked = parseCollectionSchemaJSON(schema)
       expect(isOk(checked)).toBe(true)
     })
   })
 
   describe("when there is a match index type error", () => {
     it("type checking should fail", () => {
-      const schema = {
+      const schema = JSON.stringify({
         "type": {
           "runningTime": "number",
         },
@@ -148,9 +163,9 @@ describe("Typechecking", () => {
             "tokenizer": { "kind": "standard" }
           }
         }
-      }
+      })
 
-      const checked = typecheckCollectionSchemaDefinition(schema)
+      const checked = parseCollectionSchemaJSON(schema)
       if (checked.ok) {
         fail("type checking should have failed")
         return
@@ -162,16 +177,47 @@ describe("Typechecking", () => {
 
   describe("when there is a range index type error", () => {
     it("type checking should fail", () => {
-      const schema = {
+      const schema = JSON.stringify({
         "type": {
           "title": "string",
         },
         "indexes": {
           "title": { "kind": "range", "field": "title" }
         }
+      })
+
+      const checked = parseCollectionSchemaJSON(schema)
+      if (checked.ok) {
+        fail("type checking should have failed")
+        return
       }
 
-      const checked = typecheckCollectionSchemaDefinition(schema)
+      expect(checked.error).toEqual(`index type "range" works on fields of type "number, bigint, date, boolean" but field "title" is of type "string"`)
+    })
+  })
+
+  describe("when there are multiple type errors", () => {
+    it("type checking should fail and we only return the first encountered error", () => {
+      const schema = JSON.stringify({
+        "type": {
+          "title": "string",
+          "runningTime": "number",
+        },
+        "indexes": {
+          "title": { "kind": "range", "field": "title" },
+          "runningTime": {
+            "kind": "match",
+            "fields": ["runningTime"],
+            "tokenFilters": [
+              { "kind": "downcase" },
+              { "kind": "ngram", "tokenLength": 3 }
+            ],
+            "tokenizer": { "kind": "standard" }
+          }
+        }
+      })
+
+      const checked = parseCollectionSchemaJSON(schema)
       if (checked.ok) {
         fail("type checking should have failed")
         return
