@@ -5,7 +5,6 @@ import * as fs from 'fs'
 import {
   StashInternal,
   CollectionSchema,
-  typecheckCollectionSchemaDefinition,
   Mappings,
   StashProfile,
   describeError,
@@ -14,8 +13,9 @@ import {
   StashRecord,
   Result,
   Err,
-  Ok
+  Ok,
 } from '@cipherstash/stashjs'
+import { parseCollectionSchemaJSON } from '@cipherstash/stashjs/dist/parsers/collection-schema-parser'
 
 const command: GluegunCommand = {
   name: 'create-collection',
@@ -101,17 +101,11 @@ function buildCollectionSchema(
         `Failed to read schema from file ${schemaFile}. Please check the file exists and you have permissions to read it.`
       )
     }
-    let schemaJSON
-    try {
-      schemaJSON = JSON.parse(content)
-    } catch (err) {
-      return Err(`Failed to parse schema JSON in ${schemaFile}. Please ensure the file is valid JSON.`)
-    }
-    const schemaDefinition = typecheckCollectionSchemaDefinition(schemaJSON)
-    if (schemaDefinition.ok) {
-      return Ok(CollectionSchema.define(collectionName).fromCollectionSchemeDefinition(schemaDefinition.value))
+    let schema = parseCollectionSchemaJSON(content)
+    if (schema.ok) {
+      return Ok(CollectionSchema.define(collectionName).fromCollectionSchemeDefinition(schema.value))
     } else {
-      return Err(`Collection schema error: ${schemaDefinition.error}`)
+      return Err(schema.error)
     }
   } else {
     return Err(`Schema file ${schemaFile} does not exist`)
