@@ -16,7 +16,7 @@
             "field": { "type": "string" }
           }
         },
-        "fullText": {
+        "match": {
           "properties": {
             "fields": { "elements": { "type": "string" }},
             "tokenFilters": {
