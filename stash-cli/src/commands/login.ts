@@ -100,6 +100,9 @@ const command: GluegunCommand = {
           .freshValue()
         if (login.ok) {
           print.info(`Login successful`)
+          print.info("")
+          print.info("If this is your first time using CipherStash, follow the Getting Started guide:")
+          print.info(`https://cipherstash.com/quickstart/?ws=${encodeURIComponent(profile.value.config.service.workspace)}`)
         } else {
           print.error(`Login failed: ${login.error.message}`)
         }
