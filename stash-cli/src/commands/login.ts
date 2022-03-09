@@ -36,6 +36,15 @@ const command: GluegunCommand = {
     if (isNewLogin(options)) {
       const basicProfile = buildBasicStashProfile(options)
 
+      // If there is an existing profile with the same name it MUST be for the same workspace.
+      const existing = await profileStore.loadProfile(basicProfile.name)
+      if (existing.ok) {
+        if (existing.value.config.service.workspace !== basicProfile.config.service.workspace) {
+          print.error(`There is already a saved profile called ${basicProfile.name} but for a different workspace. Try again, but specify a different name using the --profile option.`)
+          process.exit(1)
+        }
+      }
+
       const authInfo = await basicProfile.withFreshDataServiceCredentials(async creds => Ok(creds)).freshValue()
 
       if (!authInfo.ok) {
@@ -116,7 +125,7 @@ function buildBasicStashProfile(options: Options): StashProfile {
   const identityProviderClientId: string = options.identityProviderClientId || defaults.identityProvider.clientId
   const workspace: string = options.workspace
 
-  return new StashProfile(options.profile || workspace, {
+  return new StashProfile(options.profile || "default", {
     service: {
       workspace,
       host: serviceHost,
