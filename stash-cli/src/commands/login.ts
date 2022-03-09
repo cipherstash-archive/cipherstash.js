@@ -28,23 +28,22 @@ const command: GluegunCommand = {
     const options = parameters.options
 
     if (options.help) {
-      // TODO: It would be neat if we could read this summary from the docs directly
-      print.info('Usage: stash login [--workspace <workspace>] [--profile <profile>] [--help]')
-      print.info('')
-      print.info('Login to the given workspace\n')
-      print.info('If this is a first time login, you must provide a workspace option')
-      print.info('')
-      print.info('    stash login --workspace ABCD1234')
-      print.info('')
-      print.info('Otherwise, stash will attempt to perform a fresh login with your default profile')
-      print.info('See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html')
-      print.info('')
-      process.exit(1)
+      printHelp(toolbox)
+      process.exit(0)
       return
     }
 
     if (isNewLogin(options)) {
       const basicProfile = buildBasicStashProfile(options)
+
+      // If there is an existing profile with the same name it MUST be for the same workspace.
+      const existing = await profileStore.loadProfile(basicProfile.name)
+      if (existing.ok) {
+        if (existing.value.config.service.workspace !== basicProfile.config.service.workspace) {
+          print.error(`There is already a saved profile called ${basicProfile.name} but for a different workspace. Try again, but specify a different name using the --profile option.`)
+          process.exit(1)
+        }
+      }
 
       const authInfo = await basicProfile.withFreshDataServiceCredentials(async creds => Ok(creds)).freshValue()
 
@@ -104,6 +103,10 @@ const command: GluegunCommand = {
         } else {
           print.error(`Login failed: ${login.error.message}`)
         }
+      } else {
+        print.error("No default profile found. If this is a first time login, then the --workspace option is required.")
+        printHelp(toolbox)
+        process.exit(1)
       }
     }
   }
@@ -122,7 +125,7 @@ function buildBasicStashProfile(options: Options): StashProfile {
   const identityProviderClientId: string = options.identityProviderClientId || defaults.identityProvider.clientId
   const workspace: string = options.workspace
 
-  return new StashProfile(options.profile || workspace, {
+  return new StashProfile(options.profile || "default", {
     service: {
       workspace,
       host: serviceHost,
@@ -166,6 +169,21 @@ function buildCompletedStashProfile(basicProfile: StashProfile, response: AxiosR
       }
     }
   })
+}
+
+function printHelp(toolbox: Toolbox): void {
+  const { print } = toolbox
+  // TODO: It would be neat if we could read this summary from the docs directly
+  print.info('Usage: stash login [--workspace <workspace>] [--profile <profile>] [--help]')
+  print.info('')
+  print.info('Login to the given workspace\n')
+  print.info('If this is a first time login, you must provide a workspace option')
+  print.info('')
+  print.info('    stash login --workspace ABCD1234')
+  print.info('')
+  print.info('Otherwise, stash will attempt to perform a fresh login with your default profile')
+  print.info('See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html')
+  print.info('')
 }
 
 export default command
