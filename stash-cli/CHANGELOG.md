@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Changed
+
+- when creating a new profile, if --profile is not specified, use the name "default".
+- if the name of a new profile clashes with the name of a saved profile, omly allow the write if and only if the workspace IDs are identical
+
 ## Fixed
 
 - collection name is a positional argument in create-collection command. Update help & error message to reflect that
