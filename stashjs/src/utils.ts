@@ -94,7 +94,11 @@ export function describeError(err: any): string {
   if (err instanceof Error) {
     return err.message
   } else {
-    return JSON.stringify(err)
+    try {
+      return JSON.stringify(err)
+    } catch {
+      return `${err}`
+    }
   }
 }
 
