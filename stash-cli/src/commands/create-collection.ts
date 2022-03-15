@@ -103,7 +103,7 @@ function buildCollectionSchema(
     }
     let schema = parseCollectionSchemaJSON(content)
     if (schema.ok) {
-      return Ok(CollectionSchema.define(collectionName).fromCollectionSchemeDefinition(schema.value))
+      return Ok(CollectionSchema.define(collectionName).fromCollectionSchemaDefinition(schema.value))
     } else {
       return Err(schema.error)
     }

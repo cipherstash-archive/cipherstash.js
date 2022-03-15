@@ -70,7 +70,7 @@ export class CollectionSchema<
         )
       },
 
-      fromCollectionSchemeDefinition(def: CollectionSchemaDefinition) {
+      fromCollectionSchemaDefinition(def: CollectionSchemaDefinition) {
         type M = Mappings<R>
         type MM = MappingsMeta<M>
         return new CollectionSchema<R, M, MM>(
