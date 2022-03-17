@@ -161,6 +161,8 @@ class StashOauth {
           // see: https://datatracker.ietf.org/doc/html/rfc8628#section-3.5
           interval += 5
           await pause(interval)
+        } else if (response.value.data?.error ===  "invalid_grant") {
+          return Err(AuthenticationFailure(OAuthFailure(response.value.data?.error_description)))
         }
       } else {
         return Err(AuthenticationFailure(OAuthFailure(response.error)))
