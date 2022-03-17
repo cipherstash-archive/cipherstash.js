@@ -65,7 +65,12 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
       )
 
       if (pollingInfo.ok) {
-        console.info(`Visit ${pollingInfo.value.verificationUri} to complete authentication`)
+        console.info(`Visit ${pollingInfo.value.verificationUri} to complete authentication by following the below steps:`)
+        console.info("")
+        console.info(`1. Verify that this code matches the code in your browser`)
+        console.info(generateUserCodeDisplay(pollingInfo.value.userCode))
+        console.info(`2. If the codes match, click on the confirm button in the browser`)
+        console.info("")
         console.info('Waiting for authentication...')
 
         if (!isInteractive()) {
@@ -99,5 +104,29 @@ function isInteractive(): boolean {
   return (
     process.env['SSH_CLIENT'] !== undefined ||
     process.env['SSH_TTY'] !== undefined
+  )
+}
+
+function generateUserCodeDisplay(userCode: string): string {
+
+  const outerLine: string = userCode.split("").map(_ => "#").join("")
+  const whiteSpace: string = userCode.split("").map(_ => " ").join("")
+
+  const outerBorder: string = `#${outerLine}${outerLine}${outerLine}#`
+  const leftBorder: string = `#${whiteSpace}`
+  const rightBorder: string = `${whiteSpace}#`
+
+  const emptyLine: string = `${leftBorder}${whiteSpace}${rightBorder}`
+  const userCodeLine = `${leftBorder}${userCode}${rightBorder}`
+
+  return (
+    `
+              ${outerBorder}
+              ${emptyLine}
+              ${userCodeLine}
+              ${emptyLine}
+              ${outerBorder}
+              
+        `
   )
 }
