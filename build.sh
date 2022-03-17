@@ -17,7 +17,7 @@ subproject_setup() {
 }
 
 subproject_build() {
-  pnpm install --filter @cipherstash/*
+  pnpm install --frozen-lockfile --filter @cipherstash/*
   pnpm build --filter @cipherstash/*
 }
 
