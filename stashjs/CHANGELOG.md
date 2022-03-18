@@ -6,13 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-##Fixed 
+##Fixed
 
 - Schema parsing and validation are now performed in one atomic step
 
 ## Changed
 
 - StashJS now requires NodeJS version >= 16
+- Improved error rendering on the console
 
 ## [0.3.0]
 
