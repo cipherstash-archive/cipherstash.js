@@ -19,7 +19,7 @@ const command: GluegunCommand = {
       }
 
       if (!profile.ok) {
-        print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
+        print.error(describeError(profile.error))
         process.exit(1)
         return
       }
@@ -36,7 +36,9 @@ const command: GluegunCommand = {
         })
       }
     } catch (error) {
-      print.error(`Could not list collections. Reason: "${describeError(error)}"`)
+      print.error(describeError(error))
+      process.exit(1)
+      return
     }
   }
 }

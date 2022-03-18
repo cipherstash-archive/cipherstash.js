@@ -11,7 +11,7 @@ import { makeRefGenerator } from './crypto/cipher'
 import { KMS } from '@aws-sdk/client-kms'
 import { StashProfile } from './stash-profile'
 import { profileStore } from './auth/profile-store'
-import { AsyncResult, sequence, gather, Err, Ok, Unit, convertErrorsTo, parallel, toAsync, gatherTuple2 } from './result'
+import { AsyncResult, sequence, gather, Err, Ok, Unit, convertErrorsTo, parallel, toAsync, gatherTuple2, convertAsyncErrorsTo } from './result'
 import { CollectionCreationFailure, ConnectionFailure, DecryptionFailure, AuthenticationFailure, EncryptionFailure, CollectionLoadFailure, CollectionListFailure, CollectionDeleteFailure, LoadProfileFailure } from './errors'
 
 import { makeAsyncResultApiWrapper } from './stash-api-async-result-wrapper'
@@ -163,30 +163,27 @@ export class StashInternal {
   ): AsyncResult<CollectionInternal<R, M, MM>, DecryptionFailure> {
     const { id, metadata, indexes: encryptedMappings } = infoReply
 
-    return convertErrorsTo(
-      DecryptionFailure,
-      await sequence(
-        parallel(
-          _ => this.decryptCollectionMetadata(metadata!),
-          _ => this.decryptMappings(encryptedMappings!)
-        ),
-        ([_, collectionMeta, storedMappings]) =>
-          Ok.Async([
-            collectionMeta,
-            this.deserializeMappings<M>(storedMappings),
-            this.deserializeMappingsMeta<MM>(storedMappings)
-          ] as const)
-        ,
-        ([collectionMeta, mappings, mappingsMeta]) => Ok.Async(
-          new CollectionInternal<R, M, MM>(
-            this,
-            idBufferToString(id!),
-            refBufferToString(infoReply.ref!),
-            new CollectionSchema(collectionMeta.name, mappings, mappingsMeta)
-          )
+    return await sequence(
+      parallel(
+        _ => this.decryptCollectionMetadata(metadata!),
+        _ => this.decryptMappings(encryptedMappings!)
+      ),
+      ([_, collectionMeta, storedMappings]) =>
+        Ok.Async([
+          collectionMeta,
+          this.deserializeMappings<M>(storedMappings),
+          this.deserializeMappingsMeta<MM>(storedMappings)
+        ] as const)
+      ,
+      ([collectionMeta, mappings, mappingsMeta]) => Ok.Async(
+        new CollectionInternal<R, M, MM>(
+          this,
+          idBufferToString(id!),
+          refBufferToString(infoReply.ref!),
+          new CollectionSchema(collectionMeta.name, mappings, mappingsMeta)
         )
-      )(Unit)
-    )
+      )
+    )(Unit)
   }
 
   private deserializeMappings<M>(storedMappings: Array<StoredMapping>): M {
@@ -204,22 +201,19 @@ export class StashInternal {
   }
 
   private async decryptMappings(encryptedMappings: V1.Index.IndexOutput[]): AsyncResult<Array<StoredMapping>, DecryptionFailure> {
-    return convertErrorsTo(
-      DecryptionFailure,
-      await sequence(
-        _ => this.sourceDataCipherSuiteMemo.freshValue(),
-        async cipher => gather(await Promise.all(encryptedMappings.map(async em => gatherTuple2([await cipher.decrypt<StoredMapping>(em.settings!), Ok(em.id!)])))),
-        decrypted => Ok.Async(decrypted.map(([{ mapping, meta }, indexId]) => ({
-          mapping,
-          meta: {
-            ...meta,
-            $indexId: idBufferToString(indexId),
-            $prfKey: Buffer.from(meta!.$prfKey, 'hex'),
-            $prpKey: Buffer.from(meta!.$prpKey, 'hex'),
-          }
-        })))
-      )(Unit)
-    )
+    return await sequence(
+      _ => convertAsyncErrorsTo(DecryptionFailure, this.sourceDataCipherSuiteMemo.freshValue()),
+      async cipher => gather(await Promise.all(encryptedMappings.map(async em => gatherTuple2([await cipher.decrypt<StoredMapping>(em.settings!), Ok(em.id!)])))),
+      decrypted => Ok.Async(decrypted.map(([{ mapping, meta }, indexId]) => ({
+        mapping,
+        meta: {
+          ...meta,
+          $indexId: idBufferToString(indexId),
+          $prfKey: Buffer.from(meta!.$prfKey, 'hex'),
+          $prpKey: Buffer.from(meta!.$prpKey, 'hex'),
+        }
+      })))
+    )(Unit)
   }
 
   private async encryptMappings<
@@ -270,26 +264,19 @@ export class StashInternal {
   }
 
   private async decryptCollectionMetadata(buffer: Buffer): AsyncResult<CollectionMetadata, DecryptionFailure> {
-    return convertErrorsTo(
-      DecryptionFailure,
-      await sequence(
-        _ => this.sourceDataCipherSuiteMemo.freshValue(),
-        cipher => cipher.decrypt<CollectionMetadata>(buffer)
-      )(Unit)
-    )
+    return await sequence(
+      _ => convertAsyncErrorsTo(DecryptionFailure, this.sourceDataCipherSuiteMemo.freshValue()),
+      cipher => cipher.decrypt<CollectionMetadata>(buffer)
+    )(Unit)
   }
 
   private async decryptResponses(res: V1.Collection.ListReply): AsyncResult<Array<CollectionMetadata>, DecryptionFailure> {
-    return convertErrorsTo(
-      DecryptionFailure,
-      await sequence(
-        _ => this.sourceDataCipherSuiteMemo.freshValue(),
-        async cipher => Ok(await Promise.all(res.collections!.map((info) => cipher.decrypt<CollectionMetadata>(info!.metadata!)))),
-        decryptions => toAsync(gather(decryptions))
-      )(Unit)
-    )
+    return await sequence(
+      _ => convertAsyncErrorsTo(DecryptionFailure, this.sourceDataCipherSuiteMemo.freshValue()),
+      async cipher => Ok(await Promise.all(res.collections!.map((info) => cipher.decrypt<CollectionMetadata>(info!.metadata!)))),
+      decryptions => toAsync(gather(decryptions))
+    )(Unit)
   }
-
 }
 
 type StoredMapping = {

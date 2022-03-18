@@ -310,13 +310,25 @@ export function parallel3<V0, V1, V2, V3, E1, E2, E3>(
  * @returns a new result value with the desired a error type
  */
 export function convertErrorsTo<V, E1, E2>(
-  errorConstructor: (cause: E1) => E2,
+  errorConstructor: (rejection: E1) => E2,
   result: Result<V, E1>
 ): Result<V, E2> {
   if (result.ok) {
     return result
   } else {
     return Err(errorConstructor(result.error))
+  }
+}
+
+export async function convertAsyncErrorsTo<V, E1, E2>(
+  errorConstructor: (rejection: E1) => E2,
+  result: AsyncResult<V, E1>
+): AsyncResult<V, E2> {
+  const finalResult = await result
+  if (finalResult.ok) {
+    return Ok(finalResult.value)
+  } else {
+    return Err(errorConstructor(finalResult.error))
   }
 }
 
@@ -332,23 +344,23 @@ export function convertErrorsTo<V, E1, E2>(
  */
 export async function fromPromise<V, E>(
   promise: Promise<V>,
-  errorConstructor: (cause: unknown) => E
+  errorConstructor: (rejection: any) => E
 ): AsyncResult<V, E> {
   try {
     return Ok(await promise)
-  } catch(err: unknown) {
+  } catch(err: any) {
     return Err(errorConstructor(err))
   }
 }
 
 export function fromPromiseFn1<V, E, T>(
   fn: (arg: T) => Promise<V>,
-  errorConstructor: (cause: unknown) => E
+  errorConstructor: (rejection: any) => E
 ): (arg: T) => AsyncResult<V, E> {
   return async (arg: T) => {
     try {
       return Ok(await fn(arg))
-    } catch(err: unknown) {
+    } catch(err: any) {
       return Err(errorConstructor(err))
     }
   }
@@ -356,12 +368,12 @@ export function fromPromiseFn1<V, E, T>(
 
 export function fromPromiseFn2<V, E, T1, T2>(
   fn: (arg1: T1, arg2: T2) => Promise<V>,
-  errorConstructor: (cause: unknown) => E
+  errorConstructor: (rejection: any) => E
 ): (arg1: T1, arg2: T2) => AsyncResult<V, E> {
   return async (arg1: T1, arg2: T2) => {
     try {
       return Ok(await fn(arg1, arg2))
-    } catch(err: unknown) {
+    } catch(err: any) {
       return Err(errorConstructor(err))
     }
   }
