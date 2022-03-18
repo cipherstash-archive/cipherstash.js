@@ -12,7 +12,7 @@ export class CollectionSchema<
   R extends StashRecord,
   M extends Mappings<R>,
   MM extends MappingsMeta<M>
-> {
+  > {
 
   /**
    * Metadata about the Mappings, such as encrypted indexID and encryption keys.
@@ -33,7 +33,7 @@ export class CollectionSchema<
    * // or
    * const schema = CollectionSchema.define<Employee>("employees").notIndexed()
    * // or
-   * const schema = CollectionSchema.define<Employee>("employees").fromJSON({ ... })
+   * const schema = CollectionSchema.define<Employee>("employees").fromCollectionSchemaDefinition({ ... })
    * ```
    *
    * @param collectionName the name of the collection
@@ -115,7 +115,7 @@ export class CollectionSchema<
    * @param callback a user-supplied callback that can build a Query using the query DSL.
    * @returns a Query object
    */
-  public buildQuery(callback: QueryBuilderCallback<R, M>): Query<R, M>  {
+  public buildQuery(callback: QueryBuilderCallback<R, M>): Query<R, M> {
     return callback(this.makeQueryBuilder())
   }
 
@@ -155,5 +155,5 @@ export class CollectionSchema<
 export type QueryBuilderCallback<
   R extends StashRecord,
   M extends Mappings<R>
-> =
+  > =
   ($: QueryBuilder<R, M>) => Query<R, M>
