@@ -2,7 +2,7 @@ import https from 'https'
 import axios, { AxiosInstance } from 'axios'
 import querystring from 'querystring'
 import jws from 'jws'
-import { AuthenticationFailure, OAuthFailure } from '../errors'
+import { AuthenticationFailure, OAuthFailure, PlainError, wrap } from '../errors'
 import { AsyncResult, Ok, Err, Result, fromPromise } from '../result'
 
 const SCOPES = "collection.create collection.delete collection.info collection.list document.put document.delete document.get document.query"
@@ -39,10 +39,10 @@ class StashOauth {
       if (response.value.status >= 200 && response.value.status < 400) {
         return Ok(camelcaseKeys(response.value.data) as OauthAuthenticationInfo)
       } else {
-        return Err(AuthenticationFailure(OAuthFailure(`Authentication failed - returned status ${response.value.status}`)))
+        return Err(AuthenticationFailure(OAuthFailure(PlainError(`An error status was returned: ${response.value.status}`))))
       }
     } else {
-      return Err(AuthenticationFailure(OAuthFailure(response.error)))
+      return Err(AuthenticationFailure(response.error))
     }
   }
 
@@ -56,7 +56,7 @@ class StashOauth {
       refresh_token: refreshToken,
       client_id: clientId
     }
-    const promise = makeOauthClient(idpHost).post('/oauth/token', querystring.stringify(params))
+    const promise = makeOauthClient(idpHost).post<string>('/oauth/token', querystring.stringify(params))
     const response = await fromPromise(promise, OAuthFailure)
     if (response.ok) {
       if (response.value.status >= 200 && response.value.status < 400) {
@@ -65,23 +65,23 @@ class StashOauth {
           if (unpacked.ok) {
             return Ok(unpacked.value)
           } else {
-            return Err(AuthenticationFailure(OAuthFailure(unpacked.error), 'Failed to unpack response from Auth0'))
+            return Err(AuthenticationFailure(unpacked.error, 'Failed to unpack response from Auth0'))
           }
         } catch(error) {
-          return Err(AuthenticationFailure(OAuthFailure(error), `Failed to parse response from Auth0 (response body: ${response.value.data})`))
+          return Err(AuthenticationFailure(OAuthFailure(PlainError(`Failed to parse response from Auth0 (response body: ${response.value.data})`))))
         }
       } else {
-        return Err(AuthenticationFailure(OAuthFailure(`Authentication failed - returned status ${response.value.status}`)))
+        return Err(AuthenticationFailure(OAuthFailure(PlainError(`Authentication failed - returned status ${response.value.status}`))))
       }
     } else {
-      return Err(AuthenticationFailure(OAuthFailure(response.error), 'Token refresh failed'))
+      return Err(AuthenticationFailure(response.error, 'Token refresh failed'))
     }
   }
 
   public unpackResponse(json: any): Result<OauthAuthenticationInfo, OAuthFailure> {
     json = camelcaseKeys(json)
     if (!json['accessToken'] || !json['refreshToken']) {
-      return Err(OAuthFailure(`Unexpected reponse payload: ${JSON.stringify(json)}`))
+      return Err(OAuthFailure(PlainError(`Unexpected reponse payload: ${JSON.stringify(json)}`)))
     }
 
     try {
@@ -92,7 +92,7 @@ class StashOauth {
         expiry: decoded.payload.exp
       })
     } catch (err: unknown) {
-      return Err(OAuthFailure(err))
+      return Err(OAuthFailure(wrap(err)))
     }
   }
 
@@ -124,10 +124,10 @@ class StashOauth {
 
         return Ok({ deviceCode, userCode, verificationUri, interval })
       } else {
-        return Err(AuthenticationFailure(OAuthFailure(response.value.data)))
+        return Err(AuthenticationFailure(OAuthFailure(wrap(response.value.data))))
       }
     } else {
-      return Err(AuthenticationFailure(OAuthFailure(response.error)))
+      return Err(AuthenticationFailure(response.error))
     }
   }
 
@@ -165,7 +165,7 @@ class StashOauth {
           return Err(AuthenticationFailure(OAuthFailure(response.value.data?.error_description)))
         }
       } else {
-        return Err(AuthenticationFailure(OAuthFailure(response.error)))
+        return Err(AuthenticationFailure(response.error))
       }
     }
   }

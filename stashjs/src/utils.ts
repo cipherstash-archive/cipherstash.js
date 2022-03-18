@@ -1,6 +1,7 @@
 import { v4 as uuidv4, parse as parseUUID, stringify as stringifyUUID } from 'uuid'
 import stringifyObject from 'stringify-object'
 import { unreachable } from './type-utils'
+import { toErrorMessage } from './errors'
 
 export function normalizeId(id: string): Uint8Array
 export function normalizeId(id: Buffer): Uint8Array
@@ -91,15 +92,7 @@ function objectify(item: any): any {
 }
 
 export function describeError(err: any): string {
-  if (err instanceof Error) {
-    return err.message
-  } else {
-    try {
-      return JSON.stringify(err)
-    } catch {
-      return `${err}`
-    }
-  }
+  return toErrorMessage(err)
 }
 
 export function inspect<T>(value: T, label?: string): T {
