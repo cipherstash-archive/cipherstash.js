@@ -4,7 +4,7 @@ import * as lockfile from 'lockfile'
 import { StashProfile } from '../stash-profile'
 import { Result, AsyncResult, Err, Ok } from '../result'
 import { OauthAuthenticationInfo } from './oauth-utils'
-import { LoadProfileNamesFailure, SetDefaultProfileFailure, SaveProfileFailure, LoadProfileFailure, DeleteProfileFailure, MissingConfigDir, IOError, NoDefaultProfileSet, MissingProfile, MalformedConfigFile } from '../errors'
+import { LoadProfileNamesFailure, SetDefaultProfileFailure, SaveProfileFailure, LoadProfileFailure, DeleteProfileFailure, MissingConfigDir, IOError, NoDefaultProfileSet, MissingProfile, MalformedConfigFile, wrap } from '../errors'
 
 export type ConfigurationTemplate = Omit<StashConfiguration, 'keyManagement' | 'service' | 'key' > & {
   service: { host: string }
@@ -82,7 +82,7 @@ class Store implements ProfileStore {
 
   public async loadProfileNames(): AsyncResult<Array<string>, LoadProfileNamesFailure> {
     if (!fs.existsSync(dir)) {
-      return Err(LoadProfileNamesFailure(MissingConfigDir))
+      return Err(LoadProfileNamesFailure(MissingConfigDir()))
     }
 
     try {
@@ -93,13 +93,13 @@ class Store implements ProfileStore {
 
       return Ok(profileNames)
     } catch (error) {
-      return Err(LoadProfileNamesFailure(IOError(error)))
+      return Err(LoadProfileNamesFailure(IOError(wrap(error))))
     }
   }
 
   public async setDefaultProfile(profile: StashProfile): AsyncResult<void, SetDefaultProfileFailure> {
     if (!fs.existsSync(dir)) {
-      return Err(SetDefaultProfileFailure(MissingConfigDir))
+      return Err(SetDefaultProfileFailure(MissingConfigDir()))
     }
 
     try {
@@ -107,17 +107,17 @@ class Store implements ProfileStore {
       await fs.promises.writeFile(this.configFilePath(), stringify({ defaultProfile: sanitiseProfileName(profile.name) }))
       return Ok(void 0)
     } catch (error) {
-      return Err(SetDefaultProfileFailure(IOError(error)))
+      return Err(SetDefaultProfileFailure(IOError(wrap(error))))
     }
   }
 
   public async loadDefaultProfile(): AsyncResult<StashProfile, LoadProfileFailure> {
     if (!fs.existsSync(dir)) {
-      return Err(LoadProfileFailure(MissingConfigDir))
+      return Err(LoadProfileFailure(MissingConfigDir()))
     }
 
     if (!fs.existsSync(this.configFilePath())) {
-      return Err(LoadProfileFailure(NoDefaultProfileSet))
+      return Err(LoadProfileFailure(NoDefaultProfileSet()))
     }
 
     try {
@@ -127,19 +127,19 @@ class Store implements ProfileStore {
         if (defaultProfileName) {
           return this.loadProfile(defaultProfileName)
         } else {
-          return Err(LoadProfileFailure(NoDefaultProfileSet))
+          return Err(LoadProfileFailure(NoDefaultProfileSet()))
         }
       } else {
         return Err(LoadProfileFailure(config.error))
       }
     } catch (error) {
-      return Err(LoadProfileFailure(IOError(error)))
+      return Err(LoadProfileFailure(IOError(wrap(error))))
     }
   }
 
   public async loadProfile(profileName: string): AsyncResult<StashProfile, LoadProfileFailure> {
     if (!fs.existsSync(dir)) {
-      return Err(LoadProfileFailure(MissingConfigDir))
+      return Err(LoadProfileFailure(MissingConfigDir()))
     }
 
     if (!fs.existsSync(this.profileConfigFilePath(profileName))) {
@@ -155,7 +155,7 @@ class Store implements ProfileStore {
 
       return Ok(new StashProfile(sanitiseProfileName(profileName), config.value))
     } catch (error) {
-      return Err(LoadProfileFailure(IOError(error)))
+      return Err(LoadProfileFailure(IOError(wrap(error))))
     }
   }
 
@@ -174,7 +174,7 @@ class Store implements ProfileStore {
 
       return Ok(void 0)
     } catch (error) {
-      return Err(SaveProfileFailure(IOError(error)))
+      return Err(SaveProfileFailure(IOError(wrap(error))))
     }
   }
 
@@ -205,13 +205,13 @@ class Store implements ProfileStore {
 
       return Ok(void 0)
     } catch (error) {
-      return Err(SaveProfileFailure(IOError(error)))
+      return Err(SaveProfileFailure(IOError(wrap(error))))
     }
   }
 
   public async deleteAccessToken(profileName: string): AsyncResult<void, DeleteProfileFailure> {
     if (!fs.existsSync(dir)) {
-      return Err(DeleteProfileFailure(MissingConfigDir))
+      return Err(DeleteProfileFailure(MissingConfigDir()))
     }
 
     if (!fs.existsSync(this.configDir(profileName))) {
@@ -222,7 +222,7 @@ class Store implements ProfileStore {
       fs.unlinkSync(this.accessTokenFilePath(profileName))
       return Ok(void 1)
     } catch (error) {
-      return Err(DeleteProfileFailure(IOError(error)))
+      return Err(DeleteProfileFailure(IOError(wrap(error))))
     }
   }
 

@@ -1,4 +1,4 @@
-import { toErrorMessage, wrap } from "./errors"
+import { PlainError, toErrorMessage, wrap } from "./errors"
 
 describe("errors", () => {
   describe("NativeError", () => {
@@ -17,19 +17,24 @@ describe("errors", () => {
 
       expect(messageLines[0]).toMatch("[JSError: Error] (Something went wrong!)")
 
+      expect(messageLines.length).toBeGreaterThan(3)
       for (let index = 2; index < messageLines.length; index++) {
         expect(messageLines[index]).toMatch(/\s+at\s/)
       }
     })
   })
 
-  // TODO: capture file & line numbers for non-native errors
+  describe("Non-native errors", () => {
+    test("renders as an error with source code location and line number", () => {
+      let error = PlainError("This is a test error")
+      let messageLines = toErrorMessage(error).split(/\n/)
+
+      expect(messageLines[0]).toMatch("This is a test error")
+      expect(messageLines[0]).toMatch(/src\/errors.test.ts:\d+/)
+    })
+  })
 })
 
 function makeError(): any {
-  try {
-    throw new Error("Something went wrong!")
-  } catch (err) {
-    return err
-  }
+  return new Error("Something went wrong!")
 }
