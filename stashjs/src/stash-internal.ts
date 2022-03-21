@@ -15,6 +15,7 @@ import { AsyncResult, sequence, gather, Err, Ok, Unit, convertErrorsTo, parallel
 import { CollectionCreationFailure, ConnectionFailure, DecryptionFailure, AuthenticationFailure, EncryptionFailure, CollectionLoadFailure, CollectionListFailure, CollectionDeleteFailure, LoadProfileFailure } from './errors'
 
 import { makeAsyncResultApiWrapper } from './stash-api-async-result-wrapper'
+import { getUserAgent } from './user-agent'
 
 export type ProfileOptions = Readonly<{
   profileName?: string
@@ -77,7 +78,10 @@ export class StashInternal {
     }).freshValue()
 
     if (refGenerator.ok) {
-      const stub = V1.connect(profile.value.config.service.host, profile.value.config.service.port)
+      const stub = V1.connect(profile.value.config.service.host, profile.value.config.service.port, {
+        userAgent: getUserAgent()
+      })
+
       return Ok(
         new StashInternal(
           stub,
