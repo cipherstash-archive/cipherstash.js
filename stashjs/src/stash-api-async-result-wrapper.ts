@@ -8,6 +8,7 @@ import { grpcMetadata } from "./auth/grpc-metadata"
 import { stringify } from "./utils"
 import { Memo } from './auth/auth-strategy'
 import { StashProfile } from './stash-profile'
+import { logger, isDebugLoggingEnabled } from "./logger"
 
 /**
  * Creates a wrapper for the generated GRPC API that:
@@ -53,7 +54,7 @@ const secureWith =
 
 const requestLogger =
   (endpoint: string) => {
-    if (process.env['CS_DEBUG'] ===  'yes') {
+    if (isDebugLoggingEnabled()) {
       return <Request, Response>(fn: (request: Request) => AsyncResult<Response, GRPCError>): (request: Request) => AsyncResult<Response, GRPCError> =>
         async (request) => {
           const timerBegin = process.hrtime.bigint()
@@ -61,9 +62,9 @@ const requestLogger =
           const timerEnd = process.hrtime.bigint()
           const durationMS = Number((timerEnd - timerBegin) / 1000000n)
           if (response.ok) {
-            console.log(endpoint, "OK", stringify({ durationMS, request, response: response.value }))
+            logger.debug(endpoint, "OK", stringify({ durationMS, request, response: response.value }))
           } else {
-            console.log(endpoint, "ERR", stringify({ durationMS, request, response: response.error }))
+            logger.debug(endpoint, "ERR", stringify({ durationMS, request, response: response.error }))
           }
           return response
         }
