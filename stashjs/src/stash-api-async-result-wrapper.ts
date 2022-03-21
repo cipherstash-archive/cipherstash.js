@@ -62,9 +62,9 @@ const requestLogger =
           const timerEnd = process.hrtime.bigint()
           const durationMS = Number((timerEnd - timerBegin) / 1000000n)
           if (response.ok) {
-            logger.debug(endpoint, "OK", stringify({ durationMS, request, response: response.value }))
+            logger.debug(`${endpoint} OK ${stringify({ durationMS, request, response: response.value })}`);
           } else {
-            logger.debug(endpoint, "ERR", stringify({ durationMS, request, response: response.error }))
+            logger.debug(`${endpoint} ERR ${stringify({ durationMS, request, response: response.error })}`);
           }
           return response
         }
