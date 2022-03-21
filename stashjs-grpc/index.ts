@@ -53,9 +53,15 @@ const grpcDefinition = protoLoader.loadFileDescriptorSetFromBuffer(
 const APIProto = (gRPC.loadPackageDefinition(grpcDefinition) as unknown as ProtoGrpcType.ProtoGrpcType).stash
 
 export namespace V1  {
-  export const connect = function(host: string, port: number = 443) {
+  export type ConnectOptions = {
+    userAgent?: string
+  }
+
+  export const connect = function(host: string, port: number = 443, options: ConnectOptions) {
     // TODO: ensure that the SSL cert is verified
-    return new APIProto.GRPC.V1.API(`${host}:${port}`, gRPC.credentials.createSsl())
+    return new APIProto.GRPC.V1.API(`${host}:${port}`, gRPC.credentials.createSsl(), {
+      "grpc.secondary_user_agent": options?.userAgent
+    })
   }
 
   export type APIClient = API.APIClient
