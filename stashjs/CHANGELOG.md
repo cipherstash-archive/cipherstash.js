@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 
 - Send StashJS version, OS, arch and whether TypeScript is being used as part of user-agent
+- When importing `@cipherstash/stashjs` warn if project doesn't use TypeScript
 
 ## [0.3.4]
 
