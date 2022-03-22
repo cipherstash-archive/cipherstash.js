@@ -105,6 +105,15 @@ export const parseCollectionSchemaJSON: (s: string) => Result<CollectionSchemaDe
   }
 }
 
+export const generateSchemaDefinitionFromJSON = async (s: string): Promise<CollectionSchemaDefinition> => {
+  const parsedAndTypeChecked = CollectionSchemaDefinitionFromJSON.decode(s)
+  if (isRight(parsedAndTypeChecked)) {
+    return Promise.resolve(parsedAndTypeChecked.right)
+  } else {
+    return Promise.reject(draw(parsedAndTypeChecked.left))
+  }
+}
+
 const JSONDecoder: D.Decoder<string, object> = pipe(
   D.string,
   D.parse(s => {
