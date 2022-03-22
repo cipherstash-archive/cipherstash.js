@@ -10,6 +10,7 @@ import { Memo } from "./auth/auth-strategy"
 import { AsyncResult, Err, Ok } from "./result"
 import { AnalysisFailure } from "./errors"
 import { StashProfile } from './stash-profile'
+import { logger } from './logger';
 
 if (!isMainThread) {
   const recordAnalyzerCache: { [collectionName: string]: any } = {}
@@ -44,11 +45,11 @@ if (!isMainThread) {
         }
         return Ok(result)
       } else {
-        console.error(`AnalysisFailure for ${JSON.stringify(record)}: ${JSON.stringify(encryptedSource.error)}`)
+        logger.error(`AnalysisFailure for ${JSON.stringify(record)}: ${JSON.stringify(encryptedSource.error)}`)
         return Err(AnalysisFailure(encryptedSource.error))
       }
     } else {
-      console.error(`cryptoAnalysisFailure for ${JSON.stringify(record)}: ${JSON.stringify(cipher.error)}`)
+      logger.error(`cryptoAnalysisFailure for ${JSON.stringify(record)}: ${JSON.stringify(cipher.error)}`)
       return Err(AnalysisFailure(cipher.error))
     }
   }

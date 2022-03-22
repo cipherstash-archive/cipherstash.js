@@ -5,6 +5,7 @@ import { StashProfile } from '../stash-profile'
 import { Result, AsyncResult, Err, Ok } from '../result'
 import { OauthAuthenticationInfo } from './oauth-utils'
 import { LoadProfileNamesFailure, SetDefaultProfileFailure, SaveProfileFailure, LoadProfileFailure, DeleteProfileFailure, MissingConfigDir, IOError, NoDefaultProfileSet, MissingProfile, MalformedConfigFile, wrap } from '../errors'
+import { logger } from '../logger';
 
 export type ConfigurationTemplate = Omit<StashConfiguration, 'keyManagement' | 'service' | 'key' > & {
   service: { host: string }
@@ -317,9 +318,9 @@ class StoreWithReadWriteLock implements ProfileStore {
               lockfile.unlock(this.configLockFile, (err) => {
                 if (err) {
                   reject(err)
-                  console.error(`An error occurred when trying to unlock the config store at ${dir}`)
-                  console.error(`To remedy the problem, you might need to delete the lockfile at ${this.configLockFile}`)
-                  console.error(err)
+                  logger.error(`An error occurred when trying to unlock the config store at ${dir}`)
+                  logger.error(`To remedy the problem, you might need to delete the lockfile at ${this.configLockFile}`)
+                  logger.error(err)
                   process.exit(1)
                 } else {
                   resolve()

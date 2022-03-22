@@ -7,6 +7,8 @@ import { Worker } from "worker_threads"
 import { EventEmitter } from "events"
 import { AsyncQueue } from "./async-queue";
 import { StashProfile } from './stash-profile';
+import { logger } from './logger';
+
 require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
 
 export type AnalysisResult = {
@@ -44,7 +46,7 @@ export class AnalysisRunner {
       worker.on('message', (message: WorkerMessage) => {
         this.workerEvents.emit('result', message)
       })
-      worker.on('error', (err) => console.error(err))
+      worker.on('error', (err) => logger.error(err))
       this.workers.set(workerId, worker)
     }
   }
