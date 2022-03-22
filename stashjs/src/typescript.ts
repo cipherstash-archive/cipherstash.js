@@ -1,6 +1,6 @@
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, realpathSync } from "fs";
 import { dirname, resolve } from "path";
-import { logger } from './logger';
+import { logger } from "./logger";
 
 const MAX_DIRECTORY_POPS = 5;
 
@@ -30,9 +30,13 @@ export function doesProjectUseTypeScript(): boolean {
     return false;
   }
 
-  let directoryToTest = dirname(runningFile);
-
   try {
+    // If the script is being run from the node_modules/.bin folder you might need to follow the symlink
+    // to find the original package.
+    const realFile = realpathSync(runningFile);
+
+    let directoryToTest = dirname(realFile);
+
     for (let i = 0; i < MAX_DIRECTORY_POPS; i++) {
       const packagePath = resolve(directoryToTest, "package.json");
 

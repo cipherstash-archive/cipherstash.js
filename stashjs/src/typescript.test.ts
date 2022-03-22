@@ -32,6 +32,24 @@ describe("doesProjectUseTypeScript", () => {
     expect(doesProjectUseTypeScript()).toBe(true);
   });
 
+  it("should follow a symlink", () => {
+    process.argv = ["node", "/my-script"];
+
+    vol.fromJSON({
+      "/exec-dir/dist/test.js": "// current executing file",
+      "/exec-dir/dist/package.json": JSON.stringify({
+        name: "my-package",
+        dependencies: {
+          typescript: "1.0.0",
+        },
+      }),
+    });
+
+    vol.symlinkSync("/exec-dir/dist/test.js", "/my-script");
+
+    expect(doesProjectUseTypeScript()).toBe(true);
+  });
+
   it("should get a package.json from a directory up", () => {
     process.argv = ["node", "/exec-dir/dist/test.js"];
 
