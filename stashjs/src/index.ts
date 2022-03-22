@@ -109,5 +109,6 @@ export * as errors from './errors'
 export * from './result'
 
 export {
-  CollectionSchemaDefinition
+  CollectionSchemaDefinition,
+  generateSchemaDefinitionFromJSON
 } from './parsers/collection-schema-parser'
