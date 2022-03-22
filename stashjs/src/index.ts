@@ -112,3 +112,9 @@ export {
   CollectionSchemaDefinition,
   generateSchemaDefinitionFromJSON
 } from './parsers/collection-schema-parser'
+
+
+import { warnIfNoTypeScript } from './warn-if-no-typescript';
+
+// Whenever stashjs is imported warn if TypeScript isn't installed.
+warnIfNoTypeScript();
