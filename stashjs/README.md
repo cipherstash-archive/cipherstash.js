@@ -2,29 +2,80 @@
 
 StashJS is a Typescript/Javascript API for the [CipherStash](https://cipherstash.com) always-encrypted searchable datastore.
 
-Full documentation is available at [docs.cipherstash.com](https://docs.cipherstash.com).
+Full documentation is available at [docs.cipherstash.com](https://docs.cipherstash.com) as a well as an [examples
+repo](https://github.com/cipherstash/stashjs-examples).
 
-## Authentication for local development
+## Usage Examples
 
-1. In `data-service` run `./build.sh setup` - this will ensure you have a local `mkcert` cert and a `dev-local` alias in your `/etc/hosts`
-1. In the `stash-cli` directory run `pnpm build`
+### Create a collection
 
-1. Ensure you run `direnv allow` after changing your `.envrc`
-1. In `stash-cli` run `./bin/stash login`
-1. Login should have been successful and your credentials should have been stored in `$HOME/.cipherstash/`
-1. In `stashjs-examples` (or in whichever project you are planning on initialising the StashJS client), edit your `.envrc` to look like this:
+```ts
+const movieSchema = JSON.parse(`
+{
+  "type": {
+    "title": "string",
+    "runningTime": "number",
+    "year": "number"
+  },  
+  "indexes": {
+    "exactTitle": { "kind": "exact", "field": "title" },
+    "runningTime": { "kind": "range", "field": "runningTime" },
+    "year": { "kind": "range", "field": "year" },
+    "title": {
+      "kind": "match",
+      "fields": ["title"],
+      "tokenFilters": [
+        { "kind": "downcase" },
+        { "kind": "ngram", "tokenLength": 3 } 
+      ],  
+      "tokenizer": { "kind": "standard" }
+    }   
+  }
+}
+`)
+const stash = await Stash.connect()
+const movies = await stash.createCollection(movieSchema)
+```
+
+### Inserting a record
+
+```ts
+const stash = await Stash.connect()
+const movies = await stash.loadCollection(movieSchema)
+console.log(`Collection "${movies.name}" loaded`)
+
+let id = await movies.put({
+  title: "The Matrix",
+  year: 1999,
+  runningTime: 136
+})
+```
+
+### Basic queries
+
+```ts
+let queryResult = await movies.query(
+  movie => movie.exactTitle.eq("Lifelines"),
+  { limit: 10 }
+)
+```
+
+### Free text-search
+
+```ts
+let queryresult = await movies.query(
+  movie => movie.title.match("star wa"),
+  { limit: 10 }
+)
 
 ```
-export CS_AUTH_STRATEGY=stored-access-token
-export CS_SERVICE_FQDN=dev-local:50001
-export CS_IDP_HOST=cipherstash-dev.au.auth0.com
-export CS_IDP_CLIENT_ID=tz5daCHFQLJRshlk9xr2Tl1G2nVJP5nv
-export NODE_EXTRA_CA_CERTS="$(mkcert -CAROOT)/rootCA.pem"
-export AWS_DEFAULT_REGION=ap-southeast-2
 
-# Ask another CipherStash engineer for the following values:
-export CS_FEDERATED_IDENTITY_ID=
-export CS_DEV_CMK=
+### Range queries
+
+```ts
+let queryResult = await movies.query(
+  movie => movie.year.lte(1940),
+  { limit: 5, order: [{byIndex: "year", direction: "DESC"}] }
+)
 ```
 
-1. Running a command in `stashjs-examples` (such as `dist/create-collection.js`) should authenticate correctly.
