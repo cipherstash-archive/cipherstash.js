@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Send StashJS version, OS, arch and whether TypeScript is being used as part of user-agent
 - When importing `@cipherstash/stashjs` warn if project doesn't use TypeScript
 - If no profile name is passed to `Stash.loadProfile` Stash will check for the `CS_PROFILE_NAME` env var before using the default workspace
+- Public async generator function to stream records
 
 ## [0.3.4]
 
