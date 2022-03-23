@@ -91,7 +91,8 @@ export {
 } from './type-utils'
 
 export {
-  describeError
+  describeError,
+  streamPlaintextRecords as streamRecords
 } from './utils'
 
 export {
