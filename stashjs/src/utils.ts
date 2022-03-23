@@ -103,3 +103,9 @@ export function inspect<T>(value: T, label?: string): T {
   }
   return value
 }
+
+export async function* streamPlaintextRecords(plaintextRecords: Array<Object>) {
+  for (let p of plaintextRecords) {
+    yield p
+  }
+}
