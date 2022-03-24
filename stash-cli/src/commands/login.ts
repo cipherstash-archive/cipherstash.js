@@ -30,7 +30,6 @@ const command: GluegunCommand = {
     if (options.help) {
       printHelp(toolbox)
       process.exit(0)
-      return
     }
 
     if (isNewLogin(options)) {
@@ -51,7 +50,6 @@ const command: GluegunCommand = {
         print.error('An error occurred and "stash login" could not complete successfully')
         print.error(`Reason: ${errors.toErrorMessage(authInfo.error)}`)
         process.exit(1)
-        return
       }
 
       const workspace = basicProfile.config.service.workspace
@@ -74,7 +72,6 @@ const command: GluegunCommand = {
       if (!response.data) {
         print.error(`Could not load workspace metadata: API returned empty response`)
         process.exit(1)
-        return
       }
 
       const saved = await profileStore.saveProfile(buildCompletedStashProfile(basicProfile, response))

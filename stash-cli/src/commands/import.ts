@@ -17,7 +17,6 @@ const command: GluegunCommand = {
     if (collectionName === undefined) {
       print.error('No collection name specified.')
       process.exit(1)
-      return
     }
 
     const dataFile: string | undefined = parameters.options.data
@@ -26,7 +25,6 @@ const command: GluegunCommand = {
     if (dataFile === undefined) {
       print.error('No data file specified.')
       process.exit(1)
-      return
     }
 
     try {
@@ -35,7 +33,6 @@ const command: GluegunCommand = {
     } catch (error) {
       print.error(`Could not load source data. Reason: "${error}"`)
       process.exit(1)
-      return
     }
 
     try {
@@ -48,12 +45,10 @@ const command: GluegunCommand = {
       if (!profile.ok) {
         print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
         process.exit(1)
-        return
       }
     } catch (error) {
       print.error(`Could not load profile. Reason: "${describeError(error)}"`)
       process.exit(1)
-      return
     }
 
     try {
