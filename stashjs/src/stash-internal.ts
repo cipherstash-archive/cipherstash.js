@@ -51,10 +51,10 @@ export class StashInternal {
 
   public static async loadProfile(opts?: ProfileOptions): AsyncResult<StashProfile, LoadProfileFailure> {
     if (opts?.profileName) {
-      logger.debug("Loading profile using provided profileName");
+      logger.debug(`Loading profile using provided profileName: ${opts?.profileName}`);
       return await profileStore.loadProfile(opts.profileName)
     } else if (process.env['CS_PROFILE_NAME']) {
-      logger.debug("Loading profile using CS_PROFILE_NAME env var");
+      logger.debug(`Loading profile using CS_PROFILE_NAME env var: ${process.env['CS_PROFILE_NAME']}`);
       return await profileStore.loadProfile(process.env['CS_PROFILE_NAME']);
     } else {
       logger.debug("Loading profile using default profile config");
