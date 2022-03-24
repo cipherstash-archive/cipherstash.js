@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs-grpc",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Generated Typescript GRPC bindings for StashJS",
   "main": "dist/index.js",
   "scripts": {
