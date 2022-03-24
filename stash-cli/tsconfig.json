@@ -8,6 +8,7 @@
     "noImplicitAny": false,
     "noImplicitThis": true,
     "noUnusedLocals": true,
+    "allowUnreachableCode": false,
     "sourceMap": false,
     "inlineSourceMap": true,
     "outDir": "build",
