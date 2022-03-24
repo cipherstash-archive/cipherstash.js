@@ -19,7 +19,6 @@ const command: GluegunCommand = {
       print.info('See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html')
       print.info('')
       process.exit(0)
-      return
     }
 
     const profileName: string | undefined = parameters.options.profile
@@ -35,12 +34,10 @@ const command: GluegunCommand = {
       if (!profile.ok) {
         print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
         process.exit(1)
-        return
       }
     } catch (error) {
       print.error(`Could not load profile. Reason: "${describeError(error)}"`)
       process.exit(1)
-      return
     }
 
     const deleted = await profileStore.deleteAccessToken(profile.value.name)
