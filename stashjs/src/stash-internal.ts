@@ -16,6 +16,7 @@ import { CollectionCreationFailure, ConnectionFailure, DecryptionFailure, Authen
 
 import { makeAsyncResultApiWrapper } from './stash-api-async-result-wrapper'
 import { getUserAgent } from './user-agent'
+import { logger } from './logger';
 
 export type ProfileOptions = Readonly<{
   profileName?: string
@@ -49,11 +50,16 @@ export class StashInternal {
   }
 
   public static async loadProfile(opts?: ProfileOptions): AsyncResult<StashProfile, LoadProfileFailure> {
-    const profile = opts?.profileName
-      ? await profileStore.loadProfile(opts.profileName)
-      : await profileStore.loadDefaultProfile()
-
-    return profile
+    if (opts?.profileName) {
+      logger.debug("Loading profile using provided profileName");
+      return await profileStore.loadProfile(opts.profileName)
+    } else if (process.env['CS_PROFILE_NAME']) {
+      logger.debug("Loading profile using CS_PROFILE_NAME env var");
+      return await profileStore.loadProfile(process.env['CS_PROFILE_NAME']);
+    } else {
+      logger.debug("Loading profile using default profile config");
+      return profileStore.loadDefaultProfile();
+    }
   }
 
   public static loadProfileFromEnv(): StashProfile {

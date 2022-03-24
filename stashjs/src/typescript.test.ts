@@ -1,8 +1,6 @@
 import { vol } from "memfs";
 import { doesProjectUseTypeScript } from "./typescript";
 
-jest.mock("fs", () => require("memfs").fs);
-
 describe("doesProjectUseTypeScript", () => {
   let initialArgv: string[];
 

@@ -95,6 +95,9 @@
       "d.ts",
       "json"
     ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/test-setup.ts"
+    ],
     "testMatch": [
       "**/*.test.ts"
     ]
