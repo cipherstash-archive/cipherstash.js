@@ -35,7 +35,6 @@ const command: GluegunCommand = {
       if (!profile.ok) {
         print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
         process.exit(1)
-        return
       }
 
       const stash = await Stash.connect(profile.value)
@@ -43,7 +42,6 @@ const command: GluegunCommand = {
       if (collectionName === undefined) {
         print.error('No collection name specified.')
         process.exit(1)
-        return
       }
 
       const collection = await stash.loadCollection(collectionName)

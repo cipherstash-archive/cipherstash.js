@@ -10,6 +10,11 @@ const command: GluegunCommand = {
 
     const profileName: string | undefined = parameters.options.profile
 
+    if (parameters.options.help) {
+      print.info(`Usage: stash list-collections [--profile <profile>]`)
+      process.exit(0)
+    }
+
     try {
       let profile: Result<StashProfile, errors.LoadProfileFailure>
       if (profileName) {
@@ -21,7 +26,6 @@ const command: GluegunCommand = {
       if (!profile.ok) {
         print.error(describeError(profile.error))
         process.exit(1)
-        return
       }
 
       const stash = await Stash.connect(profile.value)
@@ -38,7 +42,6 @@ const command: GluegunCommand = {
     } catch (error) {
       print.error(describeError(error))
       process.exit(1)
-      return
     }
   }
 }
