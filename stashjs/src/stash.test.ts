@@ -1,4 +1,4 @@
-import { StashInternal } from "./stash-internal";
+import { Stash } from "./stash";
 import { vol } from "memfs";
 
 function createMockProfile(workspace: string): string {
@@ -29,7 +29,7 @@ function createMockProfile(workspace: string): string {
   });
 }
 
-describe("StashInternal.loadProfile", () => {
+describe("Stash.loadProfile", () => {
   beforeEach(() => {
     vol.fromJSON({
       [`${process.env["HOME"]}/.cipherstash/config.json`]:
@@ -48,42 +48,27 @@ describe("StashInternal.loadProfile", () => {
   });
 
   it("should load a profile from the passed in name", async () => {
-    const profile = await StashInternal.loadProfile({
+    const profile = await Stash.loadProfile({
       profileName: "by-name-profile",
     });
 
-    if (!profile.ok) {
-      expect(profile.error).toBeUndefined();
-      throw new Error("Expected profile to be defined");
-    }
-
-    expect(profile.value.name).toEqual("by-name-profile");
-    expect(profile.value.config.service.workspace).toEqual("by-name-workspace");
+    expect(profile.name).toEqual("by-name-profile");
+    expect(profile.config.service.workspace).toEqual("by-name-workspace");
   });
 
   it("should load a profile from the passed in from the env", async () => {
     process.env["CS_PROFILE_NAME"] = "env-profile";
 
-    const profile = await StashInternal.loadProfile();
+    const profile = await Stash.loadProfile();
 
-    if (!profile.ok) {
-      expect(profile.error).toBeUndefined();
-      throw new Error("Expected profile to be defined");
-    }
-
-    expect(profile.value.name).toEqual("env-profile");
-    expect(profile.value.config.service.workspace).toEqual("env-workspace");
+    expect(profile.name).toEqual("env-profile");
+    expect(profile.config.service.workspace).toEqual("env-workspace");
   });
 
   it("should load the default profile when nothing is passed in", async () => {
-    const profile = await StashInternal.loadProfile();
+    const profile = await Stash.loadProfile();
 
-    if (!profile.ok) {
-      expect(profile.error).toBeUndefined();
-      throw new Error("Expected profile to be defined");
-    }
-
-    expect(profile.value.name).toEqual("default-profile");
-    expect(profile.value.config.service.workspace).toEqual("default-workspace");
+    expect(profile.name).toEqual("default-profile");
+    expect(profile.config.service.workspace).toEqual("default-workspace");
   });
 });
