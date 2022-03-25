@@ -2,17 +2,13 @@ import { GluegunCommand } from 'gluegun'
 import {
   MappingOn,
   Stash,
-  StashProfile,
   StashRecord,
-  profileStore,
   describeError,
   isDynamicMatchMapping,
   isExactMapping,
   isFieldDynamicMatchMapping,
   isMatchMapping,
   isRangeMapping,
-  Result,
-  errors
 } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
@@ -24,20 +20,13 @@ const command: GluegunCommand = {
 
     const profileName: string | undefined = parameters.options.profile
 
+    const profile = await Stash.loadProfile({ profileName }).catch(error => {
+      print.error(`Could not load profile. Reason: "${describeError(error)}"`)
+      process.exit(1)
+    })
+
     try {
-      let profile: Result<StashProfile, errors.LoadProfileFailure>
-      if (profileName) {
-        profile = await profileStore.loadProfile(profileName)
-      } else {
-        profile = await profileStore.loadDefaultProfile()
-      }
-
-      if (!profile.ok) {
-        print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
-        process.exit(1)
-      }
-
-      const stash = await Stash.connect(profile.value)
+      const stash = await Stash.connect(profile)
       const collectionName = parameters.first
       if (collectionName === undefined) {
         print.error('No collection name specified.')
