@@ -1,5 +1,5 @@
 import { GluegunCommand } from 'gluegun'
-import { Stash, StashProfile, profileStore, describeError, Result, errors } from '@cipherstash/stashjs'
+import { Stash, StashProfile, describeError, Result, errors } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
@@ -16,19 +16,8 @@ const command: GluegunCommand = {
     }
 
     try {
-      let profile: Result<StashProfile, errors.LoadProfileFailure>
-      if (profileName) {
-        profile = await profileStore.loadProfile(profileName)
-      } else {
-        profile = await profileStore.loadDefaultProfile()
-      }
-
-      if (!profile.ok) {
-        print.error(describeError(profile.error))
-        process.exit(1)
-      }
-
-      const stash = await Stash.connect(profile.value)
+      const profile = await Stash.loadProfile({ profileName });
+      const stash = await Stash.connect(profile)
       const collectionNames = await stash.listCollections()
       if (parameters.options.json) {
         print.info(JSON.stringify(collectionNames, null, 2))
