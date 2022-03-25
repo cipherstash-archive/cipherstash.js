@@ -1,5 +1,5 @@
 import { GluegunCommand } from 'gluegun'
-import { Stash, StashProfile, describeError, Result, errors } from '@cipherstash/stashjs'
+import { Stash, describeError } from '@cipherstash/stashjs'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
 const command: GluegunCommand = {
