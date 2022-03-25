@@ -3,13 +3,11 @@ import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 import * as fs from 'fs'
 
 import {
+  Stash,
   StashInternal,
   CollectionSchema,
   Mappings,
-  StashProfile,
   describeError,
-  profileStore,
-  errors,
   StashRecord,
   Result,
   Err,
@@ -66,25 +64,15 @@ const command: GluegunCommand = {
     }
 
     const profileName: string | undefined = parameters.options.profile
-    let profile: Result<StashProfile, errors.LoadProfileFailure>
 
-    try {
-      if (profileName) {
-        profile = await profileStore.loadProfile(profileName)
-      } else {
-        profile = await profileStore.loadDefaultProfile()
-      }
-
-      if (!profile.ok) {
-        print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
-        process.exit(1)
-      }
-    } catch (error) {
+    const profile = await Stash.loadProfile({
+      profileName
+    }).catch(error => {
       print.error(`Unexpected error while loading profile. Reason: "${describeError(error)}"`)
       process.exit(1)
-    }
+    })
 
-    const connection = await StashInternal.connect(profile.value)
+    const connection = await StashInternal.connect(profile)
     if (!connection.ok) {
       print.error(`Authentication failed - please try to login again with "stash login"`)
       process.exit(1)
