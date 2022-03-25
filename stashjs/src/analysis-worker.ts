@@ -16,7 +16,7 @@ if (!isMainThread) {
   const recordAnalyzerCache: { [collectionName: string]: any } = {}
   let cipherMemo: Memo<CipherSuite>
 
-  async function performAnalyis(config: AnalysisConfig, record: StashRecord): AsyncResult<AnalysisResult, AnalysisFailure> {
+  async function performAnalysis(config: AnalysisConfig, record: StashRecord): AsyncResult<AnalysisResult, AnalysisFailure> {
     if (!cipherMemo) {
       const profile = new StashProfile(config.profile.name, config.profile.config)
       cipherMemo = profile.withFreshKMSCredentials<CipherSuite>(async (awsConfig) => {
@@ -71,7 +71,7 @@ if (!isMainThread) {
 
   parentPort!.on('message', async (record: StashRecord) => {
     const config: AnalysisConfig = workerData.config
-    const result = await performAnalyis(config, record)
+    const result = await performAnalysis(config, record)
     if (result.ok) {
       parentPort!.postMessage({ workerId: workerData.workerId, result: result.value })
     } else {
