@@ -5,8 +5,6 @@ import jws from 'jws'
 import { AuthenticationFailure, OAuthFailure, PlainError, wrap } from '../errors'
 import { AsyncResult, Ok, Err, Result, fromPromise } from '../result'
 
-const SCOPES = "collection.create collection.delete collection.info collection.list document.put document.delete document.get document.query"
-
 export type OauthAuthenticationInfo = {
   accessToken: string,
   refreshToken: string,
@@ -100,12 +98,8 @@ class StashOauth {
     idpHost: string,
     clientId: string,
     audience: string,
-    workspace?: string // When signing into the console for the first time we will not even know the workspace
+    scope: string
   ): AsyncResult<DeviceCodePollingInfo, AuthenticationFailure> {
-    const scope = !!workspace ?
-      `offline_access ${SCOPES} ws:${workspace}` :
-      `offline_access ${SCOPES}`
-
     const promise = makeOauthClient(idpHost).post("/oauth/device/code", {
       client_id: clientId,
       scope,
