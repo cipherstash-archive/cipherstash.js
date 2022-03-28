@@ -161,7 +161,7 @@ function flattenCondition<
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     return pipeline([condition.value]).map(term => ({
-      indexId: Buffer.from(indexMeta.$indexId, 'hex'),
+      indexId: normalizeId(indexMeta.$indexId),
       exact: encodeMatch(term, encrypt),
       condition: "exact"
     }))
@@ -171,7 +171,7 @@ function flattenCondition<
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     return pipeline([condition.value]).map(term => ({
-      indexId: Buffer.from(indexMeta.$indexId, 'hex'),
+      indexId: normalizeId(indexMeta.$indexId),
       exact: encodeMatch(`${condition.fieldName}:${term}`, encrypt),
       condition: "exact"
     }))
