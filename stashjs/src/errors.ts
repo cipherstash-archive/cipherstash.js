@@ -39,6 +39,7 @@ export type ErrorTag =
   | 'SaveProfileFailure'
   | 'SetDefaultProfileFailure'
   | 'StreamingPutFailure'
+  | 'TokenValidationFailure'
 
 export type JSError = InstanceType<ErrorConstructor>
 
@@ -145,13 +146,18 @@ export const OAuthFailure: (cause: OAuthFailure["cause"], message?: string) => O
   }
 }
 
+export type TokenValidationFailure = StashJSError<'TokenValidationFailure', NativeError | PlainError | undefined>;
+export const TokenValidationFailure = (message: string, cause?: TokenValidationFailure['cause']): TokenValidationFailure  => {
+  return addCaller({ tag: 'TokenValidationFailure', cause: cause && wrap(cause), message });
+}
+
 export type PlainError = StashJSError<'PlainError', undefined>
 export const PlainError: (message: string) => PlainError = message => addCaller(({ tag: 'PlainError', message }))
 
 export type IllegalStateError = StashJSError<'IllegalStateError'>
 export const IllegalStateError: (message: string) => IllegalStateError = (message) => addCaller(({ tag: 'IllegalStateError', message }))
 
-export type AuthenticationFailure = StashJSError<'AuthenticationFailure', OAuthFailure | AWSFederationFailure | SaveProfileFailure | IllegalStateError | KMSError>
+export type AuthenticationFailure = StashJSError<'AuthenticationFailure', OAuthFailure | AWSFederationFailure | SaveProfileFailure | IllegalStateError | KMSError | TokenValidationFailure>
 export const AuthenticationFailure: (cause: AuthenticationFailure["cause"], message?: string) => AuthenticationFailure = (cause, message) => addCaller(({ tag: 'AuthenticationFailure', cause, message }))
 
 export type ConnectionFailure = StashJSError<'ConnectionFailure', LoadProfileFailure | AuthenticationFailure | KMSError>
@@ -222,6 +228,7 @@ export function simpleDescriptionForError<Cause, E extends StashJSError<ErrorTag
     case 'SaveProfileFailure': return `[SaveProfileFailure] Failed to save profile (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'SetDefaultProfileFailure': return `[SetDefaultProfileFailure] Failed to set the default profile (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'StreamingPutFailure': return `[StreamingPutFailure] Failure during streaming bulk upsert (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
+    case 'TokenValidationFailure': return `[TokenValidationFailure] Failure while validating access token (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
   }
 }
 

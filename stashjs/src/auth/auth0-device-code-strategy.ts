@@ -5,6 +5,9 @@ import * as open from 'open'
 import { AsyncResult, Ok, Err } from "../result"
 import { AuthenticationFailure } from "../errors"
 import { profileStore } from './profile-store'
+import { validateAccessToken } from './access-token';
+
+const SCOPES = "collection.create collection.delete collection.info collection.list document.put document.delete document.get document.query"
 
 export type StashProfileAuth0DeviceCode = {
   name: string,
@@ -57,11 +60,17 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
       await profileStore.writeAccessToken(this.profile.name, oauthInfo.value)
       return Ok()
     } else {
+      const { workspace } = this.profile.config.service;
+
+      const scope = !!workspace ?
+        `offline_access ${SCOPES} ws:${workspace}` :
+        `offline_access ${SCOPES}`
+
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
         this.profile.config.identityProvider.host,
         this.profile.config.identityProvider.clientId,
         this.profile.config.service.host,
-        this.profile.config.service.workspace
+        scope
       )
 
       if (pollingInfo.ok) {
@@ -85,8 +94,22 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
         )
 
         if (authInfo.ok) {
-          this.oauthCreds = authInfo.value
+          const oauthCreds = authInfo.value;
+
+          const validationResult = validateAccessToken(
+            oauthCreds.accessToken,
+            scope,
+            workspace
+          );
+
+          if (!validationResult.ok) {
+            return Err(AuthenticationFailure(validationResult.error))
+          }
+
+          this.oauthCreds = oauthCreds;
+
           await profileStore.writeAccessToken(this.profile.name, authInfo.value)
+
           return Ok()
         } else {
           return Err(authInfo.error)
