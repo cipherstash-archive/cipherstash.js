@@ -42,7 +42,7 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy<OauthAuthentic
 
     if (oauthInfo.ok) {
       this.oauthCreds = oauthInfo.value
-      return Ok(void 0)
+      return Ok()
     } else {
       return Err(oauthInfo.error)
     }

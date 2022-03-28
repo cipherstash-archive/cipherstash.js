@@ -50,7 +50,7 @@ export class AWSClientConfigFederatedStrategy implements AuthStrategy<AWSClientC
       if (credentials) {
         this.awsConfig = this.toAwsConfig(this.credSource.region, credentials)
         this.expiryDate = credentials.Expiration!
-        return(Ok(void 0))
+        return Ok()
       } else {
         return Err(AuthenticationFailure(AWSFederationFailure(undefined, "STS Token Exchange failed")))
       }
