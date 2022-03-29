@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.7]
+
+## Fixed
+
+- Fix for dynamic match and field dynamic match queries
+
 ## [0.3.6]
 
 - Update README with code examples for insert and queries
