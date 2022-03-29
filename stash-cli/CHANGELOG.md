@@ -6,9 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.3.7]
+
 ## Added
 
 - Add `delete-record` command for deleting records in a collection by id
+- Add default command so mistyped commands show something helpful
 
 ## [0.3.6]
 
