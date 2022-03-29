@@ -55,7 +55,7 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
     if (oauthInfo.ok) {
       this.oauthCreds = oauthInfo.value
       await profileStore.writeAccessToken(this.profile.name, oauthInfo.value)
-      return Ok(void 0)
+      return Ok()
     } else {
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
         this.profile.config.identityProvider.host,
@@ -87,7 +87,7 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
         if (authInfo.ok) {
           this.oauthCreds = authInfo.value
           await profileStore.writeAccessToken(this.profile.name, authInfo.value)
-          return Ok(void 0)
+          return Ok()
         } else {
           return Err(authInfo.error)
         }

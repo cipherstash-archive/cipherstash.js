@@ -106,7 +106,7 @@ class Store implements ProfileStore {
     try {
       // NOTE: if configuration becomes any more elaborate than a single field then we should read, then merge.
       await fs.promises.writeFile(this.configFilePath(), stringify({ defaultProfile: sanitiseProfileName(profile.name) }))
-      return Ok(void 0)
+      return Ok()
     } catch (error) {
       return Err(SetDefaultProfileFailure(IOError(wrap(error))))
     }
@@ -173,7 +173,7 @@ class Store implements ProfileStore {
         }
       }
 
-      return Ok(void 0)
+      return Ok()
     } catch (error) {
       return Err(SaveProfileFailure(IOError(wrap(error))))
     }
@@ -204,7 +204,7 @@ class Store implements ProfileStore {
       await fs.promises.mkdir(this.configDir(profileName), { recursive: true })
       await fs.promises.writeFile(this.accessTokenFilePath(profileName), stringify(tokenInfo))
 
-      return Ok(void 0)
+      return Ok()
     } catch (error) {
       return Err(SaveProfileFailure(IOError(wrap(error))))
     }
@@ -221,7 +221,7 @@ class Store implements ProfileStore {
 
     try {
       fs.unlinkSync(this.accessTokenFilePath(profileName))
-      return Ok(void 1)
+      return Ok()
     } catch (error) {
       return Err(DeleteProfileFailure(IOError(wrap(error))))
     }

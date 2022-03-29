@@ -14,7 +14,9 @@ export type Result<V, E> =
  * @param value the value to wrap
  * @returns the success result
  */
-export function Ok<V>(value: V): Result<V, never> {
+export function Ok<V>(value: V): Result<V, never>;
+export function Ok(): Result<void, never>;
+export function Ok<V>(value?: V): Result<typeof value, never> {
   return { tag: 'Result.Ok', ok: true, value: value }
 }
 
