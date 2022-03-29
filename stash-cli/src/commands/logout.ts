@@ -1,7 +1,7 @@
 import { GluegunCommand } from 'gluegun'
 import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 
-import { profileStore, StashProfile, errors, describeError, Result } from '@cipherstash/stashjs'
+import { profileStore, Stash, describeError } from '@cipherstash/stashjs'
 
 const command: GluegunCommand = {
   name: 'logout',
@@ -22,31 +22,17 @@ const command: GluegunCommand = {
     }
 
     const profileName: string | undefined = parameters.options.profile
-    let profile: Result<StashProfile, errors.LoadProfileFailure>
 
-    try {
-      if (profileName) {
-        profile = await profileStore.loadProfile(profileName)
-      } else {
-        profile = await profileStore.loadDefaultProfile()
-      }
-
-      if (!profile.ok) {
-        print.error(`Could not load profile. Reason: "${describeError(profile.error)}"`)
-        process.exit(1)
-      }
-    } catch (error) {
+    const profile = await Stash.loadProfile({ profileName }).catch(error => {
       print.error(`Could not load profile. Reason: "${describeError(error)}"`)
       process.exit(1)
-    }
+    })
 
-    const deleted = await profileStore.deleteAccessToken(profile.value.name)
+    const deleted = await profileStore.deleteAccessToken(profile.name)
     if (deleted.ok) {
-      print.info(`Cached authentication deleted for profile ${profile.value.name}`)
+      print.info(`Cached authentication deleted for profile ${profile.name}`)
     } else {
-      print.error(
-        `Failed to delete cached authentication token for profile ${profile.value.name}: ${deleted.error.message}`
-      )
+      print.error(`Failed to delete cached authentication token for profile ${profile.name}: ${deleted.error.message}`)
     }
   }
 }
