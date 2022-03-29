@@ -177,8 +177,8 @@ function typecheckIndex(recordType: unknown, index: Index): Result<void | Array<
     case "exact": return fieldExists("exact", recordType, index.field.split("."), EXACT_TYPES)
     case "range": return fieldExists("range", recordType, index.field.split("."), RANGE_TYPES)
     case "match": return gather(index.fields.map(field => fieldExists("match", recordType, field.split("."), MATCH_TYPES)))
-    case "dynamic-match": return Ok(void 0)
-    case "field-dynamic-match": return Ok(void 0)
+    case "dynamic-match": return Ok()
+    case "field-dynamic-match": return Ok()
   }
 }
 
@@ -192,7 +192,7 @@ function fieldExists(indexType: string, recordType: any, path: Array<string>, ex
   }
 
   if (expectedTypes.includes(currentType)) {
-    return Ok(void 0)
+    return Ok()
   } else {
     return Err( `index type "${indexType}" works on fields of type "${expectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
   }
