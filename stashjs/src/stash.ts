@@ -5,18 +5,75 @@ import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl";
 import { CollectionSchema } from "./collection-schema";
 import { Collection } from "./collection";
 
+/**
+ * The main entrypoint to the Stash API.
+ *
+ * ## Listing all collections
+ *
+ * ```typescript
+ * // Connect to the Stash API and return a client
+ * const stash = await Stash.connect();
+ *
+ * // Get a list of collections inside the current workspace
+ * const collections = await stash.listCollections();
+ *
+ * console.log("My collections:", collections.join(', '));
+ * ```
+ */
 export class Stash {
 
   private constructor(private stash: StashInternal) {}
 
+  /**
+   * Create a `StashProfile` from various options
+   *
+   * ## Passing profile name
+   *
+   * ```ts
+   * // Attempt to load the profile from `~/.cipherstash/my-profile`
+   * const profile = await Stash.loadProfile({ name: 'my-profile' });
+   * ```
+   *
+   * ## Using default method
+   *
+   * ```ts
+   * // Will attempt to load the profile in env var CS_PROFILE_NAME if it
+   * // exists, or the default profile listed in ~/.cipherstash/config.json
+   * const profile = await Stash.loadProfile();
+   * ```
+   */
   public static async loadProfile(opts?: ProfileOptions): Promise<StashProfile> {
     return convertPrivateApiResult(StashInternal.loadProfile(opts))
   }
 
+  /**
+   * Create a `StashProfile` from environment variables
+   *
+   * Visit the [client configuration](https://docs.cipherstash.com/reference/client-configuration.html#configuration-parameters)
+   * section for a full reference.
+   */
   public static loadProfileFromEnv(): StashProfile {
     return StashInternal.loadProfileFromEnv()
   }
 
+  /**
+   * Connect to CipherStash and return a CipherStash client
+   *
+   * ## Default profile
+   *
+   * ```ts
+   * // Will connect to the profile in env var CS_PROFILE_NAME if it
+   * // exists, or the default profile listed in ~/.cipherstash/config.json
+   * const stash = await Stash.connect();
+   * ```
+   *
+   * ## Custom profile
+   *
+   * ```ts
+   * const profile = await Stash.loadProfile({ profileName: 'my-profile' });
+   * const stash = await Stash.connect(profile);
+   * ```
+   */
   public static async connect(maybeProfile?: StashProfile): Promise<Stash> {
     const result = await StashInternal.connect(maybeProfile)
     if (result.ok) {
@@ -26,10 +83,36 @@ export class Stash {
     }
   }
 
+  /**
+   * Close the connection to the CipherStash
+   *
+   * If this method is called any subsequent calls to `Stash` methods will fail.
+   */
   public close(): void {
     this.stash.close()
   }
 
+  /**
+   * Create a collection for a specified schema
+   *
+   * ## Create a collection with a schema json
+   *
+   * ```ts
+   * const schemaString = fs.readFileSync('./schema.json').toString();
+   * const schemaDefinition = await generateSchemaDefinitionFromJSON(schemaString);
+   *
+   * // Create a CipherStash schema with the name "movies" using the schema
+   * // definition from "schema.json"
+   * const schema = CollectionSchema
+   *                    .define("movies")
+   *                    .fromCollectionSchemaDefinition(schemaDefinition);
+   *
+   * const stash = await Stash.connect();
+   *
+   * // Create the movies collection using the previously defined schema
+   * const movies = await stash.createCollection(schema);
+   * ```
+   */
   public async createCollection<
     R extends StashRecord,
     M extends Mappings<R>,
@@ -45,6 +128,16 @@ export class Stash {
     }
   }
 
+  /**
+   * Load a collection for a specified schema or name
+   *
+   * ## Using a name
+   *
+   * ```ts
+   * const stash = await tash.connect();
+   * const movies = await stash.loadCollection("movies");
+   * ```
+   */
   public async loadCollection<
     R extends StashRecord,
     M extends Mappings<R> = Mappings<R>,
@@ -60,10 +153,27 @@ export class Stash {
     }
   }
 
+  /**
+   * List all collections in the workspace
+   *
+   * ```ts
+   * const stash = await Stash.connect();
+   * const collections = await stash.listCollections();
+   * console.log("My collections:", collections.join(', '));
+   * ```
+   */
   public listCollections(): Promise<Array<string>> {
     return convertPrivateApiResult(this.stash.listCollections())
   }
 
+  /**
+   * Delete a certain collection by name
+   *
+   * ```ts
+   * const stash = await Stash.connect();
+   * await stash.deleteCollection("movies");
+   * ```
+   */
   public deleteCollection(collectionName: string): Promise<void> {
     return convertPrivateApiResult(this.stash.deleteCollection(collectionName))
   }
