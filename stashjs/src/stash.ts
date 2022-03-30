@@ -47,8 +47,8 @@ export class Stash {
 
   public async loadCollection<
     R extends StashRecord,
-    M extends Mappings<R>,
-    MM extends MappingsMeta<M>
+    M extends Mappings<R> = Mappings<R>,
+    MM extends MappingsMeta<M> = MappingsMeta<M>
   >(
     schemaOrName: CollectionSchema<R, M, MM> | string
   ): Promise<Collection<R, M, MM>> {
