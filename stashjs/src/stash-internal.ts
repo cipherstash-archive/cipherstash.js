@@ -128,8 +128,8 @@ export class StashInternal {
 
   public async loadCollection<
     R extends StashRecord,
-    M extends Mappings<R>,
-    MM extends MappingsMeta<M>
+    M extends Mappings<R> = Mappings<R>,
+    MM extends MappingsMeta<M> = MappingsMeta<M>
   >(
     schemaOrName: CollectionSchema<R, M, MM> | string
   ): AsyncResult<CollectionInternal<R, M, MM>, CollectionLoadFailure> {
