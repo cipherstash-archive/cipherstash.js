@@ -33,6 +33,9 @@ export class StashProfile {
    * Retrieve fresh data service credentials for the current session
    *
    * This method is intended for internal use only.
+   *
+   * @param builder - a callback for mapping the `OauthAuthenticationInfo`
+   *
    */
   public withFreshDataServiceCredentials<R>(builder: MemoBuilder<OauthAuthenticationInfo, R>): Memo<R> {
     return withFreshCredentials<OauthAuthenticationInfo, R>(builder, this.makeDataServiceCredentialsAuthStrategy())
@@ -42,6 +45,9 @@ export class StashProfile {
    * Retrieve fresh KMS credentials for the current session
    *
    * This method is intended for internal use only.
+   *
+   * @param builder - a callback for mapping the `AWSClientConfig`
+   *
    */
   public withFreshKMSCredentials<R>(builder: MemoBuilder<AWSClientConfig, R>): Memo<R> {
     return withFreshCredentials<AWSClientConfig, R>(builder, this.makeKMSCredentialsAuthStrategy())
