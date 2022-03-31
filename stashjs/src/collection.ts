@@ -13,7 +13,21 @@ export class Collection<
 
   public get id() { return this.collection.id }
   public get ref() { return this.collection.ref }
+
+  /**
+   * The name of the collection
+   *
+   * ```ts
+   * const stash = await Stash.connect();
+   * const movies = await stash.loadCollection('movies');
+   * movies.name // 'movies'
+   * ```
+   */
   public get name() { return this.collection.name }
+
+  /**
+   * The underlying `CollectionSchema` for the collection
+   */
   public get schema() { return this.collection.schema }
 
   /**
