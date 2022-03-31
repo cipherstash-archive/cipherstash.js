@@ -39,6 +39,11 @@ export class Collection<
    *
    * const movie = await movies.get(...);
    * ```
+   *
+   * @param id - the id of the document to be retrieved
+   *
+   * @returns A promise containing the retrieved document if it exists
+   *
    */
   public get(id: string | Buffer): Promise<R & HasID | null> {
     return convertPrivateApiResult(this.collection.get(id))
@@ -53,6 +58,11 @@ export class Collection<
    *
    * const [ first, second ] = await movies.getAll([ ..., ... ]);
    * ```
+   *
+   * @param ids - An array or buffer of ids to be retrieved
+   *
+   * @returns - An array containing the retrieved documents
+   *
    */
   public getAll(ids: Array<string | Buffer>): Promise<Array<R>> {
     return convertPrivateApiResult(this.collection.getAll(ids))
@@ -70,6 +80,11 @@ export class Collection<
    *   year: 2022
    * });
    * ```
+   *
+   * @param doc - the document to be inserted into
+   *
+   * @returns A promise resolving with the id of the inserted document
+   *
    */
   public put(doc: R): Promise<string> {
     return convertPrivateApiResult(this.collection.put(doc))
@@ -86,6 +101,12 @@ export class Collection<
    *   movie => movie.year.lte(1960)
    * );
    * ```
+   *
+   * @param callbackOrQueryOptions - a callback function for building a query, or a query options object
+   * @param queryOptions - an optional object containing query options
+   *
+   * @returns A `QueryResult` object containing the documents, aggregates and the time query took
+   *
    */
   public query(
     callbackOrQueryOptions: ((where: QueryBuilder<R, M>) => Query<R, M>) | QueryOptions<R, M>,
@@ -103,6 +124,9 @@ export class Collection<
    *
    * const movie = await movies.delete(...);
    * ```
+   *
+   * @param id - the id of the document to be deleted
+   *
    */
   public delete(id: string | Buffer): Promise<null> {
     return convertPrivateApiResult(this.collection.delete(id))
@@ -123,8 +147,12 @@ export class Collection<
    * const stash = await Stash.connect();
    * const movies = await stash.loadCollection<Movie>('movies');
    *
-   * awat movies.putStream(fetchMovies);
+   * await movies.putStream(fetchMovies);
    * ```
+   *
+   * @param records - AsyncIterator that yields the docs to be inserted
+   * @returns A promise that resolves with the number of documents inserted
+   *
    */
   public putStream(records: AsyncIterator<R>): Promise<V1.Document.StreamingPutReply> {
     return convertPrivateApiResult(this.collection.putStream(records))
