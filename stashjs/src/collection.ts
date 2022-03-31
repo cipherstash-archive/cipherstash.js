@@ -11,7 +11,23 @@ export class Collection<
 > {
   constructor(private collection: CollectionInternal<R, M, MM>) {}
 
+  /**
+   * The UUID of the collection used internally
+   *
+   * As this field is for internal use only use the `Collection.name` field if
+   * you need to reference a collection.
+   *
+   * @see Collection.name
+   *
+   */
   public get id() { return this.collection.id }
+
+  /**
+   * A cryptographically secure identifier for the collection
+   *
+   * This field is generated using your profile's naming key and the name of the
+   * collection and is used when communicating with CipherStash.
+   */
   public get ref() { return this.collection.ref }
 
   /**
