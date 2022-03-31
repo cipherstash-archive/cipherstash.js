@@ -11,10 +11,6 @@ set -x # trace what gets executed (useful for debugging)
 
 trap "echo SOMETHING WENT WRONG - please read the logs above and see if it helps you figure out what is wrong - and also ask an engineer help" ERR
 
-subproject_setup() {
-  pnpm install .
-}
-
 subproject_build() {
   pnpx typedoc --entryPointStrategy packages ../stashjs-grpc ../stashjs \
     --out tsdoc \
@@ -40,10 +36,6 @@ subproject_rebuild() {
 
 subcommand="${1:-build}"
 case $subcommand in
-  setup)
-    subproject_setup
-    ;;
-
   clean)
     subproject_clean
     ;;

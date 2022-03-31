@@ -14,6 +14,7 @@ trap "echo SOMETHING WENT WRONG - please read the logs above and see if it helps
 subproject_setup() {
   asdf install
   asdf reshim
+  pnpm install --frozen-lockfile
 }
 
 subproject_build() {
