@@ -99,7 +99,7 @@ export class Stash {
   /**
    * Close the connection to the CipherStash
    *
-   * If this method is called any subsequent calls to `Stash` methods will fail.
+   * If this method is called, any subsequent calls to `Stash` methods will fail.
    */
   public close(): void {
     this.stash.close()
@@ -152,7 +152,7 @@ export class Stash {
    * ## Using a name
    *
    * ```ts
-   * const stash = await tash.connect();
+   * const stash = await Stash.connect();
    * const movies = await stash.loadCollection("movies");
    * ```
    *
