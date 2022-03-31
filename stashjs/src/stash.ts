@@ -6,7 +6,7 @@ import { CollectionSchema } from "./collection-schema";
 import { Collection } from "./collection";
 
 /**
- * The main entrypoint to the Stash API.
+ * The main entry point to the Stash API.
  *
  * ## Listing all collections
  *
@@ -41,6 +41,11 @@ export class Stash {
    * // exists, or the default profile listed in ~/.cipherstash/config.json
    * const profile = await Stash.loadProfile();
    * ```
+   *
+   * @param opts - an optional `ProfileOptions` object for choosing the right profile
+   *
+   * @returns A profile that resolves with a `StashProfile`
+   *
    */
   public static async loadProfile(opts?: ProfileOptions): Promise<StashProfile> {
     return convertPrivateApiResult(StashInternal.loadProfile(opts))
@@ -51,6 +56,9 @@ export class Stash {
    *
    * Visit the [client configuration](https://docs.cipherstash.com/reference/client-configuration.html#configuration-parameters)
    * section for a full reference.
+   *
+   * @returns A `StashProfile` loaded from environment variables
+   *
    */
   public static loadProfileFromEnv(): StashProfile {
     return StashInternal.loadProfileFromEnv()
@@ -73,6 +81,11 @@ export class Stash {
    * const profile = await Stash.loadProfile({ profileName: 'my-profile' });
    * const stash = await Stash.connect(profile);
    * ```
+   *
+   * @param maybeProfile - an optional `StashProfile` to use to connect to CipherStash
+   *
+   * @returns A promise resolving with a `Stash` client instance
+   *
    */
   public static async connect(maybeProfile?: StashProfile): Promise<Stash> {
     const result = await StashInternal.connect(maybeProfile)
@@ -112,6 +125,11 @@ export class Stash {
    * // Create the movies collection using the previously defined schema
    * const movies = await stash.createCollection(schema);
    * ```
+   *
+   * @param schema - the `CollectionSchema` object for the collection being created
+   *
+   * @returns The new collection with the specified schema
+   *
    */
   public async createCollection<
     R extends StashRecord,
@@ -137,6 +155,11 @@ export class Stash {
    * const stash = await tash.connect();
    * const movies = await stash.loadCollection("movies");
    * ```
+   *
+   * @param schemaOrName - the `CollectionSchema` object or name of the collection to load
+   *
+   * @returns - A promise that resolves with the specified collection
+   *
    */
   public async loadCollection<
     R extends StashRecord,
@@ -161,6 +184,9 @@ export class Stash {
    * const collections = await stash.listCollections();
    * console.log("My collections:", collections.join(', '));
    * ```
+   *
+   * @returns - An array of collection names
+   *
    */
   public listCollections(): Promise<Array<string>> {
     return convertPrivateApiResult(this.stash.listCollections())
@@ -173,6 +199,9 @@ export class Stash {
    * const stash = await Stash.connect();
    * await stash.deleteCollection("movies");
    * ```
+   *
+   * @param collectionName - the name of the collection to be deleted
+   *
    */
   public deleteCollection(collectionName: string): Promise<void> {
     return convertPrivateApiResult(this.stash.deleteCollection(collectionName))
