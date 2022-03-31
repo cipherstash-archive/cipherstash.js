@@ -3,6 +3,7 @@
   "version": "0.3.1",
   "description": "Generated Typescript GRPC bindings for StashJS",
   "main": "dist/index.js",
+  "typedocMain": "generated/api.ts",
   "scripts": {
     "prepublishOnly": "pnpm build --filter ./",
     "build": "./scripts/pkg-build.sh",
