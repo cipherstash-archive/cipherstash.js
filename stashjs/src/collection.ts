@@ -25,7 +25,7 @@ export class Collection<
   /**
    * A cryptographically secure identifier for the collection
    *
-   * This field is generated using your profile's naming key and the name of the
+   * This field is generated using your profile's naming key, and the name of the
    * collection and is used when communicating with CipherStash.
    */
   public get ref() { return this.collection.ref }
