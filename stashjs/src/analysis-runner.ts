@@ -8,7 +8,6 @@ import { EventEmitter } from "events"
 import { AsyncQueue } from "./async-queue";
 import { StashProfile } from './stash-profile';
 import { logger } from './logger';
-import { AnalysisFailure } from "./errors";
 import { describeError } from "./utils";
 
 require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
@@ -94,9 +93,9 @@ export class AnalysisRunner {
         }
       })
 
-      this.workerEvents.on('messageerror', (error: AnalysisFailure) => {
+      this.workerEvents.on('messageerror', ({ error, record }) => {
         failureCount += 1
-        console.error(`Error report from AnalysisWorker`)
+        console.error(`Error report from AnalysisWorker while processing record: ${JSON.stringify(record) }`)
         console.error(describeError(error))
 
         if (this.allJobsCompleted(successCount, failureCount)) {
