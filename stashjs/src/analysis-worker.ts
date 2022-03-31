@@ -75,7 +75,7 @@ if (!isMainThread) {
     if (result.ok) {
       parentPort!.postMessage({ workerId: workerData.workerId, result: result.value })
     } else {
-      parentPort!.emit("messageerror", result.error)
+      parentPort!.emit("messageerror", { error: result.error, record })
     }
   })
 }
