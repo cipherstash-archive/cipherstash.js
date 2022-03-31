@@ -29,10 +29,20 @@ export class StashProfile {
     this.config = config
   }
 
+  /**
+   * Retrieve fresh data service credentials for the current session
+   *
+   * This method is intended for internal use only.
+   */
   public withFreshDataServiceCredentials<R>(builder: MemoBuilder<OauthAuthenticationInfo, R>): Memo<R> {
     return withFreshCredentials<OauthAuthenticationInfo, R>(builder, this.makeDataServiceCredentialsAuthStrategy())
   }
 
+  /**
+   * Retrieve fresh KMS credentials for the current session
+   *
+   * This method is intended for internal use only.
+   */
   public withFreshKMSCredentials<R>(builder: MemoBuilder<AWSClientConfig, R>): Memo<R> {
     return withFreshCredentials<AWSClientConfig, R>(builder, this.makeKMSCredentialsAuthStrategy())
   }
