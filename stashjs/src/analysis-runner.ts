@@ -8,6 +8,8 @@ import { EventEmitter } from "events"
 import { AsyncQueue } from "./async-queue";
 import { StashProfile } from './stash-profile';
 import { logger } from './logger';
+import { AnalysisFailure } from "./errors";
+import { describeError } from "./utils";
 
 require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
 
@@ -31,7 +33,6 @@ export class AnalysisRunner {
   private workers: Map<number, Worker> = new Map()
   private workerEvents: EventEmitter = new EventEmitter()
   private jobCount: number = 0
-  private resultCount: number = 0
 
   constructor(private config: AnalysisConfig) {
     this.initialiseWorkers()
@@ -61,12 +62,15 @@ export class AnalysisRunner {
     this.workers.clear()
   }
 
+  private allJobsCompleted(successCount: number, failureCount: number): boolean {
+    return this.jobCount === successCount + failureCount
+  }
+
   public analyze(jobsIter: AsyncIterator<StashRecord>): AsyncIterator<AnalysisResult> {
     const queue =  new AsyncQueue<AnalysisResult>()
 
-    queue.once('drained', () => {
-      this.shutdown()
-    })
+    let successCount = 0
+    let failureCount = 0
 
     const executor = async () => {
       for (let worker of this.workers.values()) {
@@ -77,15 +81,27 @@ export class AnalysisRunner {
       }
 
       this.workerEvents.on('result', async (message: WorkerMessage) => {
-        this.resultCount += 1
+        successCount += 1
         queue.push(message.result)
         let job = await jobsIter.next()
         if (!job.done) {
           this.executeJob(this.workers.get(message.workerId)!, job.value)
         }
 
-        if (job.done && this.jobCount == this.resultCount) {
+        if (this.allJobsCompleted(successCount, failureCount)) {
           queue.end()
+          this.shutdown()
+        }
+      })
+
+      this.workerEvents.on('messageerror', (error: AnalysisFailure) => {
+        failureCount += 1
+        console.error(`Error report from AnalysisWorker`)
+        console.error(describeError(error))
+
+        if (this.allJobsCompleted(successCount, failureCount)) {
+          queue.end()
+          this.shutdown()
         }
       })
     }
