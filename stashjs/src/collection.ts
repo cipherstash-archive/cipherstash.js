@@ -14,7 +14,7 @@ export class Collection<
   /**
    * The UUID of the collection used internally
    *
-   * As this field is for internal use only use the `Collection.name` field if
+   * As this field is for internal use only, use the `Collection.name` field if
    * you need to reference a collection.
    *
    * @see Collection.name
