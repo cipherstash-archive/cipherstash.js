@@ -1,5 +1,4 @@
-#!/usr/bin/env node
-
+#!/usr/bin/env -S node --stack-trace-limit=1024
 
 /* tslint:disable */
 // check if we're running in dev mode
