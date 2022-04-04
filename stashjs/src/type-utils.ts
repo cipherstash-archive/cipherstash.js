@@ -77,6 +77,10 @@ export function unreachable(message: string): never {
   throw new Error(message)
 }
 
+export function assertValueNever(_value: never): void {
+  // noop
+}
+
 /**
  * Generates a new type from T where any keys defined in K become optional in
  * the returned type.
