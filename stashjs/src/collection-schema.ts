@@ -1,5 +1,5 @@
 import { StashRecord, Mappings, MappingsMeta, makeMappingsDSL, MappingsDSL, MappingOn } from "./dsl/mappings-dsl"
-import { Query, QueryBuilder, OperatorsForIndex, operators } from "./dsl/query-dsl"
+import { Query, QueryBuilder, OperatorsForIndex, operators, isAnyQuery } from "./dsl/query-dsl"
 import { makeId, idBufferToString } from "./utils"
 import { CollectionSchemaDefinition } from "./parsers/collection-schema-parser"
 import * as crypto from 'crypto'
@@ -117,7 +117,15 @@ export class CollectionSchema<
    * @returns a Query object
    */
   public buildQuery(callback: QueryBuilderCallback<R, M>): Query<R, M> {
-    return callback(this.makeQueryBuilder())
+    const maybeQuery = callback(this.makeQueryBuilder())
+
+    // Since the QueryBuilderCallback could return "any", double check that the returned
+    // object was actually a query.
+    if (!isAnyQuery(maybeQuery)) {
+      throw new QueryBuilderSyntaxError('Query builder returned invalid query');
+    }
+
+    return maybeQuery;
   }
 
   /**
