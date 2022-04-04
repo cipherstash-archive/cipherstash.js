@@ -36,6 +36,7 @@ export type ErrorTag =
   | 'NoDefaultProfileSet'
   | 'OAuthFailure'
   | 'PlainError'
+  | 'QueryInvalidSyntaxFailure'
   | 'SaveProfileFailure'
   | 'SetDefaultProfileFailure'
   | 'StreamingPutFailure'
@@ -103,7 +104,10 @@ export const DocumentGetAllFailure: (cause: DocumentGetAllFailure["cause"]) => D
 export type DocumentPutFailure = StashJSError<'DocumentPutFailure', EncryptionFailure | GRPCError | AuthenticationFailure>
 export const DocumentPutFailure: (cause: DocumentPutFailure["cause"]) => DocumentPutFailure = (cause) => addCaller(({ tag: 'DocumentPutFailure', cause }))
 
-export type DocumentQueryFailure = StashJSError<'DocumentQueryFailure', DecryptionFailure | GRPCError | AuthenticationFailure>
+export type QueryInvalidSyntaxFailure = StashJSError<'QueryInvalidSyntaxFailure', NativeError>;
+export const QueryInvalidSyntaxFailure = (cause: QueryBuilderSyntaxError): QueryInvalidSyntaxFailure => addCaller({ tag: 'QueryInvalidSyntaxFailure', cause: wrap(cause) })
+
+export type DocumentQueryFailure = StashJSError<'DocumentQueryFailure', DecryptionFailure | GRPCError | AuthenticationFailure | QueryInvalidSyntaxFailure>
 export const DocumentQueryFailure: (cause: DocumentQueryFailure["cause"]) => DocumentQueryFailure = (cause) => addCaller(({ tag: 'DocumentQueryFailure', cause }))
 
 
@@ -225,6 +229,7 @@ export function simpleDescriptionForError<Cause, E extends StashJSError<ErrorTag
     case 'OAuthFailure': return `[OAuthFailure] OAuth authentication failed (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'PlainError': return `${error.message} (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'NativeError': return `[JSError: ${(error.cause as any).name}]`
+    case 'QueryInvalidSyntaxFailure': return `[QueryInvalidSyntaxFailure] Query used invalid index or operator (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'SaveProfileFailure': return `[SaveProfileFailure] Failed to save profile (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'SetDefaultProfileFailure': return `[SetDefaultProfileFailure] Failed to set the default profile (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'StreamingPutFailure': return `[StreamingPutFailure] Failure during streaming bulk upsert (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
@@ -316,4 +321,10 @@ function keepFrame(frame: string): boolean {
     !frame.includes("result.ts") &&
     !frame.includes("node:internal") &&
     frame.match(STACK_FRAME_RE) !== null
+}
+
+export class QueryBuilderSyntaxError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
 }
