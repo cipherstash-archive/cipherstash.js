@@ -1,5 +1,5 @@
 import { isObject } from "./guards"
-import { unreachable } from "./type-utils"
+import { assertValueNever, unreachable } from "./type-utils"
 import { logger } from './logger';
 
 /**
@@ -233,8 +233,7 @@ export function simpleDescriptionForError<Cause, E extends StashJSError<ErrorTag
     case 'TokenValidationFailure': return `[TokenValidationFailure] Failure while validating access token (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     default: {
       // This ensures that the switch is exhaustive, since this code path is only hit when something goes very wrong
-      const assertNever: never = error;
-      void assertNever;
+      assertValueNever(error);
 
       logger.info("Method simpleDescriptionForError was calld with a non-StashJSError object");
       logger.info(String(error));
