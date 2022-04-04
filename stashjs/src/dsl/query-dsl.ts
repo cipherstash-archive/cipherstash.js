@@ -1,3 +1,4 @@
+import { isObject } from "../guards"
 import { FieldOfType, FieldType } from "../type-utils"
 import {
   Mappings,
@@ -56,6 +57,10 @@ export type Query<
   M extends Mappings<R>
 > =
   Condition<R, M>
+
+export function isAnyQuery(value: unknown): value is Query<StashRecord, Mappings<StashRecord>> {
+  return isObject(value) && `kind` in value;
+}
 
 /**
  * A condition is a single boolean expression within a Query.
