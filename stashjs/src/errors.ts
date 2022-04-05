@@ -1,4 +1,6 @@
-import { unreachable } from "./type-utils"
+import { isObject } from "./guards"
+import { assertValueNever, unreachable } from "./type-utils"
+import { logger } from './logger';
 
 /**
  * An enumeration of all errors that can be thrown by CipherStash.
@@ -229,6 +231,15 @@ export function simpleDescriptionForError<Cause, E extends StashJSError<ErrorTag
     case 'SetDefaultProfileFailure': return `[SetDefaultProfileFailure] Failed to set the default profile (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'StreamingPutFailure': return `[StreamingPutFailure] Failure during streaming bulk upsert (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'TokenValidationFailure': return `[TokenValidationFailure] Failure while validating access token (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
+    default: {
+      // This ensures that the switch is exhaustive, since this code path is only hit when something goes very wrong
+      assertValueNever(error);
+
+      logger.info("Method simpleDescriptionForError was calld with a non-StashJSError object");
+      logger.info(String(error));
+
+      return `[UnknownError] An unknown error occurred`;
+    }
   }
 }
 
@@ -248,6 +259,9 @@ function simpleDescriptionForErrorWithMessage<Cause, E extends StashJSError<Erro
   return desc
 }
 
+export function isAnyStashJSError(value: unknown): value is StashJSError<ErrorTag, unknown> {
+  return !!value && isObject(value) && 'tag' in value && 'caller' in value;
+}
 
 export function toErrorMessage<Cause, E extends StashJSError<ErrorTag, Cause>>(error: E, indentation: number = 0): string {
   if (error.tag === 'PlainError') {
