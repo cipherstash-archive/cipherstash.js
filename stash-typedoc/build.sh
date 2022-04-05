@@ -11,30 +11,22 @@ set -x # trace what gets executed (useful for debugging)
 
 trap "echo SOMETHING WENT WRONG - please read the logs above and see if it helps you figure out what is wrong - and also ask an engineer help" ERR
 
-subproject_setup() {
-  asdf install
-  asdf reshim
-  pnpm install --frozen-lockfile
-}
-
 subproject_build() {
-  pnpm install --frozen-lockfile --filter @cipherstash/*
-  pnpm build --filter @cipherstash/*
+  pnpx typedoc --entryPointStrategy packages ../stashjs-grpc ../stashjs \
+    --out tsdoc \
+    --disableSources \
+    --readme none
+
+  # The typedoc index.html file doesn't work from a subfolder.
+  sed -i 's/<head>/<head><base href="\/tsdoc\/">/g' ./tsdoc/index.html
 }
 
 subproject_test() {
-  find "$(dirname "${0}")" -name '*.sh' -exec shellcheck {} +
-  find "$(dirname "${0}")" -name '*.sh' -exec shfmt -ci -i 2 -d {} +
-  pnpm test --filter @cipherstash/*
-}
-
-subproject_publish() {
-  pnpm build --filter @cipherstash/*
-  pnpm publish --filter @cipherstash/*
+  true
 }
 
 subproject_clean() {
-  pnpm run clean --filter @cipherstash/*
+  rm ./docs -rf
 }
 
 subproject_rebuild() {
@@ -44,10 +36,6 @@ subproject_rebuild() {
 
 subcommand="${1:-build}"
 case $subcommand in
-  setup)
-    subproject_setup
-    ;;
-
   clean)
     subproject_clean
     ;;
@@ -62,10 +50,6 @@ case $subcommand in
 
   build)
     subproject_build
-    ;;
-
-  publish)
-    subproject_publish
     ;;
 
   *)
