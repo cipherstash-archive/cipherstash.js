@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Datastore & Search API for CipherStash",
   "main": "dist/index.js",
   "engines": {
