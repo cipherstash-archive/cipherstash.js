@@ -9,8 +9,8 @@ import { CollectionSchema } from "./collection-schema"
 import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer, AnalyzedQuery } from "./analyzer"
 import { StreamWriter } from "./stream-writer"
 import { V1 } from "@cipherstash/stashjs-grpc"
-import { AsyncResult, convertErrorsTo, Ok, parallel, sequence, Unit } from "./result"
-import { DocumentDeleteFailure, DocumentGetAllFailure, DocumentGetFailure, DocumentPutFailure, DocumentQueryFailure, StreamingPutFailure } from "./errors"
+import { AsyncResult, convertErrorsTo, Err, Ok, parallel, sequence, Unit } from "./result"
+import { DocumentDeleteFailure, DocumentGetAllFailure, DocumentGetFailure, DocumentPutFailure, DocumentQueryFailure, QueryBuilderError, QueryBuilderFailure, StreamingPutFailure } from "./errors"
 import { stringify as stringifyUUID } from 'uuid'
 
 const DEFAULT_QUERY_LIMIT = 50;
@@ -136,7 +136,27 @@ export class CollectionInternal<
     queryOptions?: QueryOptions<R, M>
   ): AsyncResult<QueryResult<R & HasID>, DocumentQueryFailure> {
     const options = queryOptions ? queryOptions : {}
-    const query = this.analyzeQuery(callback(this.schema.makeQueryBuilder()))
+
+    let pendingQuery: Query<R, M>;
+
+    try {
+      pendingQuery = callback(this.schema.makeQueryBuilder());
+    } catch (error) {
+      if (error instanceof QueryBuilderError) {
+        return Err(
+          DocumentQueryFailure(
+            QueryBuilderFailure(error)
+          )
+        );
+      }
+
+      // If some unknown exception was raised we're not ready to deal with it.
+      // Just pass the error on.
+      throw error;
+    }
+
+    const query = this.analyzeQuery(pendingQuery)
+
     const timerStart = process.hrtime.bigint()
 
     return convertErrorsTo(
