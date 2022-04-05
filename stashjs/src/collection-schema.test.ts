@@ -1,7 +1,7 @@
 import { CollectionSchema } from './collection-schema'
 import { downcase, ngram, standard } from './dsl/filters-and-tokenizers-dsl'
 import { all } from './dsl/query-dsl'
-import { QueryBuilderSyntaxError } from './errors'
+import { QueryBuilderError } from './errors'
 
 type PatientRecord = {
   id: string,
@@ -159,25 +159,25 @@ describe('CollectionSchema', () => {
 
       test('throw when accessing invalid index field', () => {
         expect(() => schema.buildQuery(($: any) => $.invalidIndex.eq("test"))).toThrowError(
-          new QueryBuilderSyntaxError('No index named "invalidIndex" on collection "patients"')
+          new QueryBuilderError('No index named "invalidIndex" on collection "patients"')
         );
       });
 
       test('throw when using an operator that doesn\'t exist', () => {
         expect(() => schema.buildQuery($ => ($.city as any).boom("wow"))).toThrowError(
-          new QueryBuilderSyntaxError('Cannot use operator \"boom\" on index \"city\" on collection \"patients\"')
+          new QueryBuilderError('Cannot use operator \"boom\" on index \"city\" on collection \"patients\"')
         );
       });
 
       test('throw when using an incorrect operator on a field', () => {
         expect(() => schema.buildQuery($ => ($.city as any).match("London"))).toThrowError(
-          new QueryBuilderSyntaxError('Cannot use operator \"match\" on index \"city\" on collection \"patients\"')
+          new QueryBuilderError('Cannot use operator \"match\" on index \"city\" on collection \"patients\"')
         );
       });
 
       test('throw when returning an incorrect query', () => {
         expect(() => schema.buildQuery(($: any) => $)).toThrowError(
-          new QueryBuilderSyntaxError('Query builder returned invalid query')
+          new QueryBuilderError('Query builder returned invalid query')
         );
       });
     })

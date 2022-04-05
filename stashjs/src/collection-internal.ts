@@ -10,7 +10,7 @@ import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer,
 import { StreamWriter } from "./stream-writer"
 import { V1 } from "@cipherstash/stashjs-grpc"
 import { AsyncResult, convertErrorsTo, Err, Ok, parallel, sequence, Unit } from "./result"
-import { DocumentDeleteFailure, DocumentGetAllFailure, DocumentGetFailure, DocumentPutFailure, DocumentQueryFailure, QueryBuilderSyntaxError, QueryInvalidSyntaxFailure, StreamingPutFailure } from "./errors"
+import { DocumentDeleteFailure, DocumentGetAllFailure, DocumentGetFailure, DocumentPutFailure, DocumentQueryFailure, QueryBuilderError, QueryBuilderFailure, StreamingPutFailure } from "./errors"
 import { stringify as stringifyUUID } from 'uuid'
 
 const DEFAULT_QUERY_LIMIT = 50;
@@ -142,10 +142,10 @@ export class CollectionInternal<
     try {
       pendingQuery = callback(this.schema.makeQueryBuilder());
     } catch (error) {
-      if (error instanceof QueryBuilderSyntaxError) {
+      if (error instanceof QueryBuilderError) {
         return Err(
           DocumentQueryFailure(
-            QueryInvalidSyntaxFailure(error)
+            QueryBuilderFailure(error)
           )
         );
       }

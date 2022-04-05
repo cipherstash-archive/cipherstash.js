@@ -36,7 +36,7 @@ export type ErrorTag =
   | 'NoDefaultProfileSet'
   | 'OAuthFailure'
   | 'PlainError'
-  | 'QueryInvalidSyntaxFailure'
+  | 'QueryBuilderFailure'
   | 'SaveProfileFailure'
   | 'SetDefaultProfileFailure'
   | 'StreamingPutFailure'
@@ -104,10 +104,10 @@ export const DocumentGetAllFailure: (cause: DocumentGetAllFailure["cause"]) => D
 export type DocumentPutFailure = StashJSError<'DocumentPutFailure', EncryptionFailure | GRPCError | AuthenticationFailure>
 export const DocumentPutFailure: (cause: DocumentPutFailure["cause"]) => DocumentPutFailure = (cause) => addCaller(({ tag: 'DocumentPutFailure', cause }))
 
-export type QueryInvalidSyntaxFailure = StashJSError<'QueryInvalidSyntaxFailure', NativeError>;
-export const QueryInvalidSyntaxFailure = (cause: QueryBuilderSyntaxError): QueryInvalidSyntaxFailure => addCaller({ tag: 'QueryInvalidSyntaxFailure', cause: wrap(cause) })
+export type QueryBuilderFailure = StashJSError<'QueryBuilderFailure', NativeError>;
+export const QueryBuilderFailure = (cause: QueryBuilderError): QueryBuilderFailure => addCaller({ tag: 'QueryBuilderFailure', cause: wrap(cause) })
 
-export type DocumentQueryFailure = StashJSError<'DocumentQueryFailure', DecryptionFailure | GRPCError | AuthenticationFailure | QueryInvalidSyntaxFailure>
+export type DocumentQueryFailure = StashJSError<'DocumentQueryFailure', DecryptionFailure | GRPCError | AuthenticationFailure | QueryBuilderFailure>
 export const DocumentQueryFailure: (cause: DocumentQueryFailure["cause"]) => DocumentQueryFailure = (cause) => addCaller(({ tag: 'DocumentQueryFailure', cause }))
 
 
@@ -229,7 +229,7 @@ export function simpleDescriptionForError<Cause, E extends StashJSError<ErrorTag
     case 'OAuthFailure': return `[OAuthFailure] OAuth authentication failed (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'PlainError': return `${error.message} (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'NativeError': return `[JSError: ${(error.cause as any).name}]`
-    case 'QueryInvalidSyntaxFailure': return `[QueryInvalidSyntaxFailure] Query used invalid index or operator (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
+    case 'QueryBuilderFailure': return `[QueryBuilderFailure] Query used invalid index or operator (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'SaveProfileFailure': return `[SaveProfileFailure] Failed to save profile (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'SetDefaultProfileFailure': return `[SetDefaultProfileFailure] Failed to set the default profile (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
     case 'StreamingPutFailure': return `[StreamingPutFailure] Failure during streaming bulk upsert (${error.caller.function} in ${error.caller.module}:${error.caller.line})`
@@ -323,7 +323,7 @@ function keepFrame(frame: string): boolean {
     frame.match(STACK_FRAME_RE) !== null
 }
 
-export class QueryBuilderSyntaxError extends Error {
+export class QueryBuilderError extends Error {
   constructor(message: string) {
     super(message);
   }
