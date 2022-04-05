@@ -3,7 +3,7 @@ import { Query, QueryBuilder, OperatorsForIndex, operators, isAnyQuery } from ".
 import { makeId, idBufferToString } from "./utils"
 import { CollectionSchemaDefinition } from "./parsers/collection-schema-parser"
 import * as crypto from 'crypto'
-import {QueryBuilderSyntaxError} from "./errors"
+import { QueryBuilderError } from "./errors"
 
 /**
  * Class for representing a *definition* of a collection that includes a name
@@ -122,7 +122,7 @@ export class CollectionSchema<
     // Since the QueryBuilderCallback could return "any", double check that the returned
     // object was actually a query.
     if (!isAnyQuery(maybeQuery)) {
-      throw new QueryBuilderSyntaxError('Query builder returned invalid query');
+      throw new QueryBuilderError('Query builder returned invalid query');
     }
 
     return maybeQuery;
@@ -140,17 +140,17 @@ export class CollectionSchema<
       return {
         get(_target, opName) {
           if (typeof opName !== 'string') {
-            throw new QueryBuilderSyntaxError(`Cannot index operators with invalid type: ${typeof opName}`);
+            throw new QueryBuilderError(`Cannot index operators with invalid type: ${typeof opName}`);
           }
 
           if (!operators) {
-            throw new QueryBuilderSyntaxError(`Cannot use operator "${opName}" on "${indexName}" on collection "${schemaName}" as there are no operators`);
+            throw new QueryBuilderError(`Cannot use operator "${opName}" on "${indexName}" on collection "${schemaName}" as there are no operators`);
           }
 
           const operator = operators[opName as keyof typeof operators];
 
           if (!operator) {
-            throw new QueryBuilderSyntaxError(`Cannot use operator "${opName}" on index "${indexName}" on collection "${schemaName}"`);
+            throw new QueryBuilderError(`Cannot use operator "${opName}" on index "${indexName}" on collection "${schemaName}"`);
           }
 
           return operator;
@@ -161,13 +161,13 @@ export class CollectionSchema<
     return new Proxy<object>({}, {
       get: (_target, indexName) => {
         if (typeof indexName !== 'string') {
-          throw new QueryBuilderSyntaxError(`Cannot index QueryBuilder with invalid type: ${typeof indexName}`);
+          throw new QueryBuilderError(`Cannot index QueryBuilder with invalid type: ${typeof indexName}`);
         }
 
         const mapping = this.mappings[indexName];
 
         if (!mapping) {
-          throw new QueryBuilderSyntaxError(`No index named "${indexName}" on collection "${schemaName}"`);
+          throw new QueryBuilderError(`No index named "${indexName}" on collection "${schemaName}"`);
         }
 
         const operators = this.operatorsFor(indexName as MappingKey, mapping);
