@@ -1,6 +1,7 @@
 import { CollectionSchema } from './collection-schema'
 import { downcase, ngram, standard } from './dsl/filters-and-tokenizers-dsl'
 import { all } from './dsl/query-dsl'
+import { QueryBuilderError } from './errors'
 
 type PatientRecord = {
   id: string,
@@ -155,6 +156,30 @@ describe('CollectionSchema', () => {
         let query = schema.buildQuery($ => $.allStringFields2.match("address.city", "London"))
         expect(query).toStrictEqual({ kind: "field-dynamic-match", op: "match", indexName: "allStringFields2", fieldName: "address.city", value: "London" })
       })
+
+      test('throw when accessing invalid index field', () => {
+        expect(() => schema.buildQuery(($: any) => $.invalidIndex.eq("test"))).toThrowError(
+          new QueryBuilderError('No index named "invalidIndex" on collection "patients"')
+        );
+      });
+
+      test('throw when using an operator that doesn\'t exist', () => {
+        expect(() => schema.buildQuery($ => ($.city as any).boom("wow"))).toThrowError(
+          new QueryBuilderError('Cannot use operator \"boom\" on index \"city\" on collection \"patients\"')
+        );
+      });
+
+      test('throw when using an incorrect operator on a field', () => {
+        expect(() => schema.buildQuery($ => ($.city as any).match("London"))).toThrowError(
+          new QueryBuilderError('Cannot use operator \"match\" on index \"city\" on collection \"patients\"')
+        );
+      });
+
+      test('throw when returning an incorrect query', () => {
+        expect(() => schema.buildQuery(($: any) => $)).toThrowError(
+          new QueryBuilderError('Query builder returned invalid query')
+        );
+      });
     })
 
     describe('conjunctive queries', () => {

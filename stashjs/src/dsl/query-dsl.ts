@@ -1,3 +1,4 @@
+import { isObject } from "../guards"
 import { FieldOfType, FieldType } from "../type-utils"
 import {
   Mappings,
@@ -56,6 +57,10 @@ export type Query<
   M extends Mappings<R>
 > =
   Condition<R, M>
+
+export function isAnyQuery(value: unknown): value is Query<StashRecord, Mappings<StashRecord>> {
+  return isObject(value) && `kind` in value;
+}
 
 /**
  * A condition is a single boolean expression within a Query.
@@ -253,6 +258,8 @@ export type OperatorsForIndex<
   : M[N] extends FieldDynamicMatchMapping ? FieldDynamicMatchOperators<R, M, N>
   : never
 
+type NeverObjectToAny<T> = T extends { [key: string]: never } ? any : T;
+
 /**
  * This type represents the sole argument provided to the callback when building
  * a Query with CollectionProxy.all($ => ...).
@@ -264,9 +271,9 @@ export type OperatorsForIndex<
 export type QueryBuilder<
   R extends StashRecord,
   M extends Mappings<R>
-> = {
+> = NeverObjectToAny<{
   [F in Extract<keyof M, string>]: OperatorsForIndex<R, M, F>
-}
+}>
 
 /**
  * Type guard to check if a Condition is a ConjunctiveCondition.

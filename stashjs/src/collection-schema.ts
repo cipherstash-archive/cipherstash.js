@@ -1,8 +1,9 @@
 import { StashRecord, Mappings, MappingsMeta, makeMappingsDSL, MappingsDSL, MappingOn } from "./dsl/mappings-dsl"
-import { Query, QueryBuilder, OperatorsForIndex, operators } from "./dsl/query-dsl"
+import { Query, QueryBuilder, OperatorsForIndex, operators, isAnyQuery } from "./dsl/query-dsl"
 import { makeId, idBufferToString } from "./utils"
 import { CollectionSchemaDefinition } from "./parsers/collection-schema-parser"
 import * as crypto from 'crypto'
+import { QueryBuilderError } from "./errors"
 
 /**
  * Class for representing a *definition* of a collection that includes a name
@@ -116,19 +117,64 @@ export class CollectionSchema<
    * @returns a Query object
    */
   public buildQuery(callback: QueryBuilderCallback<R, M>): Query<R, M> {
-    return callback(this.makeQueryBuilder())
+    const maybeQuery = callback(this.makeQueryBuilder())
+
+    // Since the QueryBuilderCallback could return "any", double check that the returned
+    // object was actually a query.
+    if (!isAnyQuery(maybeQuery)) {
+      throw new QueryBuilderError('Query builder returned invalid query');
+    }
+
+    return maybeQuery;
   }
 
   /**
    * Returns a QueryBuilder tailored to the Mappings defined on this Collection.
    */
   public makeQueryBuilder(): QueryBuilder<R, M> {
-    const entries = Object.entries(this.mappings) as [Extract<keyof M, string>, MappingOn<R>][]
-    return Object.fromEntries(
-      entries.map(
-        ([key, mapping]) => [key, this.operatorsFor(key, mapping)]
-      )
-    ) as QueryBuilder<R, M>
+    const schemaName = this.name;
+
+    type MappingKey = Extract<keyof M, string>;
+
+    function makeIndexOpsHandler(indexName: string, operators?: OperatorsForIndex<R, M, MappingKey>): ProxyHandler<object> {
+      return {
+        get(_target, opName) {
+          if (typeof opName !== 'string') {
+            throw new QueryBuilderError(`Cannot index operators with invalid type: ${typeof opName}`);
+          }
+
+          if (!operators) {
+            throw new QueryBuilderError(`Cannot use operator "${opName}" on "${indexName}" on collection "${schemaName}" as there are no operators`);
+          }
+
+          const operator = operators[opName as keyof typeof operators];
+
+          if (!operator) {
+            throw new QueryBuilderError(`Cannot use operator "${opName}" on index "${indexName}" on collection "${schemaName}"`);
+          }
+
+          return operator;
+        }
+      }
+    };
+
+    return new Proxy<object>({}, {
+      get: (_target, indexName) => {
+        if (typeof indexName !== 'string') {
+          throw new QueryBuilderError(`Cannot index QueryBuilder with invalid type: ${typeof indexName}`);
+        }
+
+        const mapping = this.mappings[indexName];
+
+        if (!mapping) {
+          throw new QueryBuilderError(`No index named "${indexName}" on collection "${schemaName}"`);
+        }
+
+        const operators = this.operatorsFor(indexName as MappingKey, mapping);
+
+        return new Proxy<object>({}, makeIndexOpsHandler(indexName, operators));
+      }
+    }) as unknown as QueryBuilder<R, M>;
   }
 
   /**
