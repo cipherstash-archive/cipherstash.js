@@ -2,7 +2,7 @@
   "name": "stash-typedoc",
   "private": true,
   "version": "1.0.0",
-  "description": "",
+  "description": "A package for creating API docs, to publish at https://docs.cipherstash.com/tsdoc",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
