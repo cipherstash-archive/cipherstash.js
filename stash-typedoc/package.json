@@ -1,0 +1,17 @@
+{
+  "name": "stash-typedoc",
+  "private": true,
+  "version": "1.0.0",
+  "description": "A package for creating API docs, to publish at https://docs.cipherstash.com/tsdoc",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Bennett Hardwick",
+  "license": "ISC",
+  "devDependencies": {
+    "typedoc": "^0.22.13",
+    "typescript": "4.3.5"
+  }
+}
