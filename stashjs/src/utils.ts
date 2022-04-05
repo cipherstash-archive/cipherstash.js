@@ -1,7 +1,7 @@
 import { v4 as uuidv4, parse as parseUUID, stringify as stringifyUUID } from 'uuid'
 import stringifyObject from 'stringify-object'
 import { unreachable } from './type-utils'
-import { toErrorMessage } from './errors'
+import { isAnyStashJSError, toErrorMessage } from './errors'
 
 export function normalizeId(id: string): Uint8Array
 export function normalizeId(id: Buffer): Uint8Array
@@ -91,8 +91,24 @@ function objectify(item: any): any {
   }
 }
 
-export function describeError(err: any): string {
-  return toErrorMessage(err)
+export function describeError(err: unknown): string {
+  if (isAnyStashJSError(err)) {
+    return toErrorMessage(err);
+  } else if (err instanceof Error) {
+    return err.stack ? err.stack : String(err);
+  } else {
+    try {
+      const stringified = JSON.stringify(err);
+
+      if (stringified === "{}") {
+        return String(err);
+      } else {
+        return stringified;
+      }
+    } catch (e) {
+      return String(err);
+    }
+  }
 }
 
 export function inspect<T>(value: T, label?: string): T {
