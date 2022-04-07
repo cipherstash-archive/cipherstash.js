@@ -5,7 +5,7 @@ export function makeHttpsClient(host: string, port: number): AxiosInstance {
   if (port === 443) {
     return axios.create({
       baseURL: `https://${host}`,
-      timeout: 5000,
+      timeout: 15000,
       headers: {
         Accept: 'application/vnd.github.v3+json'
       },
@@ -20,7 +20,7 @@ export function makeHttpsClient(host: string, port: number): AxiosInstance {
     // without having to set up TLS on localhost.
     return axios.create({
       baseURL: `http://${host}:${port}`,
-      timeout: 5000,
+      timeout: 15000,
       headers: {
         Accept: 'application/vnd.github.v3+json'
       }
