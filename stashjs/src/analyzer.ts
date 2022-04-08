@@ -181,10 +181,10 @@ function flattenCondition<
 }
 
 const indexExact: (encrypt: EncryptFn) => <T extends ExactMappingFieldType>(term: T) => Array<Buffer>
-  = encrypt => term => term ? [encrypt(encodeTerm(term))] : []
+  = encrypt => term => (typeof(term) !== 'undefined' && term !== null) ? [encrypt(encodeTerm(term))] : []
 
 const indexRange: (encrypt: EncryptFn) => <T extends RangeMappingFieldType>(term: T) => Array<Buffer>
-  = encrypt => term => term ? [encrypt(encodeTerm(term))] : []
+  = encrypt => term => (typeof(term) !== 'undefined' && term !== null) ? [encrypt(encodeTerm(term))] : []
 
 const indexMatch: (encrypt: EncryptFn) => (terms: Array<MatchMappingFieldType>) => Array<Buffer> = encrypt => terms => {
   return terms.map(t => encrypt(encodeTerm(t)))
