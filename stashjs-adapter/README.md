@@ -19,29 +19,28 @@ The primary goals of this module are:
 
 First create a module to represent a model (say User) in CipherStash.
 
-```ts
+```ts title="user-vault.ts"
 // Existing User type
 import { User } from '@prisma/client'
 import CollectionAPI from '@cipherstash/stashjs-adapter'
 
 const ID_NAMESPACE = '1b671a64-40d5-491e-99b0-da01ff1f3341'
 
-const ProtectedUsers = new CollectionAPI<User>("users", ID_NAMESPACE)
-export ProtectedUsers
+export const UserVault = new CollectionAPI<User>("users", ID_NAMESPACE)
 ```
 
 Then use in other parts of your application. For example, in an API:
 
 ```ts
 import type { NextApiRequest, NextApiResponse } from "next"
-import ProtectedUsers from "protected-users"
+import UserVault from "user-vault"
 
 export default async function handler(
   _req: NextApiRequest,
   res: NextApiResponse<any>
 ) {
   
-  const users = await ProtectedUsers.list()
+  const users = await UserVault.list()
   res.status(200).json(users)
 }
 ```
