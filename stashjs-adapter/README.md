@@ -20,6 +20,7 @@ The primary goals of this module are:
 First create a module to represent a model (say User) in CipherStash.
 
 ```ts title="user-vault.ts"
+// -- user-vault.ts ==
 // Existing User type
 import { User } from '@prisma/client'
 import CollectionAPI from '@cipherstash/stashjs-adapter'
