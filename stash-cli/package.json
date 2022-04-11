@@ -6,6 +6,10 @@
   "bin": {
     "stash": "bin/stash"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipherstash/stashjs-cli.git"
+  },
   "scripts": {
     "format": "pnpx prettier --write **/*.{js,ts,tsx,json}",
     "lint": "tslint -p .",
