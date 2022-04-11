@@ -5,7 +5,7 @@ import { AnalysisConfig, AnalysisResult } from "./analysis-runner"
 import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
-import { maybeGenerateId } from "./utils"
+import { idBufferToString, maybeGenerateId } from "./utils"
 import { Memo } from "./auth/auth-strategy"
 import { AsyncResult, Err, Ok } from "./result"
 import { AnalysisFailure } from "./errors"
@@ -36,7 +36,8 @@ if (!isMainThread) {
 
     const cipher = await cipherMemo.freshValue()
     if (cipher.ok) {
-      const encryptedSource = await cipher.value.encrypt(record)
+      // Store the record uuid as a string so users don't need to convert it
+      const encryptedSource = await cipher.value.encrypt({ ...recordWithId, id: idBufferToString(recordWithId.id) })
       if (encryptedSource.ok) {
         const result = {
           docId: recordWithId.id,

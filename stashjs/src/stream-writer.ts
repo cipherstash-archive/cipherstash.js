@@ -7,7 +7,6 @@ import { StashInternal } from "./stash-internal"
 import { AsyncResult, Err, fromPromise, Ok } from "./result"
 import { StreamingPutFailure } from "./errors"
 import { makeAsyncResultApiWrapper } from "./stash-api-async-result-wrapper"
-import { maybeGenerateId } from "./utils"
 
 export class StreamWriter<
   R extends StashRecord,
@@ -94,7 +93,6 @@ export class StreamWriter<
 
   private writeOneStreamingPutRequest(stream: ClientWritableStream<V1.Document.StreamingPutRequest>, analysisResult: AnalysisResult): AsyncResult<void, StreamingPutFailure> {
     let payload = this.toStreamingPutRequest(analysisResult)
-    payload.document!.source = maybeGenerateId(payload.document?.source)
     const promise = new Promise<void>((resolve, reject) => {
       this.writeWithDrainAndErrorHandlers(stream, payload, resolve, reject)
     })
