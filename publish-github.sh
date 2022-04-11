@@ -8,8 +8,8 @@ set -x # trace what gets executed (useful for debugging)
 
 platform_root=$(git rev-parse --show-toplevel)
 
-for package in stashjs-grpc stashjs stashjs-examples; do
+for package in stashjs-grpc stashjs stash-cli; do
   remote=$(node -e "console.log(require('./$package/package.json').repository.url)" | sed 's/^git\+//')
   echo "Remote: $remote"
-  (cd "$platform_root" && git subtree push --prefix="clients/@cipherstash/$package" "$remote" main)
+  (cd "$platform_root" && git subtree -d push --prefix="clients/@cipherstash/$package" "$remote" main)
 done
