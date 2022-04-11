@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix for queries on records with fields set to `0`
 - Fix errors in federated auth from rate limiting
+- Records without an explicit ID will still include an ID in the record
 
 ## [0.3.8]
 
