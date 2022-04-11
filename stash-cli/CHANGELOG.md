@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.3.8]
+
+## Changed
+
+- Launch node with --stack-trace-limit=1024 so that stack traces are not truncated
+
 ## [0.3.7]
 
 ## Added
