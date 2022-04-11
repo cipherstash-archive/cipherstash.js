@@ -1,7 +1,7 @@
 import { StashRecord, Mappings, MappingsMeta, HasID } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { StashInternal } from "./stash-internal"
-import { maybeGenerateId, normalizeId } from "./utils"
+import { idBufferToString, maybeGenerateId, normalizeId } from "./utils"
 import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToQueryResult } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./grpc/get-helper"
@@ -87,7 +87,8 @@ export class CollectionInternal<
       DocumentPutFailure,
       await sequence(
           _ => this.stash.sourceDataCipherSuiteMemo.freshValue(),
-         cipher => cipher.encrypt(doc),
+         // Store the uuid as a string so users don't need to convert it
+         cipher => cipher.encrypt({ ...docWithId, id: idBufferToString(docWithId.id) }),
          source => this.stash.api.document.put({ collectionId, vectors, source: { id: docWithId.id, source: source.result } }),
          _ => Ok.Async(stringifyUUID(docWithId.id))
       )(Unit)
