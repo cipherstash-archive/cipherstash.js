@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Fixed
 
 - Fix for queries on records with fields set to `0`
+- Fix errors in federated auth from rate limiting
 
 ## [0.3.8]
 

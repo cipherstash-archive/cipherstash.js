@@ -6,6 +6,8 @@ import { AuthenticationFailure, AWSFederationFailure } from "../errors";
 import { AsyncResult, Ok, Err } from "../result";
 import { AWSClientConfig } from './aws-client-config';
 import { Memo } from './auth-strategy';
+import { retryPromise } from "../retry-promise";
+import {isObject} from "../guards";
 
 export class AWSClientConfigFederatedStrategy implements AuthStrategy<AWSClientConfig> {
   private awsConfig!: AWSClientConfig
@@ -39,13 +41,16 @@ export class AWSClientConfigFederatedStrategy implements AuthStrategy<AWSClientC
     }
 
     const client = new STS({ region: this.credSource.region })
+
     try {
-      const { Credentials: credentials } = await client.assumeRoleWithWebIdentity({
+      const { Credentials: credentials } = await retryPromise(() => client.assumeRoleWithWebIdentity({
         RoleArn: this.credSource.roleArn,
         WebIdentityToken: tokenResult.value.accessToken,
         // TODO: This should possibly be the user ID (sub from the access token)
         RoleSessionName: "stash-client"
-      })
+        // Sometimes this method fails with an InvalidIdentityToken error that can happen when
+        // we get rate limited. It should be safe to retry.
+      }), { retryOn: e => isObject(e) && e['name'] === 'InvalidIdentityToken' });
 
       if (credentials) {
         this.awsConfig = this.toAwsConfig(this.credSource.region, credentials)
