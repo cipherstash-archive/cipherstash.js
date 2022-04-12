@@ -1,6 +1,7 @@
 import { isObject } from "./guards"
-import { assertValueNever, unreachable } from "./type-utils"
+import { assertValueNever } from "./type-utils"
 import { logger } from './logger';
+import {describePlainObject} from "./utils";
 
 /**
  * An enumeration of all errors that can be thrown by CipherStash.
@@ -77,7 +78,7 @@ export type StashJSError<Tag extends ErrorTag, Cause = undefined>
   }
 
 export type GRPCError = StashJSError<'GRPCError', NativeError | AuthenticationFailure>
-export const GRPCError: (cause: GRPCError["cause"]) => GRPCError = (cause) => addCaller(({ tag: 'GRPCError', cause: wrap(cause) }))
+export const GRPCError: (cause: GRPCError["cause"]) => GRPCError = (cause) => addCaller(({ tag: 'GRPCError', cause }))
 
 export type AnalysisFailure = StashJSError<'AnalysisFailure', EncryptionFailure | AuthenticationFailure>
 export const AnalysisFailure: (cause: AnalysisFailure["cause"]) => AnalysisFailure = (cause) => addCaller(({ tag: 'AnalysisFailure', cause }))
@@ -126,7 +127,7 @@ export type MalformedConfigFile = StashJSError<'MalformedConfigFile'>
 export const MalformedConfigFile: (profileName: string) => MalformedConfigFile = (fileName) => addCaller(({ tag: 'MalformedConfigFile', message: `Could not parse config file "${fileName}"` }))
 
 export type IOError = StashJSError<'IOError', NativeError | PlainError >
-export const IOError: (cause: IOError["cause"]) => IOError = (cause) => addCaller(({ tag: 'IOError', cause: wrap(cause) }))
+export const IOError: (cause: IOError["cause"]) => IOError = (cause) => addCaller(({ tag: 'IOError', cause }))
 
 export type LoadProfileFailure = StashJSError<'LoadProfileFailure', MissingConfigDir | NoDefaultProfileSet | MissingProfile | MalformedConfigFile | IOError>
 export const LoadProfileFailure: (cause: LoadProfileFailure["cause"]) => LoadProfileFailure = (cause) => addCaller(({ tag: 'LoadProfileFailure', cause }))
@@ -146,15 +147,15 @@ export const SaveProfileFailure: (cause: SaveProfileFailure["cause"]) => SavePro
 export type OAuthFailure = StashJSError<'OAuthFailure', NativeError | PlainError>
 export const OAuthFailure: (cause: OAuthFailure["cause"], message?: string) => OAuthFailure = (cause, message) => {
   if (typeof message === 'undefined') {
-    return addCaller(({ tag: 'OAuthFailure', cause: wrap(cause) }))
+    return addCaller(({ tag: 'OAuthFailure', cause }))
   } else {
-    return addCaller(({ tag: 'OAuthFailure', message, cause: wrap(cause) }))
+    return addCaller(({ tag: 'OAuthFailure', message, cause }))
   }
 }
 
 export type TokenValidationFailure = StashJSError<'TokenValidationFailure', NativeError | PlainError | undefined>;
 export const TokenValidationFailure = (message: string, cause?: TokenValidationFailure['cause']): TokenValidationFailure  => {
-  return addCaller({ tag: 'TokenValidationFailure', cause: cause && wrap(cause), message });
+  return addCaller({ tag: 'TokenValidationFailure', cause, message });
 }
 
 export type PlainError = StashJSError<'PlainError', undefined>
@@ -170,16 +171,16 @@ export type ConnectionFailure = StashJSError<'ConnectionFailure', LoadProfileFai
 export const ConnectionFailure: (cause: ConnectionFailure['cause']) => ConnectionFailure = (cause) => addCaller(({ tag: 'ConnectionFailure', cause }))
 
 export type KMSError = StashJSError<'KMSError', NativeError | PlainError >
-export const KMSError: (cause: unknown, message?: string) => KMSError = (cause, message) => addCaller(({ tag: 'KMSError', cause: wrap(cause), message }))
+export const KMSError: (cause: KMSError['cause'], message?: string) => KMSError = (cause, message) => addCaller(({ tag: 'KMSError', cause, message }))
 
-export type AWSFederationFailure = StashJSError<'AWSFederationFailure', NativeError | PlainError >
-export const AWSFederationFailure: (cause: unknown, message?: string) => AWSFederationFailure = (cause, message) => addCaller(({ tag: 'AWSFederationFailure', cause: wrap(cause), message }))
+export type AWSFederationFailure = StashJSError<'AWSFederationFailure', NativeError | PlainError>
+export const AWSFederationFailure: (cause: AWSFederationFailure['cause'], message?: string) => AWSFederationFailure = (cause, message) => addCaller(({ tag: 'AWSFederationFailure', cause, message }))
 
 export type DecryptionFailure = StashJSError<'DecryptionFailure', NativeError | AuthenticationFailure>
 export const DecryptionFailure: (cause: DecryptionFailure["cause"]) => DecryptionFailure = (cause) => addCaller(({ tag: 'DecryptionFailure', cause }))
 
-export type EncryptionFailure = StashJSError<'EncryptionFailure', NativeError | PlainError >
-export const EncryptionFailure: (cause: unknown) => EncryptionFailure = (cause) => addCaller(({ tag: 'EncryptionFailure', cause: wrap(cause) }))
+export type EncryptionFailure = StashJSError<'EncryptionFailure', NativeError | PlainError | AuthenticationFailure>
+export const EncryptionFailure = (cause: EncryptionFailure['cause']): EncryptionFailure => addCaller(({ tag: 'EncryptionFailure', cause }))
 
 export type StreamingPutFailure = StashJSError<'StreamingPutFailure', NativeError | GRPCError | AuthenticationFailure>
 export const StreamingPutFailure: (cause: StreamingPutFailure["cause"]) => StreamingPutFailure = (cause) => addCaller(({ tag: 'StreamingPutFailure', cause }))
@@ -188,17 +189,21 @@ export const StreamingPutFailure: (cause: StreamingPutFailure["cause"]) => Strea
 // wrap it in a JS error if it wasn't actually an error otherwise we return the
 // original error unmodified. The reason why we wrap in an error is to get a
 // stack trace.
-export const wrap
-  : (thrown: unknown) => NativeError
-  = (thrown) => {
-    if (thrown instanceof Error) {
-      return addCaller({ tag: 'NativeError', cause: thrown })
-    } else if ((thrown as any)?.tag === 'NativeError') {
-      return addCaller(thrown) as any as NativeError
-    } else {
-      throw unreachable("If we get here then something is trying to wrap an error that is not an Error or NativeError")
-    }
+export const wrap = (thrown: unknown): NativeError => {
+  if (thrown instanceof Error) {
+    return addCaller({ tag: "NativeError", cause: thrown })
+  } else if ((thrown as any)?.tag === "NativeError") {
+    return addCaller(thrown) as any as NativeError;
+  } else if (isAnyStashJSError(thrown)) {
+    throw new Error(
+      `Trying to wrap a value that is a StashJSError: ${thrown.tag}`
+    );
+  } else {
+    throw new Error(
+      `Trying to wrap a value that isn't an Error or NativeError: ${describePlainObject(thrown)}`
+    )
   }
+}
 
 export function simpleDescriptionForError<Cause, E extends StashJSError<ErrorTag, Cause>>(error: E): string {
   switch (error.tag) {

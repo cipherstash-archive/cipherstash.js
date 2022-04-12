@@ -91,23 +91,33 @@ function objectify(item: any): any {
   }
 }
 
+export function describePlainObject(value: unknown): string {
+  if (value === undefined) {
+    return 'undefined';
+  }
+
+  if (value === null) {
+    return 'null';
+  }
+
+  let stringified: string;
+
+  try {
+    stringified = JSON.stringify(value);
+  } catch (e) {
+    stringified = String(value);
+  }
+
+  return `${(value as any)?.constructor?.name ?? 'Unknown'} ${stringified}`;
+}
+
 export function describeError(err: unknown): string {
   if (isAnyStashJSError(err)) {
     return toErrorMessage(err);
   } else if (err instanceof Error) {
     return err.stack ? err.stack : String(err);
   } else {
-    try {
-      const stringified = JSON.stringify(err);
-
-      if (stringified === "{}") {
-        return String(err);
-      } else {
-        return stringified;
-      }
-    } catch (e) {
-      return String(err);
-    }
+    return describePlainObject(err);
   }
 }
 
