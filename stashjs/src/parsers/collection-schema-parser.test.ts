@@ -171,7 +171,7 @@ describe("Typechecking", () => {
       const checked = parseCollectionSchemaJSON(schema)
       expect(isOk(checked)).toBe(true)
     })
-    
+
     it("both bigint type and uint64 type accepted for backwards compatibility", () => {
       const schema = JSON.stringify({
         "type": {
@@ -246,7 +246,7 @@ describe("Typechecking", () => {
         return
       }
 
-      expect(checked.error).toEqual(`index type "range" works on fields of type "float64, number, bigint, uint64, date, boolean" but field "title" is of type "string"`)
+      expect(checked.error).toEqual(`index type "range" works on fields of type "float64, uint64, date, boolean" but field "title" is of type "string"`)
     })
   })
 
@@ -277,7 +277,7 @@ describe("Typechecking", () => {
         return
       }
 
-      expect(checked.error).toEqual(`index type "range" works on fields of type "float64, number, bigint, uint64, date, boolean" but field "title" is of type "string"`)
+      expect(checked.error).toEqual(`index type "range" works on fields of type "float64, uint64, date, boolean" but field "title" is of type "string"`)
     })
   })
 })
