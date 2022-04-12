@@ -264,7 +264,8 @@ export class StashInternal {
 
   private async encryptCollectionMetadata(metadata: CollectionMetadata): AsyncResult<Buffer, EncryptionFailure> {
     return convertErrorsTo(
-      EncryptionFailure,
+      // If the error is already an EncryptionFailure don't try and coerce it
+      e => e.tag === 'EncryptionFailure' ? e : EncryptionFailure(e),
       await sequence(
         _ => this.sourceDataCipherSuiteMemo.freshValue(),
         cipher => cipher.encrypt(metadata),

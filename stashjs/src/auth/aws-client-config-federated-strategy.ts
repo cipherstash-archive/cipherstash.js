@@ -2,7 +2,7 @@ import { AssumeRoleWithWebIdentityCommandOutput, STS } from "@aws-sdk/client-sts
 import { OauthAuthenticationInfo } from './oauth-utils';
 import { AuthStrategy } from "./auth-strategy";
 import { FederatedAwsCredentialsSource } from '../stash-config';
-import { AuthenticationFailure, AWSFederationFailure } from "../errors";
+import { AuthenticationFailure, AWSFederationFailure, wrap } from "../errors";
 import { AsyncResult, Ok, Err } from "../result";
 import { AWSClientConfig } from './aws-client-config';
 import { Memo } from './auth-strategy';
@@ -60,7 +60,7 @@ export class AWSClientConfigFederatedStrategy implements AuthStrategy<AWSClientC
         return Err(AuthenticationFailure(AWSFederationFailure(undefined, "STS Token Exchange failed")))
       }
     } catch(error) {
-      return Err(AuthenticationFailure(AWSFederationFailure(error)))
+      return Err(AuthenticationFailure(AWSFederationFailure(wrap(error))))
     }
   }
 

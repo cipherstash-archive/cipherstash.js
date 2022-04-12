@@ -1,6 +1,6 @@
 import { Result, Ok, Err } from "../result";
 import { decode } from "jws";
-import { TokenValidationFailure } from "../errors";
+import { TokenValidationFailure, wrap } from "../errors";
 import { isObject } from "../guards";
 
 /**
@@ -17,7 +17,7 @@ export function validateAccessToken(
     const signature = decode(token);
     payload = signature.payload;
   } catch (error) {
-    return Err(TokenValidationFailure("Failed to decode token", error));
+    return Err(TokenValidationFailure("Failed to decode token", wrap(error)));
   }
 
   if (!payload) {

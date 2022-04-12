@@ -75,11 +75,11 @@ describe("utils", () => {
     });
 
     it("should describe a normal object", () => {
-      expect(describeError({ name: "test" })).toEqual('{"name":"test"}');
+      expect(describeError({ name: "test" })).toEqual('Object {"name":"test"}');
     });
 
     it("should describe a class", () => {
-      expect(describeError(new Promise(() => {}))).toEqual("[object Promise]");
+      expect(describeError(new Promise(() => {}))).toEqual("Promise {}");
     });
   });
 });
