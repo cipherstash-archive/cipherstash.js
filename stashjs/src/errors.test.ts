@@ -33,6 +33,39 @@ describe("errors", () => {
       expect(messageLines[0]).toMatch(/src\/errors.test.ts:\d+/)
     })
   })
+
+  describe("wrap", () => {
+    test("wraps an error object", () => {
+      expect(wrap(new Error('Uh oh!'))).toEqual({
+        tag: 'NativeError',
+        cause: expect.any(Error),
+        caller: expect.objectContaining({})
+      })
+    })
+
+    test("passes through a native error", () => {
+      expect(wrap({ tag: 'NativeError', cause: new Error('Uh oh!'), caller: {} })).toEqual({
+        tag: 'NativeError',
+        cause: expect.any(Error),
+        caller: expect.objectContaining({})
+      })
+    })
+
+    test("throws if object is a stash error", () => {
+      expect(() => wrap( PlainError('Uh oh!'))).toThrow('Trying to wrap a value that is a StashJSError: PlainError');
+    })
+
+    test("throws if object is a random object", () => {
+
+      class MyClass {
+        constructor(
+          public field: string
+        ) {}
+      }
+
+      expect(() => wrap(new MyClass('wow'))).toThrow('Trying to wrap a value that isn\'t an Error or NativeError: MyClass {"field":"wow"}')
+    })
+  });
 })
 
 function makeError(): any {
