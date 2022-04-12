@@ -1,7 +1,7 @@
 {
   "definitions": {
     "typeDef": {
-      "values": { "enum": ["number", "bigint", "date", "string", "boolean"] }
+      "values": { "enum": ["float64", "number", "bigint", "date", "string", "boolean"] }
     },
     "indexDef": {
       "discriminator": "kind",

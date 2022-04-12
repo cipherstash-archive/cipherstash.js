@@ -83,7 +83,8 @@ const parseIndexDefinition: <R extends StashRecord>(document: object) => Result<
 
 const FieldTypeDecoder = D.union(
   D.literal('string'),
-  D.literal('number'),
+  D.literal('float64'),
+  D.literal('number'), // keeping for now for backwards compatibility for existing users
   D.literal('bigint'),
   D.literal('date'),
   D.literal('boolean'),
@@ -162,14 +163,14 @@ const typecheckCollectionSchemaDefinition: (
 
 type TypeName<T> =
   T extends string ? "string" :
-  T extends number ? "number" :
+  T extends number ? "float64" | "number" : //keeping number for now for backwards compatibility
   T extends boolean ? "boolean" :
   T extends bigint ? "bigint" :
   T extends Date ? "date" :
   never
 
-const EXACT_TYPES: Array<TypeName<ExactMappingFieldType>> = ["string", "number", "bigint", "date", "boolean"]
-const RANGE_TYPES: Array<TypeName<RangeMappingFieldType>> = ["number", "bigint", "date", "boolean"]
+const EXACT_TYPES: Array<TypeName<ExactMappingFieldType>> = ["string", "float64", "number", "bigint", "date", "boolean"]
+const RANGE_TYPES: Array<TypeName<RangeMappingFieldType>> = ["float64", "number", "bigint", "date", "boolean"]
 const MATCH_TYPES: Array<TypeName<MatchMappingFieldType>> = ["string"]
 
 function typecheckIndex(recordType: unknown, index: Index): Result<void | Array<void>, string> {

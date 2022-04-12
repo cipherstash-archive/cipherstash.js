@@ -122,8 +122,35 @@ describe("Typechecking", () => {
       const schema = JSON.stringify({
         "type": {
           "title": "string",
+          "runningTime": "float64",
+          "year": "float64"
+        },
+        "indexes": {
+          "exactTitle": { "kind": "exact", "field": "title" },
+          "runningTime": { "kind": "range", "field": "runningTime" },
+          "year": { "kind": "range", "field": "year" },
+          "title": {
+            "kind": "match",
+            "fields": ["title"],
+            "tokenFilters": [
+              { "kind": "downcase" },
+              { "kind": "ngram", "tokenLength": 3 }
+            ],
+            "tokenizer": { "kind": "standard" }
+          }
+        }
+      })
+
+      const checked = parseCollectionSchemaJSON(schema)
+      expect(isOk(checked)).toBe(true)
+    })
+
+    it("both number type and float64 type accepted for backwards compatibility", () => {
+      const schema = JSON.stringify({
+        "type": {
+          "title": "string",
           "runningTime": "number",
-          "year": "number"
+          "year": "float64"
         },
         "indexes": {
           "exactTitle": { "kind": "exact", "field": "title" },
@@ -150,7 +177,7 @@ describe("Typechecking", () => {
     it("type checking should fail", () => {
       const schema = JSON.stringify({
         "type": {
-          "runningTime": "number",
+          "runningTime": "float64",
         },
         "indexes": {
           "title": {
@@ -171,7 +198,7 @@ describe("Typechecking", () => {
         return
       }
 
-      expect(checked.error).toEqual(`index type "match" works on fields of type "string" but field "runningTime" is of type "number"`)
+      expect(checked.error).toEqual(`index type "match" works on fields of type "string" but field "runningTime" is of type "float64"`)
     })
   })
 
@@ -192,7 +219,7 @@ describe("Typechecking", () => {
         return
       }
 
-      expect(checked.error).toEqual(`index type "range" works on fields of type "number, bigint, date, boolean" but field "title" is of type "string"`)
+      expect(checked.error).toEqual(`index type "range" works on fields of type "float64, number, bigint, date, boolean" but field "title" is of type "string"`)
     })
   })
 
@@ -201,7 +228,7 @@ describe("Typechecking", () => {
       const schema = JSON.stringify({
         "type": {
           "title": "string",
-          "runningTime": "number",
+          "runningTime": "float64",
         },
         "indexes": {
           "title": { "kind": "range", "field": "title" },
@@ -223,7 +250,7 @@ describe("Typechecking", () => {
         return
       }
 
-      expect(checked.error).toEqual(`index type "range" works on fields of type "number, bigint, date, boolean" but field "title" is of type "string"`)
+      expect(checked.error).toEqual(`index type "range" works on fields of type "float64, number, bigint, date, boolean" but field "title" is of type "string"`)
     })
   })
 })
