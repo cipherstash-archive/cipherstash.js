@@ -196,7 +196,8 @@ function fieldExists(indexType: string, recordType: any, path: Array<string>, ex
   if (expectedTypes.includes(currentType)) {
     return Ok()
   } else {
-    return Err( `index type "${indexType}" works on fields of type "${expectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
+    const filteredExpectedTypes = expectedTypes.filter(t => t !== 'number' && t !== 'bigint')
+    return Err( `index type "${indexType}" works on fields of type "${filteredExpectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
   }
 }
 
