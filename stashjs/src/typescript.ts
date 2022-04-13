@@ -2,7 +2,7 @@ import { existsSync, readFileSync, realpathSync } from "fs";
 import { dirname, resolve } from "path";
 import { logger } from "./logger";
 
-const MAX_DIRECTORY_POPS = 5;
+const MAX_DIRECTORY_POPS = 10;
 
 /**
  * Test to see whether the currently running script is from a project that contains TypeScript.

@@ -83,11 +83,11 @@ describe("doesProjectUseTypeScript", () => {
   it("should fail if package.json is too far up", () => {
     process.argv = [
       "node",
-      "/exec-dir/dist/first/second/third/fourth/fifth/sixth/test.js",
+      "/exec-dir/dist/1/2/3/4/5/6/7/8/9/10/test.js",
     ];
 
     vol.fromJSON({
-      "/exec-dir/dist/first/second/third/fourth/fifth/sixth/test.js":
+      "/exec-dir/dist/1/2/3/4/5/6/7/8/9/10/test.js":
         "// current executing file",
       "/exec-dir/package.json": JSON.stringify({
         name: "my-package",
