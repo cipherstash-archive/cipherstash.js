@@ -1,4 +1,7 @@
-import { StashProfile } from "./stash-profile"
+import { AsyncResult } from "./result";
+import { StashProfile } from "./stash-profile";
+import { OauthAuthenticationInfo } from "./auth/oauth-utils";
+import { AuthenticationFailure } from "./errors";
 
 export type Auth0AccessToken = {
   kind: "Auth0-AccessToken"
@@ -18,7 +21,12 @@ export type Auth0Machine2Machine = {
   clientSecret: string
 }
 
-export type IdentityProvider = Auth0AccessToken | Auth0DeviceCode | Auth0Machine2Machine
+export type OAuthCallback = {
+  kind: "OAuthCallback"
+  callback: () => AsyncResult<OauthAuthenticationInfo, AuthenticationFailure>
+}
+
+export type IdentityProvider = Auth0AccessToken | Auth0DeviceCode | Auth0Machine2Machine | OAuthCallback
 
 export type KmsKeySource = {
   arn: string
