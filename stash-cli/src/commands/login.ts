@@ -4,7 +4,7 @@ import { Toolbox } from 'gluegun/build/types/domain/toolbox'
 import { AxiosResponse } from 'axios'
 import { makeHttpsClient } from '../https-client'
 
-import { profileStore, defaults, StashProfile, errors, Ok } from '@cipherstash/stashjs'
+import { profileStore, defaults, StashProfile, errors, Ok, describeError } from '@cipherstash/stashjs'
 
 // A first time login (saves a profile for that workspace + credentials)
 // stash login --workspace foo
@@ -82,10 +82,12 @@ const command: GluegunCommand = {
             `Workspace configuration and authentication details have been saved in ~/.cipherstash/${basicProfile.name}`
           )
         } else {
-          print.error(`Failed to store cached authentication details: ${savedToken.error.message}`)
+          print.error('Failed to store cached authentication details')
+          print.error(describeError(savedToken.error))
         }
       } else {
-        print.error(`Failed to save profile: ${saved.error.message}`)
+        print.error('Failed to save profile')
+        print.error(describeError(saved.error))
       }
     } else {
       let profile = options.profile
@@ -101,7 +103,8 @@ const command: GluegunCommand = {
           print.info("If this is your first time using CipherStash, follow the Getting Started guide:")
           print.info(`https://cipherstash.com/quickstart/?ws=${encodeURIComponent(profile.value.config.service.workspace)}`)
         } else {
-          print.error(`Login failed: ${login.error.message}`)
+          print.error('Login failed')
+          print.error(describeError(login.error))
         }
       } else {
         print.error("No default profile found. If this is a first time login, then the --workspace option is required.")
