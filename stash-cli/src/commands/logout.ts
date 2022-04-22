@@ -32,7 +32,8 @@ const command: GluegunCommand = {
     if (deleted.ok) {
       print.info(`Cached authentication deleted for profile ${profile.name}`)
     } else {
-      print.error(`Failed to delete cached authentication token for profile ${profile.name}: ${deleted.error.message}`)
+      print.error(`Failed to delete cached authentication token for profile ${profile.name}`)
+      print.error(describeError(deleted.error))
     }
   }
 }
