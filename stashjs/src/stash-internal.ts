@@ -3,7 +3,7 @@ import { V1 } from '@cipherstash/stashjs-grpc'
 import { CipherSuite, makeCipherSuite, makeNodeCachingMaterialsManager, MakeRefFn } from './crypto/cipher'
 import { CollectionSchema } from './collection-schema'
 import { Memo } from './auth/auth-strategy'
-import { Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
+import { fieldTypeOfMapping, Mappings, MappingsMeta, StashRecord } from './dsl/mappings-dsl'
 import { CollectionInternal, CollectionMetadata } from './collection-internal'
 import { idBufferToString, normalizeId, refBufferToString } from './utils'
 import { loadProfileFromEnv } from './stash-config'
@@ -116,7 +116,7 @@ export class StashInternal {
       CollectionCreationFailure,
       await sequence(
         parallel(
-          _ => this.encryptCollectionMetadata({ name: schema.name }),
+          _ => this.encryptCollectionMetadata({ name: schema.name, recordType: schema.recordType }),
           _ => this.encryptMappings(schema)
         ),
         ([_, metadata, mappings]) => Ok.Async({ ref: this.makeRef(schema.name), metadata, indexes: mappings }),
@@ -190,7 +190,7 @@ export class StashInternal {
           this,
           idBufferToString(id!),
           refBufferToString(infoReply.ref!),
-          new CollectionSchema(collectionMeta.name, mappings, mappingsMeta)
+          new CollectionSchema(collectionMeta.name, collectionMeta.recordType, mappings, mappingsMeta)
         )
       )
     )(Unit)
@@ -237,7 +237,7 @@ export class StashInternal {
     if (memo.ok) {
       const encryptedIndexes = await Promise.all(Object.entries(definition.mappings).map(async ([indexName, mapping]) => {
         const storedMapping: StoredMapping = {
-          mapping,
+          mapping: { ...mapping, fieldType: fieldTypeOfMapping(mapping, definition.recordType)},
           meta: {
             ...definition.meta[indexName]!,
             $prfKey: definition.meta[indexName]!.$prfKey.toString('hex'),

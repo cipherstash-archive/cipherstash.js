@@ -1,5 +1,6 @@
 import { TokenFilter, Tokenizer } from "./filters-and-tokenizers-dsl"
-import { FieldOfType, FieldType } from "../type-utils"
+import { FieldOfType, FieldType, unreachable } from "../type-utils"
+import { RecordTypeDefinition } from "../record-type-definition"
 
 /**
  * A new record is permitted to not already have an assigned ID (the client will
@@ -262,5 +263,22 @@ export function makeMappingsDSL<R extends StashRecord>(): MappingsDSL<R> {
     Match: makeMatchFn<R>(),
     DynamicMatch: makeDynamicMatchFn(),
     FieldDynamicMatch: makeFieldDynamicMatchFn(),
+  }
+}
+
+function extractTypeName(field: string, record: any): string {
+  const path = field.split(".")
+  let current = record
+  path.forEach(part => { current = current?.[part] })
+  return current
+}
+
+export function fieldTypeOfMapping(mapping: any, recordType: RecordTypeDefinition): "string" | "float64" | "number" | "bigint" | "uint64" | "date" | "boolean" {
+  if (isExactMapping(mapping) || isRangeMapping(mapping)) {
+    return extractTypeName(mapping.field, recordType) as any
+  } else if (isMatchMapping(mapping) || isDynamicMatchMapping(mapping) || isFieldDynamicMatchMapping(mapping)) {
+    return "string"
+  } else {
+    throw unreachable(`Unknown index kind: '${mapping.kind}'`)
   }
 }
