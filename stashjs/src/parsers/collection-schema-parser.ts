@@ -6,6 +6,7 @@ import { Err, Ok, Result, gather } from '../result'
 import { DynamicMatchMapping, ExactMapping, ExactMappingFieldType, FieldDynamicMatchMapping, Mappings, MatchMapping, MatchMappingFieldType, RangeMapping, RangeMappingFieldType, StashRecord } from '../dsl/mappings-dsl'
 import { isRight } from 'fp-ts/lib/Either'
 import { DowncaseFilter, NgramTokenizer, StandardTokenizer, UpcaseFilter } from '../dsl/filters-and-tokenizers-dsl'
+import { RecordTypeDefinition } from '../record-type-definition'
 
 export type CollectionSchemaDefinition = D.TypeOf<typeof CollectionSchemaDefDecoder>
 
@@ -91,7 +92,7 @@ const FieldTypeDecoder = D.union(
   D.literal('boolean'),
 )
 
-const TypeDecoder: D.Decoder<unknown, unknown> = D.lazy('TypeDecoder', () => D.record(D.union(FieldTypeDecoder, TypeDecoder)))
+const TypeDecoder: D.Decoder<unknown, RecordTypeDefinition> = D.lazy('TypeDecoder', () => D.record(D.union(FieldTypeDecoder, TypeDecoder)))
 
 const CollectionSchemaDefDecoder = D.struct({
   type: TypeDecoder,

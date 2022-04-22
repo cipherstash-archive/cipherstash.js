@@ -12,6 +12,7 @@ import { V1 } from "@cipherstash/stashjs-grpc"
 import { AsyncResult, convertErrorsTo, Err, Ok, parallel, sequence, Unit } from "./result"
 import { DocumentDeleteFailure, DocumentGetAllFailure, DocumentGetFailure, DocumentPutFailure, DocumentQueryFailure, QueryBuilderError, QueryBuilderFailure, StreamingPutFailure } from "./errors"
 import { stringify as stringifyUUID } from 'uuid'
+import { RecordTypeDefinition } from "./record-type-definition"
 
 const DEFAULT_QUERY_LIMIT = 50;
 
@@ -261,4 +262,5 @@ export type QueryOptions<
 
 export type CollectionMetadata = {
   name: string
+  recordType: RecordTypeDefinition
 }
