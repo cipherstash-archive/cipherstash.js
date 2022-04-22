@@ -4,6 +4,7 @@ import { makeId, idBufferToString } from "./utils"
 import { CollectionSchemaDefinition } from "./parsers/collection-schema-parser"
 import * as crypto from 'crypto'
 import { QueryBuilderError } from "./errors"
+import { RecordTypeDefinition } from "./record-type-definition"
 
 /**
  * Class for representing a *definition* of a collection that includes a name
@@ -21,6 +22,7 @@ export class CollectionSchema<
 
   constructor(
     public readonly name: string,
+    public readonly recordType: RecordTypeDefinition,
     public readonly mappings: M,
     public readonly meta: MM
   ) { }
@@ -54,6 +56,7 @@ export class CollectionSchema<
         const mappings = callback(makeMappingsDSL<R>())
         return new CollectionSchema<R, M, MM>(
           collectionName,
+          {},
           mappings,
           Object.fromEntries(Object.keys(mappings).map((indexName) => {
             return [
@@ -76,6 +79,7 @@ export class CollectionSchema<
         type MM = MappingsMeta<M>
         return new CollectionSchema<R, M, MM>(
           collectionName,
+          def.type,
           def.indexes as M,
           Object.fromEntries(Object.keys(def.indexes).map((indexName) => {
             return [
@@ -105,7 +109,7 @@ export class CollectionSchema<
       notIndexed() {
         type M = Mappings<R>
         type MM = MappingsMeta<M>
-        return new CollectionSchema<R, M, MM>(collectionName, {} as M, {} as MM)
+        return new CollectionSchema<R, M, MM>(collectionName, {}, {} as M, {} as MM)
       }
     }
   }

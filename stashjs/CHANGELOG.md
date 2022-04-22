@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Improved error types and wrap error messaging
 - Increased directory pop count when checking if project has TypeScript
+- Persist record type and index field type settings
 
 ## [0.3.10]
 
