@@ -36,18 +36,20 @@ export function buildRecordAnalyzer<
     if (isExactMapping<R, FieldOfType<R, ExactMappingFieldType>>(mapping)) {
       const fieldExtractor = buildFieldExtractor(mapping.field)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
+      const exactIndexer = indexExact(encrypt)
       return (record: R) => ({
         indexId: meta.$indexId,
-        encryptedTerms: indexExact(encrypt)(fieldExtractor(record))
+        encryptedTerms: exactIndexer(fieldExtractor(record))
       })
     }
 
     if (isRangeMapping<R, FieldOfType<R, RangeMappingFieldType>>(mapping)) {
       const fieldExtractor = buildFieldExtractor(mapping.field)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
+      const rangeIndexer = indexRange(encrypt)
       return (record: R) => ({
         indexId: meta.$indexId,
-        encryptedTerms: indexRange(encrypt)(fieldExtractor(record))
+        encryptedTerms: rangeIndexer(fieldExtractor(record))
       })
     }
 
@@ -55,27 +57,30 @@ export function buildRecordAnalyzer<
       const fieldExtractors = mapping.fields.map(f => buildFieldExtractor(f))
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
+      const matchIndexer = indexMatch(encrypt)
       return (record: R) => ({
         indexId: meta.$indexId,
-        encryptedTerms: indexMatch(encrypt)(pipeline(fieldExtractors.map(fe => fe(record)).filter(t => !!t)))
+        encryptedTerms: matchIndexer(pipeline(fieldExtractors.map(fe => fe(record)).filter(t => !!t)))
       })
     }
 
     if (isDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
+      const matchIndexer = indexMatch(encrypt)
       return (record: R) => ({
         indexId: meta.$indexId,
-        encryptedTerms: indexMatch(encrypt)(pipeline(extractStringFields(record)))
+        encryptedTerms: matchIndexer(pipeline(extractStringFields(record)))
       })
     }
 
     if (isFieldDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
+      const matchIndexer = indexMatch(encrypt)
       return (record: R) => ({
         indexId: meta.$indexId,
-        encryptedTerms: indexMatch(encrypt)(extractStringFieldsWithPath(record).flatMap(([f, v]) => {
+        encryptedTerms: matchIndexer(extractStringFieldsWithPath(record).flatMap(([f, v]) => {
           return pipeline([v]).map(t => `${f}:${t}`)
         }))
       })
