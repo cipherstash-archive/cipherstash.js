@@ -1,6 +1,6 @@
 import { TokenFilter, Tokenizer } from "./filters-and-tokenizers-dsl"
 import { FieldOfType, FieldType, unreachable } from "../type-utils"
-import { RecordTypeDefinition } from "../record-type-definition"
+import { RecordTypeDefinition, TermType } from "../record-type-definition"
 
 /**
  * A new record is permitted to not already have an assigned ID (the client will
@@ -51,6 +51,7 @@ export type ExactMapping<
 >  = {
   kind: "exact",
   field: F
+  fieldType: TermType
 }
 
 /**
@@ -62,6 +63,7 @@ export type RangeMapping<
 >  = {
   kind: "range",
   field: F
+  fieldType: TermType
 }
 
 /**
@@ -73,6 +75,7 @@ export type MatchMapping<
 >  = {
   kind: "match",
   fields: Array<F>,
+  fieldType: "string"
 } & MatchOptions
 
 /**
