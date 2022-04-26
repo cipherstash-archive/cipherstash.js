@@ -15,10 +15,10 @@ describe("buildRecordAnalyzer", () => {
   }
 
   let schema = CollectionSchema.define<SomeRecord>("blah").indexedWith(mappings => ({
-    exact: mappings.Exact("exact"),
-    exactOptional: mappings.Exact("exactOptional"),
-    range: mappings.Range("range"),
-    rangeOptional: mappings.Range("rangeOptional"),
+    exact: mappings.Exact("exact", "string"),
+    exactOptional: mappings.Exact("exactOptional", "string"),
+    range: mappings.Range("range", "float64"),
+    rangeOptional: mappings.Range("rangeOptional", "float64"),
     match: mappings.Match(["match"], {
       tokenFilters: [downcase],
       tokenizer: standard
@@ -26,7 +26,7 @@ describe("buildRecordAnalyzer", () => {
     matchOptional: mappings.Match(["matchOptional"], {
       tokenFilters: [downcase],
       tokenizer: standard
-    }),
+  }),
   }))
 
   let analyze = buildRecordAnalyzer(schema)

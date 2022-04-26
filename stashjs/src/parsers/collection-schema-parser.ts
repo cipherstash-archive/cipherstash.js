@@ -41,29 +41,34 @@ const TokenizerDecoder = D.sum('kind')({
 
 const ExactIndexDecoder = D.struct<ExactMapping<any, any>>({
   kind: D.literal("exact"),
+  fieldType: D.literal("string", "uint64", "float64", "date", "boolean", "bigint", "number"),
   field: D.string
 })
 
 const RangeIndexDecoder = D.struct<RangeMapping<any, any>>({
   kind: D.literal("range"),
+  fieldType: D.literal("uint64", "float64", "date", "boolean", "bigint", "number"),
   field: D.string
 })
 
 const MatchIndexDecoder = D.struct<MatchMapping<any, any>>({
   kind: D.literal("match"),
   fields: D.array(D.string),
+  fieldType: D.literal("string"),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
 })
 
 const DynamicMatchIndexDecoder = D.struct<DynamicMatchMapping>({
   kind: D.literal("dynamic-match"),
+  fieldType: D.literal("string"),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
 })
 
 const FieldDynamicMatchIndexDecoder = D.struct<FieldDynamicMatchMapping>({
   kind: D.literal("field-dynamic-match"),
+  fieldType: D.literal("string"),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
 })

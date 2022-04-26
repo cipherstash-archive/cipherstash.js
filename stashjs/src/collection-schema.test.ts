@@ -26,13 +26,13 @@ type PatientRecord = {
 }
 
 let schema = CollectionSchema.define<PatientRecord>("patients").indexedWith(mapping => ({
-  email: mapping.Exact("email"),
-  age: mapping.Exact("age"),
-  ageRange: mapping.Range("age"),
-  dob: mapping.Exact("dob"),
-  dobRange: mapping.Range("dob"),
-  expired: mapping.Exact("expired"),
-  city: mapping.Exact("address.city"),
+  email: mapping.Exact("email", "string"),
+  age: mapping.Exact("age", "uint64"),
+  ageRange: mapping.Range("age", "uint64"),
+  dob: mapping.Exact("dob", "date"),
+  dobRange: mapping.Range("dob", "date"),
+  expired: mapping.Exact("expired", "boolean"),
+  city: mapping.Exact("address.city", "string"),
   notesAndDescription: mapping.Match(["notes", "description"], {
     tokenFilters: [downcase, ngram({ tokenLength: 3 })],
     tokenizer: standard
