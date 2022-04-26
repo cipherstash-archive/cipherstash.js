@@ -88,6 +88,7 @@ export type MatchMapping<
  */
 export type DynamicMatchMapping = {
   kind: "dynamic-match",
+  fieldType: "string"
 } & MatchOptions
 
 /**
@@ -100,6 +101,7 @@ export type DynamicMatchMapping = {
  */
 export type FieldDynamicMatchMapping = {
   kind: "field-dynamic-match",
+  fieldType: "string"
 } & MatchOptions
 
 /**
@@ -207,22 +209,22 @@ export type MappingsMeta<M> =
 // TODO: support options for date (resolution etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
 type ExactFn<R extends StashRecord> =
-  <F extends FieldOfType<R, ExactMappingFieldType>>(field: F) => ExactMapping<R, F>
+  <F extends FieldOfType<R, ExactMappingFieldType>>(field: F, fieldType: TermType) => ExactMapping<R, F>
 
 // TODO: support options for string (token filters etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
 // TODO: support options for date (resolution etc)
 export function makeExactFn<R extends StashRecord>(): ExactFn<R> {
-  return (field) => ({ kind: "exact", field })
+  return (field, fieldType) => ({ kind: "exact", field, fieldType })
 }
 
 // TODO: support options for date (resolution etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
 export type RangeFn<R extends StashRecord> =
-  <F extends FieldOfType<R, RangeMappingFieldType>>(field: F) => RangeMapping<R, F>
+  <F extends FieldOfType<R, RangeMappingFieldType>>(field: F, fieldType: TermType) => RangeMapping<R, F>
 
 export function makeRangeFn<R extends StashRecord>(): RangeFn<R> {
-  return (field) => ({ kind: "range", field })
+  return (field, fieldType) => ({ kind: "range", field, fieldType })
 }
 
 export type MatchOptions = {
@@ -236,19 +238,19 @@ export type MatchFn<R extends StashRecord> = <F extends FieldOfType<R, MatchMapp
 ) => MatchMapping<R, F>
 
 export function makeMatchFn<R extends StashRecord>(): MatchFn<R> {
-  return (fields, options) => ({ kind: "match", fields, ...options })
+  return (fields, options) => ({ kind: "match", fields, fieldType: "string", ...options })
 }
 
 export type DynamicMatchFn = (options: MatchOptions) => DynamicMatchMapping
 
 export function makeDynamicMatchFn(): DynamicMatchFn {
-  return (options) => ({ kind: "dynamic-match", ...options })
+  return (options) => ({ kind: "dynamic-match", fieldType: "string", ...options })
 }
 
 export type FieldDynamicMatchFn = (options: MatchOptions) => FieldDynamicMatchMapping
 
 export function makeFieldDynamicMatchFn(): FieldDynamicMatchFn {
-  return (options) => ({ kind: "field-dynamic-match", ...options })
+  return (options) => ({ kind: "field-dynamic-match", fieldType: "string", ...options })
 }
 
 export type MappingsDSL<R extends StashRecord> = {
