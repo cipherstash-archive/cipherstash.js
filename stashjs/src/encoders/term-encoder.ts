@@ -1,29 +1,57 @@
 import { ORE, OrePlainText } from '@cipherstash/ore-rs'
 import { unreachable } from "../type-utils"
 import { utcDateWithResolution } from './date-encoding-helpers'
-import { MappableFieldType } from '../dsl/mappings-dsl'
+import { TermType } from '../record-type-definition'
 
 export const UINT64_MIN: bigint = 0n
 export const UINT64_MAX: bigint = 18446744073709551615n
 
-type TermEncoder<InputT extends MappableFieldType, OutputT> = (input: InputT) => OutputT
-export type EqualityPreservingEncoder<InputT extends MappableFieldType> = TermEncoder<InputT, number>
-export type OrderPreservingEncoder<InputT extends MappableFieldType> = TermEncoder<InputT, number>
+export const encodeTermType: (termType: TermType) => (term: any) => OrePlainText
+  = termType => {
+    switch (termType) {
+      case "string": return encodeString
+      case "number": return encodeNumber
+      case "float64": return encodeNumber
+      case "bigint": return encodeBigint
+      case "uint64": return encodeBigint
+      case "boolean": return encodeBoolean
+      case "date": return encodeDate
+    }
+  }
 
-export function encodeTerm<T extends number | boolean | bigint | string | Date>(term: T): OrePlainText {
-  if (typeof term == 'number') {
+function encodeString(term: any): OrePlainText {
+  if (typeof term === "string") {
+    return ORE.encodeString(term)
+  }
+  throw unreachable("Expected term of type 'string'")
+}
+
+function encodeNumber(term: any): OrePlainText {
+  if (typeof term === "number") {
     return ORE.encodeNumber(term)
-  } else if (typeof term == 'boolean') {
-    return ORE.encodeNumber(term ? 1 : 0)
-  } else if (typeof term == 'bigint') {
+  }
+  throw unreachable("Expected term of type 'float64'")
+}
+
+function encodeBigint(term: any): OrePlainText {
+  if (typeof term === "bigint") {
     let buf = Buffer.allocUnsafe(8)
     buf.writeBigUInt64BE(term)
     return ORE.encodeBuffer(buf)
-  } else if (term instanceof Date) {
-    return ORE.encodeNumber(utcDateWithResolution(term, "millisecond"))
-  } else if (typeof term == 'string') {
-    // NOTE: because string are siphashed before encrypting only == makes sense (< & > are meaningless).
-    return ORE.encodeString(term)
   }
-  throw unreachable(`Unexpected term type for term <${JSON.stringify(term)}>`)
+  throw unreachable("Expected term of type 'uint64'")
+}
+
+function encodeBoolean(term: any): OrePlainText {
+  if (typeof term === "boolean") {
+    return ORE.encodeNumber(term ? 1 : 0)
+  }
+  throw unreachable("Expected term of type 'boolean'")
+}
+
+function encodeDate(term: any): OrePlainText {
+  if (term instanceof Date) {
+    return ORE.encodeNumber(utcDateWithResolution(term, "millisecond"))
+  }
+  throw unreachable("Expected term of type 'date'")
 }

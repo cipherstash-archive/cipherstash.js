@@ -3,12 +3,13 @@ import { CollectionSchema } from "./collection-schema";
 import { TokenFilter, Tokenizer } from "./dsl/filters-and-tokenizers-dsl";
 import { DynamicMatchMapping, ExactMappingFieldType, isDynamicMatchMapping, isExactMapping, isMatchMapping, isRangeMapping, isFieldDynamicMatchMapping, MappableFieldType, Mappings, MappingsMeta, MatchMapping, MatchMappingFieldType, MatchOptions, RangeMappingFieldType, FieldDynamicMatchMapping, StashRecord } from "./dsl/mappings-dsl"
 import { ConjunctiveCondition, DynamicMatchCondition, ExactCondition, isConjunctiveCondition, isDynamicMatchCondition, isExactCondition, isMatchCondition, isRangeCondition, isFieldDynamicMatchCondition, MatchCondition, Query, RangeCondition, RangeOperator, FieldDynamicMatchCondition } from "./dsl/query-dsl";
-import { encodeTerm } from "./encoders/term-encoder";
+import { encodeTermType } from "./encoders/term-encoder";
 import { extractStringFields, extractStringFieldsWithPath } from "./string-field-extractor";
 import { TextProcessor, textPipeline, standardTokenizer, ngramsTokenizer, downcaseFilter, upcaseFilter } from "./text-processors";
 import { FieldOfType, FieldType, unreachable } from "./type-utils";
 import { normalizeId } from "./utils";
 import { ORE, OrePlainText } from "@cipherstash/ore-rs"
+import { TermType } from "./record-type-definition";
 
 /**
  * Builds and returns a function that will analyze a record using the mapping
@@ -36,7 +37,7 @@ export function buildRecordAnalyzer<
     if (isExactMapping<R, FieldOfType<R, ExactMappingFieldType>>(mapping)) {
       const fieldExtractor = buildFieldExtractor(mapping.field)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const exactIndexer = indexExact(encrypt)
+      const exactIndexer = indexExact(encrypt, mapping.fieldType)
       return (record: R) => ({
         indexId: meta.$indexId,
         encryptedTerms: exactIndexer(fieldExtractor(record))
@@ -46,7 +47,7 @@ export function buildRecordAnalyzer<
     if (isRangeMapping<R, FieldOfType<R, RangeMappingFieldType>>(mapping)) {
       const fieldExtractor = buildFieldExtractor(mapping.field)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const rangeIndexer = indexRange(encrypt)
+      const rangeIndexer = indexRange(encrypt, mapping.fieldType)
       return (record: R) => ({
         indexId: meta.$indexId,
         encryptedTerms: rangeIndexer(fieldExtractor(record))
@@ -57,7 +58,7 @@ export function buildRecordAnalyzer<
       const fieldExtractors = mapping.fields.map(f => buildFieldExtractor(f))
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexMatch(encrypt)
+      const matchIndexer = indexMatch(encrypt, "string")
       return (record: R) => ({
         indexId: meta.$indexId,
         encryptedTerms: matchIndexer(pipeline(fieldExtractors.map(fe => fe(record)).filter(t => !!t)))
@@ -67,7 +68,7 @@ export function buildRecordAnalyzer<
     if (isDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexMatch(encrypt)
+      const matchIndexer = indexMatch(encrypt, "string")
       return (record: R) => ({
         indexId: meta.$indexId,
         encryptedTerms: matchIndexer(pipeline(extractStringFields(record)))
@@ -77,7 +78,7 @@ export function buildRecordAnalyzer<
     if (isFieldDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexMatch(encrypt)
+      const matchIndexer = indexMatch(encrypt, "string")
       return (record: R) => ({
         indexId: meta.$indexId,
         encryptedTerms: matchIndexer(extractStringFieldsWithPath(record).flatMap(([f, v]) => {
@@ -185,14 +186,31 @@ function flattenCondition<
   }
 }
 
-const indexExact: (encrypt: EncryptFn) => <T extends ExactMappingFieldType>(term: T) => Array<Buffer>
-  = encrypt => term => (typeof(term) !== 'undefined' && term !== null) ? [encrypt(encodeTerm(term))] : []
+function indexExact(encrypt: EncryptFn, termType: TermType): (term: any) => Array<Buffer> {
+  const encoder = encodeTermType(termType)
+  return term => {
+    if (typeof term !== 'undefined' && term !== null) {
+      return [encrypt(encoder(term))]
+    } else {
+      return []
+    }
+  }
+}
 
-const indexRange: (encrypt: EncryptFn) => <T extends RangeMappingFieldType>(term: T) => Array<Buffer>
-  = encrypt => term => (typeof(term) !== 'undefined' && term !== null) ? [encrypt(encodeTerm(term))] : []
+function indexRange(encrypt: EncryptFn, termType: TermType): (term: any) => Array<Buffer> {
+  const encoder = encodeTermType(termType)
+  return term => {
+    if (typeof term !== 'undefined' && term !== null) {
+      return [encrypt(encoder(term))]
+    } else {
+      return []
+    }
+  }
+}
 
-const indexMatch: (encrypt: EncryptFn) => (terms: Array<MatchMappingFieldType>) => Array<Buffer> = encrypt => terms => {
-  return terms.map(t => encrypt(encodeTerm(t)))
+function indexMatch(encrypt: EncryptFn, termType: TermType): (terms: Array<string>) => Array<Buffer> {
+  const encoder = encodeTermType(termType)
+  return terms => terms.map(t => encrypt(encoder(t)))
 }
 
 const buildTextProcessingPipeline: (options: MatchOptions) => TextProcessor = options => {

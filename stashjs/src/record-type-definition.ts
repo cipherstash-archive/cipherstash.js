@@ -1,6 +1,5 @@
 
-export type RecordTypeDefinition = {
-  [key: string]:
+export type TermType =
     | "string"
     | "float64"
     | "number"
@@ -8,5 +7,7 @@ export type RecordTypeDefinition = {
     | "uint64"
     | "date"
     | "boolean"
-    | RecordTypeDefinition
+
+export type RecordTypeDefinition = {
+  [key: string]: |TermType | RecordTypeDefinition
 }
