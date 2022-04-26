@@ -9,7 +9,8 @@ import { TextProcessor, textPipeline, standardTokenizer, ngramsTokenizer, downca
 import { FieldOfType, FieldType, unreachable } from "./type-utils";
 import { normalizeId } from "./utils";
 import { ORE, OrePlainText } from "@cipherstash/ore-rs"
-import { TermType } from "./record-type-definition";
+import { TermType } from "./record-type-definition"
+import { Nothing, Option, Something, unwrapArray } from "./option"
 
 /**
  * Builds and returns a function that will analyze a record using the mapping
@@ -38,20 +39,36 @@ export function buildRecordAnalyzer<
       const fieldExtractor = buildFieldExtractor(mapping.field)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
       const exactIndexer = indexExact(encrypt, mapping.fieldType)
-      return (record: R) => ({
-        indexId: meta.$indexId,
-        encryptedTerms: exactIndexer(fieldExtractor(record))
-      })
+      return (record: R) => {
+        const term = fieldExtractor(record)
+        if (typeof term !== 'undefined' && term !== null) {
+          const indexed = exactIndexer(term)
+          return Something({
+            indexId: meta.$indexId,
+            encryptedTerms: [indexed]
+          })
+        } else {
+          return Nothing
+        }
+      }
     }
 
     if (isRangeMapping<R, FieldOfType<R, RangeMappingFieldType>>(mapping)) {
       const fieldExtractor = buildFieldExtractor(mapping.field)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
       const rangeIndexer = indexRange(encrypt, mapping.fieldType)
-      return (record: R) => ({
-        indexId: meta.$indexId,
-        encryptedTerms: rangeIndexer(fieldExtractor(record))
-      })
+      return (record: R) => {
+        const term = fieldExtractor(record)
+        if (typeof term !== 'undefined' && term !== null) {
+          const indexed = rangeIndexer(term)
+          return Something({
+            indexId: meta.$indexId,
+            encryptedTerms: [indexed]
+          })
+        } else {
+          return Nothing
+        }
+      }
     }
 
     if (isMatchMapping<R, FieldOfType<R, MatchMappingFieldType>>(mapping)) {
@@ -59,32 +76,32 @@ export function buildRecordAnalyzer<
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
       const matchIndexer = indexMatch(encrypt, "string")
-      return (record: R) => ({
+      return (record: R) => (Something({
         indexId: meta.$indexId,
-        encryptedTerms: matchIndexer(pipeline(fieldExtractors.map(fe => fe(record)).filter(t => !!t)))
-      })
+        encryptedTerms: pipeline(fieldExtractors.map(fe => fe(record)).filter(t => !!t)).map(matchIndexer)
+      }))
     }
 
     if (isDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
       const matchIndexer = indexMatch(encrypt, "string")
-      return (record: R) => ({
+      return (record: R) => (Something({
         indexId: meta.$indexId,
-        encryptedTerms: matchIndexer(pipeline(extractStringFields(record)))
-      })
+        encryptedTerms: pipeline(extractStringFields(record)).map(matchIndexer)
+      }))
     }
 
     if (isFieldDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
       const matchIndexer = indexMatch(encrypt, "string")
-      return (record: R) => ({
+      return (record: R) => (Something({
         indexId: meta.$indexId,
-        encryptedTerms: matchIndexer(extractStringFieldsWithPath(record).flatMap(([f, v]) => {
+        encryptedTerms: extractStringFieldsWithPath(record).flatMap(([f, v]) => {
           return pipeline([v]).map(t => `${f}:${t}`)
-        }))
-      })
+        }).map(matchIndexer)
+      }))
     }
 
     return unreachable(`Internal error: unreachable code reached. Unknown mapping: ${JSON.stringify(mapping)}`)
@@ -92,14 +109,13 @@ export function buildRecordAnalyzer<
 
   return (record: R) => ({
     recordId: record.id,
-    indexEntries: mappingAnalzers.map(
-      analyzer => analyzer(record)).reduce((acc, { indexId, encryptedTerms }) => {
-        if (encryptedTerms.length > 0) {
-          return Object.assign(acc, { [indexId]: encryptedTerms })
-        } else {
-          return acc
-        }
-      }, {})
+    indexEntries: unwrapArray(mappingAnalzers.map(analyzer => analyzer(record))).reduce((acc, { indexId, encryptedTerms }) => {
+      if (encryptedTerms.length > 0) {
+        return Object.assign(acc, { [indexId]: encryptedTerms })
+      } else {
+        return acc
+      }
+    }, {})
   }) as AnalyzedRecord<R, M, MM>
 }
 
@@ -138,17 +154,24 @@ function flattenCondition<
   } else if (isExactCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
+    const mapping = mappings[condition.indexName]!
+    const exactIndexer = indexExact(encrypt, mapping.fieldType)
     return [{
       indexId: normalizeId(indexMeta.$indexId),
-      exact: encodeExact(condition, encrypt),
+      exact: { term: exactIndexer(condition.value) },
       condition: "exact"
     }]
   } else if (isRangeCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
+    const mapping = mappings[condition.indexName]!
+    const helper = rangeMinMax[condition.op]
+    // FIXME: "helper as any" is a type hack
+    const { min, max } = (helper as any)(condition)
+    const rangeIndexer = indexRange(encrypt, mapping.fieldType)
     return [{
       indexId: normalizeId(indexMeta.$indexId),
-      range: encodeRange(condition, encrypt),
+      range: { lower: rangeIndexer(min), upper: rangeIndexer(max) },
       condition: "range"
     }]
   } else if (isMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
@@ -156,9 +179,10 @@ function flattenCondition<
     const mapping = mappings[condition.indexName]! as MatchMapping<R, FieldOfType<R, MatchMappingFieldType>>
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
+    const matchIndexer = indexMatch(encrypt, "string")
     return pipeline([condition.value]).map(term => ({
       indexId: normalizeId(indexMeta.$indexId),
-      exact: encodeMatch(term, encrypt),
+      exact: { term: matchIndexer(term) },
       condition: "exact"
     }))
   } else if (isDynamicMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
@@ -166,9 +190,10 @@ function flattenCondition<
     const mapping = mappings[condition.indexName]! as DynamicMatchMapping
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
+    const matchIndexer = indexMatch(encrypt, "string")
     return pipeline([condition.value]).map(term => ({
       indexId: normalizeId(indexMeta.$indexId),
-      exact: encodeMatch(term, encrypt),
+      exact: { term: matchIndexer(term) },
       condition: "exact"
     }))
   } else if (isFieldDynamicMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
@@ -176,9 +201,10 @@ function flattenCondition<
     const mapping = mappings[condition.indexName]! as FieldDynamicMatchMapping
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
+    const matchIndexer = indexMatch(encrypt, "string")
     return pipeline([condition.value]).map(term => ({
       indexId: normalizeId(indexMeta.$indexId),
-      exact: encodeMatch(`${condition.fieldName}:${term}`, encrypt),
+      exact: { term: matchIndexer(`${condition.fieldName}:${term}`) },
       condition: "exact"
     }))
   } else {
@@ -186,31 +212,22 @@ function flattenCondition<
   }
 }
 
-function indexExact(encrypt: EncryptFn, termType: TermType): (term: any) => Array<Buffer> {
+function indexExact(encrypt: EncryptFn, termType: TermType): (term: any) => Buffer {
+  // TODO: pass in the encoder function
   const encoder = encodeTermType(termType)
-  return term => {
-    if (typeof term !== 'undefined' && term !== null) {
-      return [encrypt(encoder(term))]
-    } else {
-      return []
-    }
-  }
+  return term => encrypt(encoder(term))
 }
 
-function indexRange(encrypt: EncryptFn, termType: TermType): (term: any) => Array<Buffer> {
+function indexRange(encrypt: EncryptFn, termType: TermType): (term: any) => Buffer {
+  // TODO: pass in the encoder function
   const encoder = encodeTermType(termType)
-  return term => {
-    if (typeof term !== 'undefined' && term !== null) {
-      return [encrypt(encoder(term))]
-    } else {
-      return []
-    }
-  }
+  return term => encrypt(encoder(term))
 }
 
-function indexMatch(encrypt: EncryptFn, termType: TermType): (terms: Array<string>) => Array<Buffer> {
+function indexMatch(encrypt: EncryptFn, termType: TermType): (term: string) => Buffer {
+  // TODO: pass in the encoder function
   const encoder = encodeTermType(termType)
-  return terms => terms.map(t => encrypt(encoder(t)))
+  return term => encrypt(encoder(term))
 }
 
 const buildTextProcessingPipeline: (options: MatchOptions) => TextProcessor = options => {
@@ -254,49 +271,6 @@ const buildFieldExtractor: <
     }
   }
 
-function encodeMatch(term: string, encrypt: EncryptFn): ExactConstraint {
-  return { term: encrypt(encodeTerm(term)) };
-}
-
-function encodeExact<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
->(
-  condition: ExactCondition<R, M, N>,
-  encrypt: EncryptFn,
-): ExactConstraint {
-  return { term: encrypt(encodeTerm(condition.value)) };
-}
-
-function encodeRange<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
->(
-  condition: RangeCondition<R, M, N>,
-  encrypt: EncryptFn
-): RangeConstraint {
-  const helper = rangeMinMax[condition.op]
-  // FIXME: "helper as any" is a type hack
-  const { min, max } = (helper as any)(condition)
-
-  return {
-    constraint: "range" as const,
-    lower: encrypt(min),
-    upper: encrypt(max),
-  }
-}
-
-type RangeConstraint = {
-  constraint: "range",
-  lower: Buffer,
-  upper: Buffer,
-}
-
-type ExactConstraint = {
-  term: Buffer,
-}
 
 type RangeMinMaxHelper = {
   [op in RangeOperator]: <
@@ -331,9 +305,9 @@ const rangeMinMax: RangeMinMaxHelper = {
   eq: ({ value }) => ORE.encodeRangeEq(value),
 }
 
-type MappingAnalyzers<R> = ((record: R) => {
-  indexId: string;
-  encryptedTerms: Buffer[];
-})[]
+type MappingAnalyzers<R> = Array<(record: R) => Option<{
+  indexId: string
+  encryptedTerms: Array<Buffer>
+}>>
 
 type EncryptFn = (input: OrePlainText) => Buffer
