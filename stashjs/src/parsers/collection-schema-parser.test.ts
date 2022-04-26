@@ -9,6 +9,7 @@ describe("Index definition: Exact", () => {
   it("parses valid index definition", () => {
     const def = {
       "kind": "exact",
+      "fieldType": "string",
       "field": "title"
     }
 
@@ -19,6 +20,7 @@ describe("Index definition: Exact", () => {
   it("parses invalid index definition", () => {
     const def = {
       "kind": "garbage",
+      "fieldType": "string",
       "field": "title"
     }
 
@@ -31,7 +33,8 @@ describe("Index definition: Range", () => {
   it("parses valid index definition", () => {
     const def = {
       "kind": "range",
-      "field": "title"
+      "fieldType": "uint64",
+      "field": "age"
     }
 
     const parsed = RangeIndexDecoder.decode(def)
@@ -41,6 +44,7 @@ describe("Index definition: Range", () => {
   it("parses invalid index definition", () => {
     const def = {
       "kind": "garbage",
+      "fieldType": "string",
       "field": "title"
     }
 
@@ -53,6 +57,7 @@ describe("Index definition: Match", () => {
   it("parses valid index definition", () => {
     const def = {
       "kind": "match",
+      "fieldType": "string",
       "fields": ["title"],
       "tokenFilters": [
         { "kind": "downcase" },
@@ -68,6 +73,7 @@ describe("Index definition: Match", () => {
   it("parses invalid index definition", () => {
     const def = {
       "kind": "match",
+      "fieldType": "string",
       // Should be an array of fields
       "fields": "title",
       "tokenFilters": [
@@ -86,12 +92,13 @@ describe("Entire indexes definition", () => {
 
   it("can be parsed", () => {
     const indexes = {
-      "exactTitle": { "kind": "exact", "field": "title" },
-      "runningTime": { "kind": "range", "field": "runningTime" },
-      "year": { "kind": "range", "field": "year" },
+      "exactTitle": { "kind": "exact", "field": "title", "fieldType": "string" },
+      "runningTime": { "kind": "range", "field": "runningTime", "fieldType": "float64" },
+      "year": { "kind": "range", "field": "year", "fieldType": "uint64" },
       "title": {
         "kind": "match",
         "fields": ["title"],
+        "fieldType": "string",
         "tokenFilters": [
           { "kind": "downcase" },
           { "kind": "ngram", "tokenLength": 3 }
@@ -123,69 +130,16 @@ describe("Typechecking", () => {
         "type": {
           "title": "string",
           "runningTime": "float64",
-          "year": "float64"
-        },
-        "indexes": {
-          "exactTitle": { "kind": "exact", "field": "title" },
-          "runningTime": { "kind": "range", "field": "runningTime" },
-          "year": { "kind": "range", "field": "year" },
-          "title": {
-            "kind": "match",
-            "fields": ["title"],
-            "tokenFilters": [
-              { "kind": "downcase" },
-              { "kind": "ngram", "tokenLength": 3 }
-            ],
-            "tokenizer": { "kind": "standard" }
-          }
-        }
-      })
-
-      const checked = parseCollectionSchemaJSON(schema)
-      expect(isOk(checked)).toBe(true)
-    })
-
-    it("both number type and float64 type accepted for backwards compatibility", () => {
-      const schema = JSON.stringify({
-        "type": {
-          "title": "string",
-          "runningTime": "number",
-          "year": "float64"
-        },
-        "indexes": {
-          "exactTitle": { "kind": "exact", "field": "title" },
-          "runningTime": { "kind": "range", "field": "runningTime" },
-          "year": { "kind": "range", "field": "year" },
-          "title": {
-            "kind": "match",
-            "fields": ["title"],
-            "tokenFilters": [
-              { "kind": "downcase" },
-              { "kind": "ngram", "tokenLength": 3 }
-            ],
-            "tokenizer": { "kind": "standard" }
-          }
-        }
-      })
-
-      const checked = parseCollectionSchemaJSON(schema)
-      expect(isOk(checked)).toBe(true)
-    })
-
-    it("both bigint type and uint64 type accepted for backwards compatibility", () => {
-      const schema = JSON.stringify({
-        "type": {
-          "title": "string",
-          "runningTime": "bigint",
           "year": "uint64"
         },
         "indexes": {
-          "exactTitle": { "kind": "exact", "field": "title" },
-          "runningTime": { "kind": "range", "field": "runningTime" },
-          "year": { "kind": "range", "field": "year" },
+          "exactTitle": { "kind": "exact", "field": "title", "fieldType": "string" },
+          "runningTime": { "kind": "range", "field": "runningTime", "fieldType": "float64" },
+          "year": { "kind": "range", "field": "year", "fieldType": "uint64" },
           "title": {
             "kind": "match",
             "fields": ["title"],
+            "fieldType": "string",
             "tokenFilters": [
               { "kind": "downcase" },
               { "kind": "ngram", "tokenLength": 3 }
@@ -210,6 +164,7 @@ describe("Typechecking", () => {
           "title": {
             "kind": "match",
             "fields": ["runningTime"],
+            "fieldType": "string",
             "tokenFilters": [
               { "kind": "downcase" },
               { "kind": "ngram", "tokenLength": 3 }
@@ -236,7 +191,7 @@ describe("Typechecking", () => {
           "title": "string",
         },
         "indexes": {
-          "title": { "kind": "range", "field": "title" }
+          "title": { "kind": "range", "field": "title", "fieldType": "uint64" }
         }
       })
 
@@ -258,9 +213,10 @@ describe("Typechecking", () => {
           "runningTime": "float64",
         },
         "indexes": {
-          "title": { "kind": "range", "field": "title" },
+          "title": { "kind": "range", "field": "title", "fieldType": "float64" },
           "runningTime": {
             "kind": "match",
+            "fieldType": "string",
             "fields": ["runningTime"],
             "tokenFilters": [
               { "kind": "downcase" },

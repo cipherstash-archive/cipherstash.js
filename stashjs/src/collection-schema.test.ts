@@ -55,15 +55,16 @@ describe('CollectionSchema', () => {
 
     test('produces a schema with mappings', () => {
       expect(schema.mappings).toStrictEqual({
-        email: { kind: "exact", field: "email" },
-        expired: { kind: "exact", field: "expired" },
-        age: { kind: "exact", field: "age" },
-        dob: { kind: "exact", field: "dob" },
-        dobRange: { kind: "range", field: "dob" },
-        city: { kind: "exact", field: "address.city" },
-        ageRange: { kind: "range", field: "age" },
+        email: { kind: "exact", field: "email", fieldType: "string" },
+        expired: { kind: "exact", field: "expired", fieldType: "boolean" },
+        age: { kind: "exact", field: "age", fieldType: "uint64" },
+        dob: { kind: "exact", field: "dob", fieldType: "date" },
+        dobRange: { kind: "range", field: "dob" , fieldType: "date" },
+        city: { kind: "exact", field: "address.city" , fieldType: "string" },
+        ageRange: { kind: "range", field: "age" , fieldType: "uint64" },
         notesAndDescription: {
           kind: "match",
+          fieldType: "string",
           fields: ["notes", "description"],
           tokenFilters: [
             { kind: "downcase" },
@@ -73,6 +74,7 @@ describe('CollectionSchema', () => {
         },
         allStringFields1: {
           kind: "dynamic-match",
+          fieldType: "string",
           tokenFilters: [
             {
               kind: "downcase",
@@ -88,6 +90,7 @@ describe('CollectionSchema', () => {
         },
         "allStringFields2": {
           kind: "field-dynamic-match",
+          fieldType: "string",
           tokenFilters: [
             {
               kind: "downcase",
