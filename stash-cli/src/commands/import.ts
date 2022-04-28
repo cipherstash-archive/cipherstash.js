@@ -1,10 +1,10 @@
-import { GluegunCommand } from 'gluegun'
-import * as fs from 'fs'
-import { Stash, describeError } from '@cipherstash/stashjs'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
+import { GluegunCommand } from "gluegun"
+import * as fs from "fs"
+import { Stash, describeError, StashRecord } from "@cipherstash/stashjs"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
 
 const command: GluegunCommand = {
-  name: 'import',
+  name: "import",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
@@ -14,28 +14,28 @@ const command: GluegunCommand = {
     const collectionName: string | undefined = parameters.first
 
     if (collectionName === undefined) {
-      print.error('No collection name specified.')
+      print.error("No collection name specified.")
       process.exit(1)
     }
 
     const dataFile: string | undefined = parameters.options.data
-    let data: Array<Object>
+    let data: Array<StashRecord>
 
     if (dataFile === undefined) {
-      print.error('No data file specified.')
+      print.error("No data file specified.")
       process.exit(1)
     }
 
     try {
       const dataBuffer = await fs.promises.readFile(dataFile)
-      data = JSON.parse(dataBuffer.toString('utf8'))
+      data = JSON.parse(dataBuffer.toString("utf8"))
     } catch (error) {
       print.error(`Could not load source data. Reason: "${error}"`)
       process.exit(1)
     }
 
     const profile = await Stash.loadProfile({
-      profileName
+      profileName,
     }).catch(error => {
       print.error(`Could not load profile. Reason: "${describeError(error)}"`)
       process.exit(1)
@@ -50,13 +50,13 @@ const command: GluegunCommand = {
     } catch (error) {
       print.error(`Could not import sources. Reason: "${describeError(error)}"`)
     }
-  }
+  },
 }
 
 export default command
 
-async function* streamSources(sources: Array<Object>) {
-  for (let s of sources) {
+async function* streamSources<T>(sources: Array<T>) {
+  for (const s of sources) {
     yield s
   }
 }

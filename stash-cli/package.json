@@ -12,16 +12,17 @@
   },
   "scripts": {
     "format": "pnpx prettier --write **/*.{js,ts,tsx,json}",
-    "lint": "tslint -p .",
+    "lint": "prettier ./src/**/*.ts --check && eslint ./src/**/*.ts",
+    "lint:fix": "prettier ./src/**/*.ts --write && eslint ./src/**/*.ts --fix",
     "clean-build": "rm -rf ./build",
     "compile": "tsc -p .",
     "copy-templates": "if [ -e ./src/templates ]; then cp -a ./src/templates ./build/; fi",
     "build": "pnpm run format && pnpm run lint && pnpm run clean-build && pnpm run compile && pnpm run copy-templates",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run build",
+    "lint:staged": "lint-staged"
   },
   "files": [
     "tsconfig.json",
-    "tslint.json",
     "build",
     "LICENSE",
     "readme.md",
@@ -40,22 +41,25 @@
   "devDependencies": {
     "@types/jest": "^24.0.18",
     "@types/node": "^12.7.11",
+    "@typescript-eslint/eslint-plugin": "^5.21.0",
+    "@typescript-eslint/parser": "^5.21.0",
+    "eslint": "^8.14.0",
+    "eslint-config-prettier": "^8.5.0",
     "jest": "^24.1.0",
-    "prettier": "^1.19.1",
+    "lint-staged": "12.4.1",
+    "prettier": "2.6.2",
     "ts-jest": "^24.1.0",
     "ts-node": "^8.4.1",
-    "tslint": "^5.20.1",
-    "tslint-config-prettier": "^1.17.0",
-    "tslint-config-standard": "^8.0.1",
     "typescript": "^4.3.5"
   },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node"
   },
-  "prettier": {
-    "semi": false,
-    "singleQuote": true,
-    "printWidth": 120
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }
