@@ -2,6 +2,8 @@ import * as typeScriptUtils from "./typescript";
 import { getUserAgent } from "./user-agent";
 import * as os from "os";
 
+jest.mock("os")
+
 jest.mock("../package.json", () => ({
   name: "@cipherstash/stashjs",
   version: "1.0.0",
