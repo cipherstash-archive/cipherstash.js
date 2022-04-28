@@ -38,7 +38,7 @@ export function buildRecordAnalyzer<
     if (isExactMapping<R, FieldOfType<R, ExactMappingFieldType>>(mapping)) {
       const fieldExtractor = buildFieldExtractor(mapping.field)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const exactIndexer = indexExact(encrypt, mapping.fieldType)
+      const exactIndexer = indexOneTerm(encrypt, mapping.fieldType)
       return (record: R) => {
         const term = fieldExtractor(record)
         if (typeof term !== 'undefined' && term !== null) {
@@ -56,7 +56,7 @@ export function buildRecordAnalyzer<
     if (isRangeMapping<R, FieldOfType<R, RangeMappingFieldType>>(mapping)) {
       const fieldExtractor = buildFieldExtractor(mapping.field)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const rangeIndexer = indexRange(encrypt, mapping.fieldType)
+      const rangeIndexer = indexOneTerm(encrypt, mapping.fieldType)
       return (record: R) => {
         const term = fieldExtractor(record)
         if (typeof term !== 'undefined' && term !== null) {
@@ -75,7 +75,7 @@ export function buildRecordAnalyzer<
       const fieldExtractors = mapping.fields.map(f => buildFieldExtractor(f))
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexMatch(encrypt, "string")
+      const matchIndexer = indexOneTerm(encrypt, "string")
       return (record: R) => (Something({
         indexId: meta.$indexId,
         encryptedTerms: pipeline(fieldExtractors.map(fe => fe(record)).filter(t => !!t)).map(matchIndexer)
@@ -85,7 +85,7 @@ export function buildRecordAnalyzer<
     if (isDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexMatch(encrypt, "string")
+      const matchIndexer = indexOneTerm(encrypt, "string")
       return (record: R) => (Something({
         indexId: meta.$indexId,
         encryptedTerms: pipeline(extractStringFields(record)).map(matchIndexer)
@@ -95,7 +95,7 @@ export function buildRecordAnalyzer<
     if (isFieldDynamicMatchMapping(mapping)) {
       const pipeline = buildTextProcessingPipeline(mapping)
       const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexMatch(encrypt, "string")
+      const matchIndexer = indexOneTerm(encrypt, "string")
       return (record: R) => (Something({
         indexId: meta.$indexId,
         encryptedTerms: extractStringFieldsWithPath(record).flatMap(([f, v]) => {
@@ -155,7 +155,7 @@ function flattenCondition<
     const indexMeta = meta[condition.indexName]!
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
     const mapping = mappings[condition.indexName]!
-    const exactIndexer = indexExact(encrypt, mapping.fieldType)
+    const exactIndexer = indexOneTerm(encrypt, mapping.fieldType)
     return [{
       indexId: normalizeId(indexMeta.$indexId),
       exact: { term: exactIndexer(condition.value) },
@@ -176,7 +176,7 @@ function flattenCondition<
     const mapping = mappings[condition.indexName]! as MatchMapping<R, FieldOfType<R, MatchMappingFieldType>>
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
-    const matchIndexer = indexMatch(encrypt, "string")
+    const matchIndexer = indexOneTerm(encrypt, "string")
     return pipeline([condition.value]).map(term => ({
       indexId: normalizeId(indexMeta.$indexId),
       exact: { term: matchIndexer(term) },
@@ -187,7 +187,7 @@ function flattenCondition<
     const mapping = mappings[condition.indexName]! as DynamicMatchMapping
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
-    const matchIndexer = indexMatch(encrypt, "string")
+    const matchIndexer = indexOneTerm(encrypt, "string")
     return pipeline([condition.value]).map(term => ({
       indexId: normalizeId(indexMeta.$indexId),
       exact: { term: matchIndexer(term) },
@@ -198,7 +198,7 @@ function flattenCondition<
     const mapping = mappings[condition.indexName]! as FieldDynamicMatchMapping
     const pipeline = buildTextProcessingPipeline(mapping)
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
-    const matchIndexer = indexMatch(encrypt, "string")
+    const matchIndexer = indexOneTerm(encrypt, "string")
     return pipeline([condition.value]).map(term => ({
       indexId: normalizeId(indexMeta.$indexId),
       exact: { term: matchIndexer(`${condition.fieldName}:${term}`) },
@@ -209,20 +209,7 @@ function flattenCondition<
   }
 }
 
-function indexExact(encrypt: EncryptFn, termType: TermType): (term: any) => Buffer {
-  // TODO: pass in the encoder function
-  const encoder = encodeTermType(termType)
-  return term => encrypt(encoder(term))
-}
-
-function indexRange(encrypt: EncryptFn, termType: TermType): (term: any) => Buffer {
-  // TODO: pass in the encoder function
-  const encoder = encodeTermType(termType)
-  return term => encrypt(encoder(term))
-}
-
-function indexMatch(encrypt: EncryptFn, termType: TermType): (term: string) => Buffer {
-  // TODO: pass in the encoder function
+function indexOneTerm(encrypt: EncryptFn, termType: TermType): (term: any) => Buffer {
   const encoder = encodeTermType(termType)
   return term => encrypt(encoder(term))
 }
