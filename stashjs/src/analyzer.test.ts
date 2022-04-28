@@ -1,7 +1,5 @@
 import { CollectionSchema } from "./collection-schema"
 import { buildRecordAnalyzer } from "./analyzer"
-import { downcase, standard } from "./dsl/filters-and-tokenizers-dsl"
-
 
 describe("buildRecordAnalyzer", () => {
   type SomeRecord = {
@@ -14,20 +12,37 @@ describe("buildRecordAnalyzer", () => {
     matchOptional?: string
   }
 
-  let schema = CollectionSchema.define<SomeRecord>("blah").indexedWith(mappings => ({
-    exact: mappings.Exact("exact", "string"),
-    exactOptional: mappings.Exact("exactOptional", "string"),
-    range: mappings.Range("range", "float64"),
-    rangeOptional: mappings.Range("rangeOptional", "float64"),
-    match: mappings.Match(["match"], {
-      tokenFilters: [downcase],
-      tokenizer: standard
-    }),
-    matchOptional: mappings.Match(["matchOptional"], {
-      tokenFilters: [downcase],
-      tokenizer: standard
-  }),
-  }))
+  let schema = CollectionSchema.define<SomeRecord>("blah").fromCollectionSchemaDefinition({
+    type: {
+      id: "string",
+      exact: "string",
+      exactOptional: "string",
+      range: "float64",
+      rangeOptional: "float64",
+      match: "string",
+      matchOptional: "string",
+    },
+    indexes: {
+      exact: { kind: "exact", fieldType: "string", field: "exact" },
+      exactOptional: { kind: "exact", fieldType: "string", field: "exactOptional" },
+      range: { kind: "range", fieldType: "float64", field: "range" },
+      rangeOptional: {kind: "range", fieldType: "float64", field: "rangeOptional"},
+      match: {
+        kind: "match",
+        fieldType: "string",
+        fields: ["match"],
+        tokenFilters: [{ kind: "downcase" }],
+        tokenizer: { kind: "standard" },
+      },
+      matchOptional: {
+        kind: "match",
+        fieldType: "string",
+        fields: ["matchOptional"],
+        tokenFilters: [{ kind: "downcase" }],
+        tokenizer: { kind: "standard" },
+      },
+    },
+  })
 
   let analyze = buildRecordAnalyzer(schema)
 
