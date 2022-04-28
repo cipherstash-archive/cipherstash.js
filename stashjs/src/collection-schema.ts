@@ -1,4 +1,4 @@
-import { StashRecord, Mappings, MappingsMeta, makeMappingsDSL, MappingsDSL, MappingOn } from "./dsl/mappings-dsl"
+import { StashRecord, Mappings, MappingsMeta, MappingOn } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder, OperatorsForIndex, operators, isAnyQuery } from "./dsl/query-dsl"
 import { makeId, idBufferToString } from "./utils"
 import { CollectionSchemaDefinition } from "./parsers/collection-schema-parser"
@@ -43,37 +43,6 @@ export class CollectionSchema<
    */
   public static define<R extends StashRecord>(collectionName: string) {
     return {
-      /**
-       * Defines a named Collection with mappings.
-       *
-       * @params callback that will be invoked to define mappings on the record type.
-       * @returns a CollectionSchema instance
-       */
-      indexedWith<
-        M extends Mappings<R>,
-        MM extends MappingsMeta<M>
-      >(callback: (define: MappingsDSL<R>) => M) {
-        const mappings = callback(makeMappingsDSL<R>())
-        return new CollectionSchema<R, M, MM>(
-          collectionName,
-          {},
-          mappings,
-          Object.fromEntries(Object.keys(mappings).map((indexName) => {
-            return [
-              indexName, {
-                $indexName: indexName,
-                // Keep the generated UUID as a string
-                // because we'll use it later to key analysis objects
-                //$indexId: idBufferToString(makeId()),
-                $indexId: idBufferToString(makeId()),
-                $prfKey: crypto.randomBytes(16),
-                $prpKey: crypto.randomBytes(16)
-              }
-            ]
-          })) as MM
-        )
-      },
-
       fromCollectionSchemaDefinition(def: CollectionSchemaDefinition) {
         type M = Mappings<R>
         type MM = MappingsMeta<M>
