@@ -1,5 +1,4 @@
 import { CollectionSchema } from './collection-schema'
-import { downcase, ngram, standard } from './dsl/filters-and-tokenizers-dsl'
 import { all } from './dsl/query-dsl'
 import { QueryBuilderError } from './errors'
 
@@ -22,30 +21,58 @@ type PatientRecord = {
     country: string
     postcode: string
   },
-  prescriptions: Array<string>
 }
 
-let schema = CollectionSchema.define<PatientRecord>("patients").indexedWith(mapping => ({
-  email: mapping.Exact("email", "string"),
-  age: mapping.Exact("age", "uint64"),
-  ageRange: mapping.Range("age", "uint64"),
-  dob: mapping.Exact("dob", "date"),
-  dobRange: mapping.Range("dob", "date"),
-  expired: mapping.Exact("expired", "boolean"),
-  city: mapping.Exact("address.city", "string"),
-  notesAndDescription: mapping.Match(["notes", "description"], {
-    tokenFilters: [downcase, ngram({ tokenLength: 3 })],
-    tokenizer: standard
-  }),
-  allStringFields1: mapping.DynamicMatch({
-    tokenFilters: [downcase, ngram({ tokenLength: 3 })],
-    tokenizer: standard
-  }),
-  allStringFields2: mapping.FieldDynamicMatch({
-    tokenFilters: [downcase, ngram({ tokenLength: 3 })],
-    tokenizer: standard
-  })
-}))
+let schema = CollectionSchema.define<PatientRecord>("patients").fromCollectionSchemaDefinition({
+  type: {
+    id: "string",
+    name: "string",
+    phone: "string",
+    altPhone: "string",
+    dob: "date",
+    email: "string",
+    secondaryEmail: "string",
+    expired: "boolean",
+    age: "float64",
+    notes: "string",
+    description: "string",
+    address: {
+      streetNumber: "string",
+      street: "string",
+      city: "string",
+      country: "string",
+      postcode: "string"
+    },
+  },
+  indexes: {
+    email: { kind: "exact", fieldType: "string", field: "email" },
+    age: { kind: "exact", fieldType: "uint64", field: "age"},
+    ageRange: { kind: "range", fieldType: "uint64", field: "age"},
+    dob: { kind: "exact", fieldType: "date", field: "dob"},
+    dobRange: { kind: "range", fieldType: "date", field: "dob"},
+    expired: { kind: "exact", fieldType: "boolean", field: "expired"},
+    city: { kind: "exact", fieldType: "string", field: "address.city" },
+    notesAndDescription: {
+      kind: "match",
+      fieldType: "string",
+      fields: ["notes", "description"],
+      tokenFilters: [{ kind: "downcase" }, {kind: "ngram", tokenLength: 3 }],
+      tokenizer: { kind: "standard" }
+    },
+    allStringFields1: {
+      kind: "dynamic-match",
+      fieldType: "string",
+      tokenFilters: [{ kind: "downcase" }, {kind: "ngram", tokenLength: 3 }],
+      tokenizer: { kind: "standard" }
+    },
+    allStringFields2: {
+      kind: "field-dynamic-match",
+      fieldType: "string",
+      tokenFilters: [{ kind: "downcase" }, {kind: "ngram", tokenLength: 3 }],
+      tokenizer: { kind: "standard" }
+    }
+  }
+})
 
 describe('CollectionSchema', () => {
   describe('define', () => {
