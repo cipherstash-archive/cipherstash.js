@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved error types and wrap error messaging
 - Increased directory pop count when checking if project has TypeScript
 - Persist record type and index field type settings
+- Remove support for `number` and `bigint` field types in favour of `float64` and `uint64`
+- Remove support for schema definition via the `indexedWith` TS DSL in favour of JSON schema definitions
 
 ## [0.3.10]
 
