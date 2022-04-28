@@ -271,16 +271,16 @@ export function makeMappingsDSL<R extends StashRecord>(): MappingsDSL<R> {
   }
 }
 
-function extractTypeName(field: string, record: any): string {
+function extractTypeName(field: string, record: any): TermType {
   const path = field.split(".")
   let current = record
   path.forEach(part => { current = current?.[part] })
-  return current
+  return current as TermType
 }
 
 export function fieldTypeOfMapping(mapping: any, recordType: RecordTypeDefinition): TermType {
   if (isExactMapping(mapping) || isRangeMapping(mapping)) {
-    return extractTypeName(mapping.field, recordType) as any
+    return extractTypeName(mapping.field, recordType)
   } else if (isMatchMapping(mapping) || isDynamicMatchMapping(mapping) || isFieldDynamicMatchMapping(mapping)) {
     return "string"
   } else {
