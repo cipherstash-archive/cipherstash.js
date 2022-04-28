@@ -41,13 +41,13 @@ const TokenizerDecoder = D.sum('kind')({
 
 const ExactIndexDecoder = D.struct<ExactMapping<any, any>>({
   kind: D.literal("exact"),
-  fieldType: D.literal("string", "uint64", "float64", "date", "boolean", "bigint", "number"),
+  fieldType: D.literal("string", "uint64", "float64", "date", "boolean"),
   field: D.string
 })
 
 const RangeIndexDecoder = D.struct<RangeMapping<any, any>>({
   kind: D.literal("range"),
-  fieldType: D.literal("uint64", "float64", "date", "boolean", "bigint", "number"),
+  fieldType: D.literal("uint64", "float64", "date", "boolean"),
   field: D.string
 })
 
@@ -90,8 +90,6 @@ const parseIndexDefinition: <R extends StashRecord>(document: object) => Result<
 const FieldTypeDecoder = D.union(
   D.literal('string'),
   D.literal('float64'),
-  D.literal('number'), // keeping for now for backwards compatibility for existing users
-  D.literal('bigint'), // as above
   D.literal('uint64'),
   D.literal('date'),
   D.literal('boolean'),

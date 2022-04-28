@@ -10,9 +10,7 @@ export const encodeTermType: (termType: TermType) => (term: any) => OrePlainText
   = termType => {
     switch (termType) {
       case "string": return encodeString
-      case "number": return encodeNumber
       case "float64": return encodeNumber
-      case "bigint": return encodeBigint
       case "uint64": return encodeBigint
       case "boolean": return encodeBoolean
       case "date": return encodeDate
