@@ -2,8 +2,6 @@
 export type TermType =
     | "string"
     | "float64"
-    | "number"
-    | "bigint"
     | "uint64"
     | "date"
     | "boolean"
