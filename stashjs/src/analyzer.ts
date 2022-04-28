@@ -30,7 +30,7 @@ export function buildRecordAnalyzer<
 >(
   schema: CollectionSchema<R, M, MM>
 ): RecordAnalyzer<R, M, MM> {
-  const mappingAnalzers: MappingAnalyzers<R> = Object.entries(schema.mappings).map(([indexName, mapping]) => {
+  const mappingAnalyzers: MappingAnalyzers<R> = Object.entries(schema.mappings).map(([indexName, mapping]) => {
     const meta = schema.meta[indexName]!
 
     // FIXME: handle missing data in records
@@ -109,7 +109,7 @@ export function buildRecordAnalyzer<
 
   return (record: R) => ({
     recordId: record.id,
-    indexEntries: unwrapArray(mappingAnalzers.map(analyzer => analyzer(record))).reduce((acc, { indexId, encryptedTerms }) => {
+    indexEntries: unwrapArray(mappingAnalyzers.map(analyzer => analyzer(record))).reduce((acc, { indexId, encryptedTerms }) => {
       if (encryptedTerms.length > 0) {
         return Object.assign(acc, { [indexId]: encryptedTerms })
       } else {
@@ -168,7 +168,7 @@ function flattenCondition<
     const { min, max } = (helper as any)(condition)
     return [{
       indexId: normalizeId(indexMeta.$indexId),
-      range: { lower: encrypt(min), upper: encrypt(max) },
+      range: { lower: [encrypt(min)], upper: [encrypt(max)] },
       condition: "range"
     }]
   } else if (isMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
@@ -209,9 +209,9 @@ function flattenCondition<
   }
 }
 
-function indexOneTerm(encrypt: EncryptFn, termType: TermType): (term: any) => Buffer {
+function indexOneTerm(encrypt: EncryptFn, termType: TermType): (term: any) => Array<Buffer> {
   const encoder = encodeTermType(termType)
-  return term => encrypt(encoder(term))
+  return term => encoder(term).map(encrypt)
 }
 
 const buildTextProcessingPipeline: (options: MatchOptions) => TextProcessor = options => {
@@ -276,7 +276,7 @@ export type AnalyzedRecord<
   > = {
     recordId: R['id'],
     indexEntries: {
-      [F in keyof MM]: Array<Buffer>
+      [F in keyof MM]: Array<Array<Buffer>>
     }
   }
 
@@ -291,7 +291,7 @@ const rangeMinMax: RangeMinMaxHelper = {
 
 type MappingAnalyzers<R> = Array<(record: R) => Option<{
   indexId: string
-  encryptedTerms: Array<Buffer>
+  encryptedTerms: Array<Array<Buffer>>
 }>>
 
 type EncryptFn = (input: OrePlainText) => Buffer
