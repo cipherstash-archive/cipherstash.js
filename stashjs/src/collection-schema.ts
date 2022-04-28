@@ -32,8 +32,6 @@ export class CollectionSchema<
    *
    * e.g.
    * ```typescript
-   * const schema = CollectionSchema.define<Employee>("employees").indexedWith(mappings => ({ ... }))
-   * // or
    * const schema = CollectionSchema.define<Employee>("employees").notIndexed()
    * // or
    * const schema = CollectionSchema.define<Employee>("employees").fromCollectionSchemaDefinition({ ... })
