@@ -164,14 +164,11 @@ function flattenCondition<
   } else if (isRangeCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
-    const mapping = mappings[condition.indexName]!
     const helper = rangeMinMax[condition.op]
-    // FIXME: "helper as any" is a type hack
     const { min, max } = (helper as any)(condition)
-    const rangeIndexer = indexRange(encrypt, mapping.fieldType)
     return [{
       indexId: normalizeId(indexMeta.$indexId),
-      range: { lower: rangeIndexer(min), upper: rangeIndexer(max) },
+      range: { lower: encrypt(min), upper: encrypt(max) },
       condition: "range"
     }]
   } else if (isMatchCondition<R, M, Extract<keyof M, string>>(condition)) {
