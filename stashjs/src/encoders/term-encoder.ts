@@ -6,7 +6,7 @@ import { TermType } from '../record-type-definition'
 export const UINT64_MIN: bigint = 0n
 export const UINT64_MAX: bigint = 18446744073709551615n
 
-export const encodeTermType: (termType: TermType) => (term: any) => OrePlainText
+export const encodeTermType: (termType: TermType) => (term: any) => Array<OrePlainText>
   = termType => {
     switch (termType) {
       case "string": return encodeString
@@ -17,39 +17,39 @@ export const encodeTermType: (termType: TermType) => (term: any) => OrePlainText
     }
   }
 
-function encodeString(term: any): OrePlainText {
+function encodeString(term: any): Array<OrePlainText> {
   if (typeof term === "string") {
-    return ORE.encodeString(term)
+    return [ORE.encodeString(term)]
   }
   throw unreachable("Expected term of type 'string'")
 }
 
-function encodeNumber(term: any): OrePlainText {
+function encodeNumber(term: any): Array<OrePlainText> {
   if (typeof term === "number") {
-    return ORE.encodeNumber(term)
+    return [ORE.encodeNumber(term)]
   }
   throw unreachable("Expected term of type 'float64'")
 }
 
-function encodeBigint(term: any): OrePlainText {
+function encodeBigint(term: any): Array<OrePlainText> {
   if (typeof term === "bigint") {
     let buf = Buffer.allocUnsafe(8)
     buf.writeBigUInt64BE(term)
-    return ORE.encodeBuffer(buf)
+    return [ORE.encodeBuffer(buf)]
   }
   throw unreachable("Expected term of type 'uint64'")
 }
 
-function encodeBoolean(term: any): OrePlainText {
+function encodeBoolean(term: any): Array<OrePlainText> {
   if (typeof term === "boolean") {
-    return ORE.encodeNumber(term ? 1 : 0)
+    return [ORE.encodeNumber(term ? 1 : 0)]
   }
   throw unreachable("Expected term of type 'boolean'")
 }
 
-function encodeDate(term: any): OrePlainText {
+function encodeDate(term: any): Array<OrePlainText> {
   if (term instanceof Date) {
-    return ORE.encodeNumber(utcDateWithResolution(term, "millisecond"))
+    return [ORE.encodeNumber(utcDateWithResolution(term, "millisecond"))]
   }
   throw unreachable("Expected term of type 'date'")
 }
