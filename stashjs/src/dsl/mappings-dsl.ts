@@ -278,7 +278,7 @@ function extractTypeName(field: string, record: any): string {
   return current
 }
 
-export function fieldTypeOfMapping(mapping: any, recordType: RecordTypeDefinition): "string" | "float64" | "number" | "bigint" | "uint64" | "date" | "boolean" {
+export function fieldTypeOfMapping(mapping: any, recordType: RecordTypeDefinition): TermType {
   if (isExactMapping(mapping) || isRangeMapping(mapping)) {
     return extractTypeName(mapping.field, recordType) as any
   } else if (isMatchMapping(mapping) || isDynamicMatchMapping(mapping) || isFieldDynamicMatchMapping(mapping)) {
