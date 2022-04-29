@@ -1,5 +1,5 @@
 import { isRight } from 'fp-ts/lib/Either'
-import { parseCollectionSchemaJSON, PRIVATE } from './collection-schema-parser'
+import { generateSchemaDefinitionFromJSON, parseCollectionSchemaJSON, PRIVATE } from './collection-schema-parser'
 
 const { ExactIndexDecoder, MatchIndexDecoder, RangeIndexDecoder, parseIndexDefinition } = PRIVATE
 
@@ -9,7 +9,6 @@ describe("Index definition: Exact", () => {
   it("parses valid index definition", () => {
     const def = {
       "kind": "exact",
-      "fieldType": "string",
       "field": "title"
     }
 
@@ -20,7 +19,6 @@ describe("Index definition: Exact", () => {
   it("parses invalid index definition", () => {
     const def = {
       "kind": "garbage",
-      "fieldType": "string",
       "field": "title"
     }
 
@@ -33,7 +31,6 @@ describe("Index definition: Range", () => {
   it("parses valid index definition", () => {
     const def = {
       "kind": "range",
-      "fieldType": "uint64",
       "field": "age"
     }
 
@@ -44,7 +41,6 @@ describe("Index definition: Range", () => {
   it("parses invalid index definition", () => {
     const def = {
       "kind": "garbage",
-      "fieldType": "string",
       "field": "title"
     }
 
@@ -57,7 +53,6 @@ describe("Index definition: Match", () => {
   it("parses valid index definition", () => {
     const def = {
       "kind": "match",
-      "fieldType": "string",
       "fields": ["title"],
       "tokenFilters": [
         { "kind": "downcase" },
@@ -73,7 +68,6 @@ describe("Index definition: Match", () => {
   it("parses invalid index definition", () => {
     const def = {
       "kind": "match",
-      "fieldType": "string",
       // Should be an array of fields
       "fields": "title",
       "tokenFilters": [
@@ -92,13 +86,12 @@ describe("Entire indexes definition", () => {
 
   it("can be parsed", () => {
     const indexes = {
-      "exactTitle": { "kind": "exact", "field": "title", "fieldType": "string" },
-      "runningTime": { "kind": "range", "field": "runningTime", "fieldType": "float64" },
-      "year": { "kind": "range", "field": "year", "fieldType": "uint64" },
+      "exactTitle": { "kind": "exact", "field": "title" },
+      "runningTime": { "kind": "range", "field": "runningTime" },
+      "year": { "kind": "range", "field": "year", },
       "title": {
         "kind": "match",
         "fields": ["title"],
-        "fieldType": "string",
         "tokenFilters": [
           { "kind": "downcase" },
           { "kind": "ngram", "tokenLength": 3 }
@@ -133,13 +126,12 @@ describe("Typechecking", () => {
           "year": "uint64"
         },
         "indexes": {
-          "exactTitle": { "kind": "exact", "field": "title", "fieldType": "string" },
-          "runningTime": { "kind": "range", "field": "runningTime", "fieldType": "float64" },
-          "year": { "kind": "range", "field": "year", "fieldType": "uint64" },
+          "exactTitle": { "kind": "exact", "field": "title" },
+          "runningTime": { "kind": "range", "field": "runningTime" },
+          "year": { "kind": "range", "field": "year" },
           "title": {
             "kind": "match",
             "fields": ["title"],
-            "fieldType": "string",
             "tokenFilters": [
               { "kind": "downcase" },
               { "kind": "ngram", "tokenLength": 3 }
@@ -164,7 +156,6 @@ describe("Typechecking", () => {
           "title": {
             "kind": "match",
             "fields": ["runningTime"],
-            "fieldType": "string",
             "tokenFilters": [
               { "kind": "downcase" },
               { "kind": "ngram", "tokenLength": 3 }
@@ -191,7 +182,7 @@ describe("Typechecking", () => {
           "title": "string",
         },
         "indexes": {
-          "title": { "kind": "range", "field": "title", "fieldType": "uint64" }
+          "title": { "kind": "range", "field": "title" }
         }
       })
 
@@ -213,7 +204,7 @@ describe("Typechecking", () => {
           "runningTime": "float64",
         },
         "indexes": {
-          "title": { "kind": "range", "field": "title", "fieldType": "float64" },
+          "title": { "kind": "range", "field": "title" },
           "runningTime": {
             "kind": "match",
             "fieldType": "string",
@@ -235,5 +226,58 @@ describe("Typechecking", () => {
 
       expect(checked.error).toEqual(`index type "range" works on fields of type "float64, uint64, date, boolean" but field "title" is of type "string"`)
     })
+  })
+})
+
+describe("Generating a schema definition from JSON", () => {
+  it("returns a schema with field types on indexes", async () => {
+    const schema = JSON.stringify({
+      "type": {
+        "title": "string",
+        "runningTime": "float64",
+        "year": "uint64"
+      },
+      "indexes": {
+        "exactTitle": { "kind": "exact", "field": "title" },
+        "runningTime": { "kind": "range", "field": "runningTime" },
+        "year": { "kind": "range", "field": "year" },
+        "title": {
+          "kind": "match",
+          "fields": ["title"],
+          "tokenFilters": [
+            { "kind": "downcase" },
+            { "kind": "ngram", "tokenLength": 3 }
+          ],
+          "tokenizer": { "kind": "standard" }
+        }
+      }
+    })
+
+    const expectedSchema = {
+      "type": {
+        "title": "string",
+        "runningTime": "float64",
+        "year": "uint64"
+      },
+      "indexes": {
+        "exactTitle": { "kind": "exact", "field": "title", "fieldType": "string" },
+        "runningTime": { "kind": "range", "field": "runningTime", "fieldType": "float64" },
+        "year": { "kind": "range", "field": "year", "fieldType": "uint64" },
+        "title": {
+          "kind": "match",
+          "fields": ["title"],
+          "fieldType": "string",
+          "tokenFilters": [
+            { "kind": "downcase" },
+            { "kind": "ngram", "tokenLength": 3 }
+          ],
+          "tokenizer": { "kind": "standard" }
+        }
+      }
+    }
+
+    const generatedSchema = await generateSchemaDefinitionFromJSON(schema)
+
+    expect(generatedSchema).toStrictEqual(expectedSchema)
   })
 })
