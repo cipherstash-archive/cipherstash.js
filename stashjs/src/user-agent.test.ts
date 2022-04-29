@@ -4,8 +4,6 @@ import { getUserAgent } from "./user-agent";
 
 jest.mock("os")
 
-jest.mock("os")
-
 jest.mock("../package.json", () => ({
   name: "@cipherstash/stashjs",
   version: "1.0.0",
