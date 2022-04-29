@@ -3,24 +3,48 @@ import * as DE from 'io-ts/DecodeError'
 import * as E from 'fp-ts/Either'
 import { pipe } from 'fp-ts/function'
 import { Err, Ok, Result, gather } from '../result'
-import { DynamicMatchMapping, ExactMapping, ExactMappingFieldType, FieldDynamicMatchMapping, Mappings, MatchMapping, MatchMappingFieldType, RangeMapping, RangeMappingFieldType, StashRecord } from '../dsl/mappings-dsl'
+import {
+  DynamicMatchMapping,
+  ExactMapping,
+  ExactMappingFieldType,
+  FieldDynamicMatchMapping,
+  fieldTypeOfMapping,
+  Mappings,
+  MatchMapping,
+  MatchMappingFieldType,
+  RangeMapping,
+  RangeMappingFieldType,
+  StashRecord
+} from '../dsl/mappings-dsl'
 import { isRight } from 'fp-ts/lib/Either'
 import { DowncaseFilter, NgramTokenizer, StandardTokenizer, UpcaseFilter } from '../dsl/filters-and-tokenizers-dsl'
-import { RecordTypeDefinition } from '../record-type-definition'
+import { RecordTypeDefinition, TermType } from '../record-type-definition'
 
-export type CollectionSchemaDefinition = D.TypeOf<typeof CollectionSchemaDefDecoder>
+export type ParsedCollectionSchemaDefinition = D.TypeOf<typeof CollectionSchemaDefDecoder>
+
+type Mapping =
+ | ExactMapping<any, any>
+ | RangeMapping<any, any>
+ | MatchMapping<any, any>
+ | DynamicMatchMapping
+ | FieldDynamicMatchMapping
+
+export type CollectionSchemaDefinition = {
+  type: { [key: string]: RecordTypeDefinition | TermType },
+  indexes: { [key: string]: Mapping }
+}
 
 type IndexDefinitionDecoder<R extends StashRecord> = D.Decoder<object, Mappings<R>>
 
 const decoder = <R extends StashRecord>(): IndexDefinitionDecoder<R> => ({
-    decode: input => {
-      const result = IndexesDecoder.decode(input)
-      if (isRight(result)) {
-        return D.success(result.right as Mappings<R>)
-      } else {
-        return D.failure(result.left, "Failed to parse index definitions")
-      }
+  decode: input => {
+    const result = IndexesDecoder.decode(input)
+    if (isRight(result)) {
+      return D.success(result.right as Mappings<R>)
+    } else {
+      return D.failure(result.left, "Failed to parse index definitions")
     }
+  }
 })
 
 const TokenFilterDecoder = D.sum('kind')({
@@ -39,36 +63,31 @@ const TokenizerDecoder = D.sum('kind')({
 // perform some runtime type checking (see: function
 // typecheckCollectionSchemaDefinition).
 
-const ExactIndexDecoder = D.struct<ExactMapping<any, any>>({
+const ExactIndexDecoder = D.struct<Omit<ExactMapping<any, any>, "fieldType">>({
   kind: D.literal("exact"),
-  fieldType: D.literal("string", "uint64", "float64", "date", "boolean"),
   field: D.string
 })
 
-const RangeIndexDecoder = D.struct<RangeMapping<any, any>>({
+const RangeIndexDecoder = D.struct<Omit<RangeMapping<any, any>, "fieldType">>({
   kind: D.literal("range"),
-  fieldType: D.literal("uint64", "float64", "date", "boolean"),
   field: D.string
 })
 
-const MatchIndexDecoder = D.struct<MatchMapping<any, any>>({
+const MatchIndexDecoder = D.struct<Omit<MatchMapping<any, any>, "fieldType">>({
   kind: D.literal("match"),
   fields: D.array(D.string),
-  fieldType: D.literal("string"),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
 })
 
-const DynamicMatchIndexDecoder = D.struct<DynamicMatchMapping>({
+const DynamicMatchIndexDecoder = D.struct<Omit<DynamicMatchMapping, "fieldType">>({
   kind: D.literal("dynamic-match"),
-  fieldType: D.literal("string"),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
 })
 
-const FieldDynamicMatchIndexDecoder = D.struct<FieldDynamicMatchMapping>({
+const FieldDynamicMatchIndexDecoder = D.struct<Omit<FieldDynamicMatchMapping, "fieldType">>({
   kind: D.literal("field-dynamic-match"),
-  fieldType: D.literal("string"),
   tokenFilters: D.array(TokenFilterDecoder),
   tokenizer: TokenizerDecoder
 })
@@ -102,10 +121,27 @@ const CollectionSchemaDefDecoder = D.struct({
   indexes: IndexesDecoder
 })
 
+const annotateIndexFieldTypes = (parsed: ParsedCollectionSchemaDefinition): CollectionSchemaDefinition => {
+  const mappingsWithFieldTypes = Object.entries(parsed.indexes)
+    .map(([name, mapping]) => {
+      const fieldType = fieldTypeOfMapping(mapping, parsed.type)
+      return [name, { fieldType, ...mapping }] as const
+    })
+    .reduce((acc, [name, mappingWithFieldType]) => {
+      acc[name] = mappingWithFieldType
+      return acc
+    }, {} as any)
+
+  return {
+    type: parsed.type,
+    indexes: mappingsWithFieldTypes,
+  }
+}
+
 export const parseCollectionSchemaJSON: (s: string) => Result<CollectionSchemaDefinition, string> = (s) => {
   const parsedAndTypeChecked = CollectionSchemaDefinitionFromJSON.decode(s)
   if (isRight(parsedAndTypeChecked)) {
-    return Ok(parsedAndTypeChecked.right)
+    return Ok(annotateIndexFieldTypes(parsedAndTypeChecked.right))
   } else {
     return Err(draw(parsedAndTypeChecked.left))
   }
@@ -114,7 +150,7 @@ export const parseCollectionSchemaJSON: (s: string) => Result<CollectionSchemaDe
 export const generateSchemaDefinitionFromJSON = async (s: string): Promise<CollectionSchemaDefinition> => {
   const parsedAndTypeChecked = CollectionSchemaDefinitionFromJSON.decode(s)
   if (isRight(parsedAndTypeChecked)) {
-    return Promise.resolve(parsedAndTypeChecked.right)
+    return Promise.resolve(annotateIndexFieldTypes(parsedAndTypeChecked.right))
   } else {
     return Promise.reject(draw(parsedAndTypeChecked.left))
   }
@@ -131,7 +167,7 @@ const JSONDecoder: D.Decoder<string, object> = pipe(
   })
 )
 
-const CollectionSchemaDefinitionFromJSON: D.Decoder<string, CollectionSchemaDefinition> = pipe(
+const CollectionSchemaDefinitionFromJSON: D.Decoder<string, ParsedCollectionSchemaDefinition> = pipe(
   JSONDecoder,
   D.parse(json => {
     try {
@@ -155,8 +191,8 @@ const CollectionSchemaDefinitionFromJSON: D.Decoder<string, CollectionSchemaDefi
 //    - exist on the type
 //    - be of a type that is compitible with the index type
 const typecheckCollectionSchemaDefinition: (
-  def: CollectionSchemaDefinition
-) => Result<CollectionSchemaDefinition, string> = (def) => {
+  def: ParsedCollectionSchemaDefinition
+) => Result<ParsedCollectionSchemaDefinition, string> = (def) => {
   const checked = gather(Object.values(def.indexes).map(index => typecheckIndex(def.type, index)))
   if (checked.ok) {
     return Ok(def)
@@ -164,7 +200,6 @@ const typecheckCollectionSchemaDefinition: (
     return Err(checked.error)
   }
 }
-
 
 type TypeName<T> =
   T extends string ? "string" :
@@ -201,7 +236,7 @@ function fieldExists(indexType: string, recordType: any, path: Array<string>, ex
     return Ok()
   } else {
     const filteredExpectedTypes = expectedTypes.filter(t => t !== 'number' && t !== 'bigint')
-    return Err( `index type "${indexType}" works on fields of type "${filteredExpectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
+    return Err(`index type "${indexType}" works on fields of type "${filteredExpectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
   }
 }
 
