@@ -203,14 +203,14 @@ const typecheckCollectionSchemaDefinition: (
 
 type TypeName<T> =
   T extends string ? "string" :
-  T extends number ? "float64" | "number" : //keeping number for now for backwards compatibility
+  T extends number ? "float64" :
   T extends boolean ? "boolean" :
-  T extends bigint ? "uint64" | "bigint" : //keeping number for now for backwards compatibility
+  T extends bigint ? "uint64" :
   T extends Date ? "date" :
   never
 
-const EXACT_TYPES: Array<TypeName<ExactMappingFieldType>> = ["string", "float64", "number", "bigint", "uint64", "date", "boolean"]
-const RANGE_TYPES: Array<TypeName<RangeMappingFieldType>> = ["float64", "number", "bigint", "uint64", "date", "boolean"]
+const EXACT_TYPES: Array<TypeName<ExactMappingFieldType>> = ["string", "float64", "uint64", "date", "boolean"]
+const RANGE_TYPES: Array<TypeName<RangeMappingFieldType>> = ["float64", "uint64", "date", "boolean"]
 const MATCH_TYPES: Array<TypeName<MatchMappingFieldType>> = ["string"]
 
 function typecheckIndex(recordType: unknown, index: Index): Result<void | Array<void>, string> {
@@ -235,8 +235,7 @@ function fieldExists(indexType: string, recordType: any, path: Array<string>, ex
   if (expectedTypes.includes(currentType)) {
     return Ok()
   } else {
-    const filteredExpectedTypes = expectedTypes.filter(t => t !== 'number' && t !== 'bigint')
-    return Err(`index type "${indexType}" works on fields of type "${filteredExpectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
+    return Err(`index type "${indexType}" works on fields of type "${expectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
   }
 }
 
