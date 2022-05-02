@@ -21,12 +21,22 @@ export type Auth0Machine2Machine = {
   clientSecret: string
 }
 
+export type ConsoleAccessKey = {
+  kind: "Console-AccessKey"
+  accessKey: string
+}
+
 export type OAuthCallback = {
   kind: "OAuthCallback"
   callback: () => AsyncResult<OauthAuthenticationInfo, AuthenticationFailure>
 }
 
-export type IdentityProvider = Auth0AccessToken | Auth0DeviceCode | Auth0Machine2Machine | OAuthCallback
+export type IdentityProvider =
+  | Auth0AccessToken
+  | Auth0DeviceCode
+  | Auth0Machine2Machine
+  | OAuthCallback
+  | ConsoleAccessKey;
 
 export type KmsKeySource = {
   arn: string
@@ -66,6 +76,7 @@ export type StashConfiguration = {
   readonly keyManagement: KMSKey
 }
 
+
 export function loadProfileFromEnv(): StashProfile {
   return new StashProfile(`${getVar("CS_SERVICE_FQDN")}-${getVar("CS_WORKSPACE")}`, {
     service: {
@@ -82,11 +93,9 @@ export function loadProfileFromEnv(): StashProfile {
               clientId: getVar("CS_IDP_CLIENT_ID"),
             }
           : {
-              kind: "Auth0-Machine2Machine",
-              host: getVar("CS_IDP_HOST"),
-              clientId: getVar("CS_IDP_CLIENT_ID"),
-              clientSecret: getVar("CS_IDP_CLIENT_SECRET"),
-            }
+          kind: "Console-AccessKey",
+          accessKey: getVar("CS_IDP_CLIENT_SECRET"),
+        }
         : {
             kind: "Auth0-AccessToken",
             accessToken: getVar("CS_ACCESS_TOKEN"),
