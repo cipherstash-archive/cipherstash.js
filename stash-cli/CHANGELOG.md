@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - Update error reporting
+- Bump axios to 0.26.1
 
 ## [0.3.10]
 
