@@ -1,10 +1,10 @@
-import { GluegunCommand } from 'gluegun'
-import { Options } from 'gluegun/build/types/domain/options'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
-import { AxiosResponse } from 'axios'
-import { makeHttpsClient } from '../https-client'
+import { GluegunCommand } from "gluegun"
+import { Options } from "gluegun/build/types/domain/options"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
+import { AxiosResponse } from "axios"
+import { makeHttpsClient } from "../https-client"
 
-import { profileStore, defaults, StashProfile, errors, Ok, describeError } from '@cipherstash/stashjs'
+import { profileStore, defaults, StashProfile, errors, Ok, describeError } from "@cipherstash/stashjs"
 
 // A first time login (saves a profile for that workspace + credentials)
 // stash login --workspace foo
@@ -19,9 +19,9 @@ import { profileStore, defaults, StashProfile, errors, Ok, describeError } from 
 // stash login --workspace foo --profile bar
 
 const command: GluegunCommand = {
-  name: 'login',
-  description: 'Login to the workspace',
-  alias: 'l',
+  name: "login",
+  description: "Login to the workspace",
+  alias: "l",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
@@ -39,7 +39,9 @@ const command: GluegunCommand = {
       const existing = await profileStore.loadProfile(basicProfile.name)
       if (existing.ok) {
         if (existing.value.config.service.workspace !== basicProfile.config.service.workspace) {
-          print.error(`There is already a saved profile called ${basicProfile.name} but for a different workspace. Try again, but specify a different name using the --profile option.`)
+          print.error(
+            `There is already a saved profile called ${basicProfile.name} but for a different workspace. Try again, but specify a different name using the --profile option.`
+          )
           process.exit(1)
         }
       }
@@ -54,11 +56,11 @@ const command: GluegunCommand = {
 
       const workspace = basicProfile.config.service.workspace
 
-      const response = await makeHttpsClient('console.cipherstash.com', 443)
+      const response = await makeHttpsClient("console.cipherstash.com", 443)
         .get(`/api/meta/workspaces/${encodeURIComponent(workspace)}`, {
           headers: {
-            Authorization: `Bearer ${authInfo.value.accessToken}`
-          }
+            Authorization: `Bearer ${authInfo.value.accessToken}`,
+          },
         })
         .catch(error => {
           print.error(
@@ -82,15 +84,15 @@ const command: GluegunCommand = {
             `Workspace configuration and authentication details have been saved in ~/.cipherstash/${basicProfile.name}`
           )
         } else {
-          print.error('Failed to store cached authentication details')
+          print.error("Failed to store cached authentication details")
           print.error(describeError(savedToken.error))
         }
       } else {
-        print.error('Failed to save profile')
+        print.error("Failed to save profile")
         print.error(describeError(saved.error))
       }
     } else {
-      let profile = options.profile
+      const profile = options.profile
         ? await profileStore.loadProfile(options.profile)
         : await profileStore.loadDefaultProfile()
       if (profile.ok) {
@@ -101,9 +103,11 @@ const command: GluegunCommand = {
           print.info(`Login successful`)
           print.info("")
           print.info("If this is your first time using CipherStash, follow the Getting Started guide:")
-          print.info(`https://cipherstash.com/quickstart/?ws=${encodeURIComponent(profile.value.config.service.workspace)}`)
+          print.info(
+            `https://cipherstash.com/quickstart/?ws=${encodeURIComponent(profile.value.config.service.workspace)}`
+          )
         } else {
-          print.error('Login failed')
+          print.error("Login failed")
           print.error(describeError(login.error))
         }
       } else {
@@ -112,7 +116,7 @@ const command: GluegunCommand = {
         process.exit(1)
       }
     }
-  }
+  },
 }
 
 // The heuristic is that if a workspace is provided as a command line option
@@ -132,26 +136,26 @@ function buildBasicStashProfile(options: Options): StashProfile {
     service: {
       workspace,
       host: serviceHost,
-      port: servicePort
+      port: servicePort,
     },
     identityProvider: {
-      kind: 'Auth0-DeviceCode',
+      kind: "Auth0-DeviceCode",
       host: identityProviderHost,
-      clientId: identityProviderClientId
+      clientId: identityProviderClientId,
     },
     keyManagement: {
-      kind: 'AWS-KMS',
+      kind: "AWS-KMS",
       awsCredentials: {
-        kind: 'Federated',
-        region: '',
-        roleArn: ''
+        kind: "Federated",
+        region: "",
+        roleArn: "",
       },
       key: {
-        arn: '',
-        namingKey: '',
-        region: ''
-      }
-    }
+        arn: "",
+        namingKey: "",
+        region: "",
+      },
+    },
   })
 }
 
@@ -159,34 +163,34 @@ function buildCompletedStashProfile(basicProfile: StashProfile, response: AxiosR
   return new StashProfile(basicProfile.name, {
     ...basicProfile.config,
     keyManagement: {
-      kind: 'AWS-KMS',
+      kind: "AWS-KMS",
       awsCredentials: {
-        kind: 'Federated',
+        kind: "Federated",
         region: response.data.keyRegion,
-        roleArn: response.data.keyRoleArn
+        roleArn: response.data.keyRoleArn,
       },
       key: {
         arn: response.data.keyId,
         namingKey: response.data.namingKey,
-        region: response.data.keyRegion
-      }
-    }
+        region: response.data.keyRegion,
+      },
+    },
   })
 }
 
 function printHelp(toolbox: Toolbox): void {
   const { print } = toolbox
   // TODO: It would be neat if we could read this summary from the docs directly
-  print.info('Usage: stash login [--workspace <workspace>] [--profile <profile>] [--help]')
-  print.info('')
-  print.info('Login to the given workspace\n')
-  print.info('If this is a first time login, you must provide a workspace option')
-  print.info('')
-  print.info('    stash login --workspace ABCD1234')
-  print.info('')
-  print.info('Otherwise, stash will attempt to perform a fresh login with your default profile')
-  print.info('See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html')
-  print.info('')
+  print.info("Usage: stash login [--workspace <workspace>] [--profile <profile>] [--help]")
+  print.info("")
+  print.info("Login to the given workspace\n")
+  print.info("If this is a first time login, you must provide a workspace option")
+  print.info("")
+  print.info("    stash login --workspace ABCD1234")
+  print.info("")
+  print.info("Otherwise, stash will attempt to perform a fresh login with your default profile")
+  print.info("See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html")
+  print.info("")
 }
 
 export default command

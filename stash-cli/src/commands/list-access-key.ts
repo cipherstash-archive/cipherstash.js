@@ -1,8 +1,8 @@
-import { GluegunCommand } from 'gluegun'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
+import { GluegunCommand } from "gluegun"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
 
-import { Stash, StashInternal, describeError, Ok, errors } from '@cipherstash/stashjs'
-import { makeHttpsClient } from '../https-client'
+import { Stash, StashInternal, describeError, Ok, errors } from "@cipherstash/stashjs"
+import { makeHttpsClient } from "../https-client"
 
 type AccessKey = {
   id: string
@@ -14,17 +14,17 @@ type AccessKey = {
 }
 
 const command: GluegunCommand = {
-  name: 'list-keys',
+  name: "list-keys",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
     const options = parameters.options
 
     function exitWithUsage(): never {
-      print.info('Usage: stash list-keys [--profile <profile>] [--help]')
-      print.info('')
-      print.info('Lists the access keys for a workspace\n')
-      print.info('')
+      print.info("Usage: stash list-keys [--profile <profile>] [--help]")
+      print.info("")
+      print.info("Lists the access keys for a workspace\n")
+      print.info("")
       process.exit(0)
     }
 
@@ -43,7 +43,7 @@ const command: GluegunCommand = {
     const profileName: string | undefined = parameters.options.profile
 
     const profile = await Stash.loadProfile({
-      profileName
+      profileName,
     }).catch(error => {
       print.error(`Unexpected error while loading profile. Reason: "${describeError(error)}"`)
       process.exit(1)
@@ -64,11 +64,11 @@ const command: GluegunCommand = {
       process.exit(1)
     }
 
-    const response = await makeHttpsClient('console.cipherstash.com', 443)
+    const response = await makeHttpsClient("console.cipherstash.com", 443)
       .get(`/api/access-keys/${encodeURIComponent(workspace)}`, {
         headers: {
-          Authorization: `Bearer ${authInfo.value.accessToken}`
-        }
+          Authorization: `Bearer ${authInfo.value.accessToken}`,
+        },
       })
       .catch(error => {
         print.error(
@@ -80,13 +80,13 @@ const command: GluegunCommand = {
       })
 
     const data: AccessKey[] = response.data
-    const tbl = [['Name', 'Key ID', 'Workspace', 'Created At', 'Last Used At']]
+    const tbl = [["Name", "Key ID", "Workspace", "Created At", "Last Used At"]]
 
     Object.values(data).forEach(k => {
       tbl.push([k.keyName, k.keyId, k.workspaceId, k.createdAt, k.lastUsedAt])
     })
-    print.table(tbl, { format: 'lean' })
-  }
+    print.table(tbl, { format: "lean" })
+  },
 }
 
 export default command

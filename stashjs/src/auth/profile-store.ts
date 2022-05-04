@@ -1,18 +1,30 @@
-import * as fs from 'fs'
-import { StashConfiguration } from '../stash-config'
-import * as lockfile from 'lockfile'
-import { StashProfile } from '../stash-profile'
-import { Result, AsyncResult, Err, Ok } from '../result'
-import { OauthAuthenticationInfo } from './oauth-utils'
-import { LoadProfileNamesFailure, SetDefaultProfileFailure, SaveProfileFailure, LoadProfileFailure, DeleteProfileFailure, MissingConfigDir, IOError, NoDefaultProfileSet, MissingProfile, MalformedConfigFile, wrap } from '../errors'
-import { logger } from '../logger';
+import * as fs from "fs"
+import { StashConfiguration } from "../stash-config"
+import * as lockfile from "lockfile"
+import { StashProfile } from "../stash-profile"
+import { Result, AsyncResult, Err, Ok } from "../result"
+import { OauthAuthenticationInfo } from "./oauth-utils"
+import {
+  LoadProfileNamesFailure,
+  SetDefaultProfileFailure,
+  SaveProfileFailure,
+  LoadProfileFailure,
+  DeleteProfileFailure,
+  MissingConfigDir,
+  IOError,
+  NoDefaultProfileSet,
+  MissingProfile,
+  MalformedConfigFile,
+  wrap,
+} from "../errors"
+import { logger } from "../logger"
 
-export type ConfigurationTemplate = Omit<StashConfiguration, 'keyManagement' | 'service' | 'key' > & {
+export type ConfigurationTemplate = Omit<StashConfiguration, "keyManagement" | "service" | "key"> & {
   service: { host: string }
   identityProvider: { kind: "Auth0-DeviceCode" }
   keyManagement: {
     kind: "AWS-KMS"
-    awsCredentials: { kind: "Federated", roleArn: string, region: string }
+    awsCredentials: { kind: "Federated"; roleArn: string; region: string }
   }
 }
 
@@ -21,20 +33,19 @@ export const defaults: ConfigurationTemplate = {
     host: "ap-southeast-2.aws.stashdata.net",
   },
   identityProvider: {
-    kind: 'Auth0-DeviceCode',
-    host: 'auth.cipherstash.com',
-    clientId: 'CtY9DNGongoSvZaAwbb6sw0Hr7Gl7pg7'
+    kind: "Auth0-DeviceCode",
+    host: "auth.cipherstash.com",
+    clientId: "CtY9DNGongoSvZaAwbb6sw0Hr7Gl7pg7",
   },
   keyManagement: {
     kind: "AWS-KMS",
     awsCredentials: {
       kind: "Federated",
       roleArn: "arn:aws:iam::356036487853:role/cs-federated-cmk-access",
-      region: 'ap-southeast-2'
-    }
+      region: "ap-southeast-2",
+    },
   },
 }
-
 
 /**
  * Service interface for reading and editing the CipherStash configuration
@@ -45,7 +56,6 @@ export const defaults: ConfigurationTemplate = {
  * - Sets default configuration for the Free Tier.
  */
 export interface ProfileStore {
-
   /**
    * Lists the IDs of configured profiles.
    */
@@ -70,13 +80,11 @@ export interface ProfileStore {
    * Gets the ID of the configured default profile.
    */
   readonly loadDefaultProfile: () => AsyncResult<StashProfile, LoadProfileFailure>
-
 }
 
-const dir = `${process.env['HOME']}/.cipherstash`
+const dir = `${process.env["HOME"]}/.cipherstash`
 
 class Store implements ProfileStore {
-
   public constructor() {
     fs.mkdirSync(dir, { recursive: true })
   }
@@ -89,8 +97,8 @@ class Store implements ProfileStore {
     try {
       const entries = await fs.promises.readdir(dir)
       const profileNames = entries
-        .filter(e => fs.existsSync([dir, e].join('/')))
-        .filter(e => fs.lstatSync([dir, e].join('/')).isDirectory())
+        .filter(e => fs.existsSync([dir, e].join("/")))
+        .filter(e => fs.lstatSync([dir, e].join("/")).isDirectory())
 
       return Ok(profileNames)
     } catch (error) {
@@ -105,7 +113,10 @@ class Store implements ProfileStore {
 
     try {
       // NOTE: if configuration becomes any more elaborate than a single field then we should read, then merge.
-      await fs.promises.writeFile(this.configFilePath(), stringify({ defaultProfile: sanitiseProfileName(profile.name) }))
+      await fs.promises.writeFile(
+        this.configFilePath(),
+        stringify({ defaultProfile: sanitiseProfileName(profile.name) })
+      )
       return Ok()
     } catch (error) {
       return Err(SetDefaultProfileFailure(IOError(wrap(error))))
@@ -124,7 +135,7 @@ class Store implements ProfileStore {
     try {
       const config = parseConfig(this.configFilePath(), await fs.promises.readFile(this.configFilePath()))
       if (config.ok) {
-        const defaultProfileName = config.value['defaultProfile']
+        const defaultProfileName = config.value["defaultProfile"]
         if (defaultProfileName) {
           return this.loadProfile(defaultProfileName)
         } else {
@@ -188,7 +199,10 @@ class Store implements ProfileStore {
    */
   public async readAccessToken(profileName: string): AsyncResult<OauthAuthenticationInfo, never> {
     try {
-      const tokenInfo = parseConfig(this.accessTokenFilePath(profileName), fs.readFileSync(this.accessTokenFilePath(profileName)))
+      const tokenInfo = parseConfig(
+        this.accessTokenFilePath(profileName),
+        fs.readFileSync(this.accessTokenFilePath(profileName))
+      )
       if (!tokenInfo.ok) {
         return Ok(nullAccessToken)
       }
@@ -199,7 +213,10 @@ class Store implements ProfileStore {
     }
   }
 
-  public async writeAccessToken(profileName: string, tokenInfo: OauthAuthenticationInfo): AsyncResult<void, SaveProfileFailure> {
+  public async writeAccessToken(
+    profileName: string,
+    tokenInfo: OauthAuthenticationInfo
+  ): AsyncResult<void, SaveProfileFailure> {
     try {
       await fs.promises.mkdir(this.configDir(profileName), { recursive: true })
       await fs.promises.writeFile(this.accessTokenFilePath(profileName), stringify(tokenInfo))
@@ -228,7 +245,7 @@ class Store implements ProfileStore {
   }
 
   public configDir(profileName: string): string {
-    return [dir, sanitiseProfileName(profileName)].join('/')
+    return [dir, sanitiseProfileName(profileName)].join("/")
   }
 
   private configFilePath(): string {
@@ -240,20 +257,14 @@ class Store implements ProfileStore {
   }
 
   private accessTokenFilePath(profileName: string): string {
-    return [this.configDir(profileName), "auth-token.json"].join('/')
+    return [this.configDir(profileName), "auth-token.json"].join("/")
   }
 }
 
 function sanitiseProfileName(profileName: string): string {
   // Remove leading and trailing whitespace, replace internal whitespace,
   // periods and path separators with dashes.
-  return profileName
-    .trim()
-    .replace(/\s/, '-')
-    .replace("/", "-")
-    .replace("\\", "-")
-    .replace(".", "-")
-    .toLowerCase()
+  return profileName.trim().replace(/\s/, "-").replace("/", "-").replace("\\", "-").replace(".", "-").toLowerCase()
 }
 
 /**
@@ -264,8 +275,7 @@ function sanitiseProfileName(profileName: string): string {
  * store do not cause corruption.
  */
 class StoreWithReadWriteLock implements ProfileStore {
-
-  private configLockFile: string = [dir, 'config.lock'].join('/')
+  private configLockFile: string = [dir, "config.lock"].join("/")
 
   constructor(private store: Store) {}
 
@@ -303,7 +313,7 @@ class StoreWithReadWriteLock implements ProfileStore {
 
   private async lock<T>(callback: () => Promise<T>): Promise<T> {
     return await new Promise<T>((resolve, reject) => {
-      lockfile.lock(this.configLockFile, { retries: 1000, retryWait: 5 }, async (err) => {
+      lockfile.lock(this.configLockFile, { retries: 1000, retryWait: 5 }, async err => {
         try {
           if (err) {
             reject(err)
@@ -315,7 +325,7 @@ class StoreWithReadWriteLock implements ProfileStore {
         } finally {
           if (!err) {
             await new Promise<void>((resolve, reject) => {
-              lockfile.unlock(this.configLockFile, (err) => {
+              lockfile.unlock(this.configLockFile, err => {
                 if (err) {
                   reject(err)
                   logger.error(`An error occurred when trying to unlock the config store at ${dir}`)
@@ -340,7 +350,7 @@ function stringify(obj: any): string {
 
 function parseConfig(fileName: string, buffer: Buffer): Result<any, MalformedConfigFile> {
   try {
-    return Ok(JSON.parse(buffer.toString('utf-8')))
+    return Ok(JSON.parse(buffer.toString("utf-8")))
   } catch (err: any) {
     return Err(MalformedConfigFile(fileName))
   }

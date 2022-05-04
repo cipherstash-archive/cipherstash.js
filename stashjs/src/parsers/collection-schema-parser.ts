@@ -1,8 +1,8 @@
-import * as D from 'io-ts/Decoder'
-import * as DE from 'io-ts/DecodeError'
-import * as E from 'fp-ts/Either'
-import { pipe } from 'fp-ts/function'
-import { Err, Ok, Result, gather } from '../result'
+import * as D from "io-ts/Decoder"
+import * as DE from "io-ts/DecodeError"
+import * as E from "fp-ts/Either"
+import { pipe } from "fp-ts/function"
+import { Err, Ok, Result, gather } from "../result"
 import {
   DynamicMatchMapping,
   ExactMapping,
@@ -14,23 +14,23 @@ import {
   MatchMappingFieldType,
   RangeMapping,
   RangeMappingFieldType,
-  StashRecord
-} from '../dsl/mappings-dsl'
-import { isRight } from 'fp-ts/lib/Either'
-import { DowncaseFilter, NgramTokenizer, StandardTokenizer, UpcaseFilter } from '../dsl/filters-and-tokenizers-dsl'
-import { RecordTypeDefinition, TermType } from '../record-type-definition'
+  StashRecord,
+} from "../dsl/mappings-dsl"
+import { isRight } from "fp-ts/lib/Either"
+import { DowncaseFilter, NgramTokenizer, StandardTokenizer, UpcaseFilter } from "../dsl/filters-and-tokenizers-dsl"
+import { RecordTypeDefinition, TermType } from "../record-type-definition"
 
 export type ParsedCollectionSchemaDefinition = D.TypeOf<typeof CollectionSchemaDefDecoder>
 
 type Mapping =
- | ExactMapping<any, any>
- | RangeMapping<any, any>
- | MatchMapping<any, any>
- | DynamicMatchMapping
- | FieldDynamicMatchMapping
+  | ExactMapping<any, any>
+  | RangeMapping<any, any>
+  | MatchMapping<any, any>
+  | DynamicMatchMapping
+  | FieldDynamicMatchMapping
 
 export type CollectionSchemaDefinition = {
-  type: { [key: string]: RecordTypeDefinition | TermType },
+  type: { [key: string]: RecordTypeDefinition | TermType }
   indexes: { [key: string]: Mapping }
 }
 
@@ -44,18 +44,18 @@ const decoder = <R extends StashRecord>(): IndexDefinitionDecoder<R> => ({
     } else {
       return D.failure(result.left, "Failed to parse index definitions")
     }
-  }
+  },
 })
 
-const TokenFilterDecoder = D.sum('kind')({
-  downcase: D.struct<DowncaseFilter>({ kind: D.literal('downcase') }),
-  upcase: D.struct<UpcaseFilter>({ kind: D.literal('upcase') }),
-  ngram: D.struct<NgramTokenizer>({ kind: D.literal('ngram'), tokenLength: D.number }),
+const TokenFilterDecoder = D.sum("kind")({
+  downcase: D.struct<DowncaseFilter>({ kind: D.literal("downcase") }),
+  upcase: D.struct<UpcaseFilter>({ kind: D.literal("upcase") }),
+  ngram: D.struct<NgramTokenizer>({ kind: D.literal("ngram"), tokenLength: D.number }),
 })
 
-const TokenizerDecoder = D.sum('kind')({
-  standard: D.struct<StandardTokenizer>({ kind: D.literal('standard') }),
-  ngram: D.struct<NgramTokenizer>({ kind: D.literal('ngram'), tokenLength: D.number }),
+const TokenizerDecoder = D.sum("kind")({
+  standard: D.struct<StandardTokenizer>({ kind: D.literal("standard") }),
+  ngram: D.struct<NgramTokenizer>({ kind: D.literal("ngram"), tokenLength: D.number }),
 })
 
 // NOTE: the types ExactMapping, RangeMapping and MatchMapping take type
@@ -65,39 +65,49 @@ const TokenizerDecoder = D.sum('kind')({
 
 const ExactIndexDecoder = D.struct<Omit<ExactMapping<any, any>, "fieldType">>({
   kind: D.literal("exact"),
-  field: D.string
+  field: D.string,
 })
 
 const RangeIndexDecoder = D.struct<Omit<RangeMapping<any, any>, "fieldType">>({
   kind: D.literal("range"),
-  field: D.string
+  field: D.string,
 })
 
 const MatchIndexDecoder = D.struct<Omit<MatchMapping<any, any>, "fieldType">>({
   kind: D.literal("match"),
   fields: D.array(D.string),
   tokenFilters: D.array(TokenFilterDecoder),
-  tokenizer: TokenizerDecoder
+  tokenizer: TokenizerDecoder,
 })
 
 const DynamicMatchIndexDecoder = D.struct<Omit<DynamicMatchMapping, "fieldType">>({
   kind: D.literal("dynamic-match"),
   tokenFilters: D.array(TokenFilterDecoder),
-  tokenizer: TokenizerDecoder
+  tokenizer: TokenizerDecoder,
 })
 
 const FieldDynamicMatchIndexDecoder = D.struct<Omit<FieldDynamicMatchMapping, "fieldType">>({
   kind: D.literal("field-dynamic-match"),
   tokenFilters: D.array(TokenFilterDecoder),
-  tokenizer: TokenizerDecoder
+  tokenizer: TokenizerDecoder,
 })
 
-const IndexDecoder = D.union(ExactIndexDecoder, RangeIndexDecoder, MatchIndexDecoder, DynamicMatchIndexDecoder, FieldDynamicMatchIndexDecoder)
+const IndexDecoder = D.union(
+  ExactIndexDecoder,
+  RangeIndexDecoder,
+  MatchIndexDecoder,
+  DynamicMatchIndexDecoder,
+  FieldDynamicMatchIndexDecoder
+)
 type Index = D.TypeOf<typeof IndexDecoder>
 
 const IndexesDecoder = D.record(IndexDecoder)
 
-const parseIndexDefinition: <R extends StashRecord>(document: object) => Result<Mappings<R>, string> = <R extends StashRecord>(document: object) => {
+const parseIndexDefinition: <R extends StashRecord>(document: object) => Result<Mappings<R>, string> = <
+  R extends StashRecord
+>(
+  document: object
+) => {
   const parsed = decoder<R>().decode(document)
   if (isRight(parsed)) {
     return Ok(parsed.right)
@@ -107,18 +117,20 @@ const parseIndexDefinition: <R extends StashRecord>(document: object) => Result<
 }
 
 const FieldTypeDecoder = D.union(
-  D.literal('string'),
-  D.literal('float64'),
-  D.literal('uint64'),
-  D.literal('date'),
-  D.literal('boolean'),
+  D.literal("string"),
+  D.literal("float64"),
+  D.literal("uint64"),
+  D.literal("date"),
+  D.literal("boolean")
 )
 
-const TypeDecoder: D.Decoder<unknown, RecordTypeDefinition> = D.lazy('TypeDecoder', () => D.record(D.union(FieldTypeDecoder, TypeDecoder)))
+const TypeDecoder: D.Decoder<unknown, RecordTypeDefinition> = D.lazy("TypeDecoder", () =>
+  D.record(D.union(FieldTypeDecoder, TypeDecoder))
+)
 
 const CollectionSchemaDefDecoder = D.struct({
   type: TypeDecoder,
-  indexes: IndexesDecoder
+  indexes: IndexesDecoder,
 })
 
 const annotateIndexFieldTypes = (parsed: ParsedCollectionSchemaDefinition): CollectionSchemaDefinition => {
@@ -138,7 +150,7 @@ const annotateIndexFieldTypes = (parsed: ParsedCollectionSchemaDefinition): Coll
   }
 }
 
-export const parseCollectionSchemaJSON: (s: string) => Result<CollectionSchemaDefinition, string> = (s) => {
+export const parseCollectionSchemaJSON: (s: string) => Result<CollectionSchemaDefinition, string> = s => {
   const parsedAndTypeChecked = CollectionSchemaDefinitionFromJSON.decode(s)
   if (isRight(parsedAndTypeChecked)) {
     return Ok(annotateIndexFieldTypes(parsedAndTypeChecked.right))
@@ -176,7 +188,7 @@ const CollectionSchemaDefinitionFromJSON: D.Decoder<string, ParsedCollectionSche
       return D.failure(json, `Collection schema is not valid JSON: ${err?.message}`)
     }
   }),
-  D.parse((cs) => {
+  D.parse(cs => {
     const checked = typecheckCollectionSchemaDefinition(cs)
     if (checked.ok) {
       return D.success(checked.value)
@@ -192,7 +204,7 @@ const CollectionSchemaDefinitionFromJSON: D.Decoder<string, ParsedCollectionSche
 //    - be of a type that is compitible with the index type
 const typecheckCollectionSchemaDefinition: (
   def: ParsedCollectionSchemaDefinition
-) => Result<ParsedCollectionSchemaDefinition, string> = (def) => {
+) => Result<ParsedCollectionSchemaDefinition, string> = def => {
   const checked = gather(Object.values(def.indexes).map(index => typecheckIndex(def.type, index)))
   if (checked.ok) {
     return Ok(def)
@@ -201,13 +213,17 @@ const typecheckCollectionSchemaDefinition: (
   }
 }
 
-type TypeName<T> =
-  T extends string ? "string" :
-  T extends number ? "float64" :
-  T extends boolean ? "boolean" :
-  T extends bigint ? "uint64" :
-  T extends Date ? "date" :
-  never
+type TypeName<T> = T extends string
+  ? "string"
+  : T extends number
+  ? "float64"
+  : T extends boolean
+  ? "boolean"
+  : T extends bigint
+  ? "uint64"
+  : T extends Date
+  ? "date"
+  : never
 
 const EXACT_TYPES: Array<TypeName<ExactMappingFieldType>> = ["string", "float64", "uint64", "date", "boolean"]
 const RANGE_TYPES: Array<TypeName<RangeMappingFieldType>> = ["float64", "uint64", "date", "boolean"]
@@ -215,19 +231,29 @@ const MATCH_TYPES: Array<TypeName<MatchMappingFieldType>> = ["string"]
 
 function typecheckIndex(recordType: unknown, index: Index): Result<void | Array<void>, string> {
   switch (index.kind) {
-    case "exact": return fieldExists("exact", recordType, index.field.split("."), EXACT_TYPES)
-    case "range": return fieldExists("range", recordType, index.field.split("."), RANGE_TYPES)
-    case "match": return gather(index.fields.map(field => fieldExists("match", recordType, field.split("."), MATCH_TYPES)))
-    case "dynamic-match": return Ok()
-    case "field-dynamic-match": return Ok()
+    case "exact":
+      return fieldExists("exact", recordType, index.field.split("."), EXACT_TYPES)
+    case "range":
+      return fieldExists("range", recordType, index.field.split("."), RANGE_TYPES)
+    case "match":
+      return gather(index.fields.map(field => fieldExists("match", recordType, field.split("."), MATCH_TYPES)))
+    case "dynamic-match":
+      return Ok()
+    case "field-dynamic-match":
+      return Ok()
   }
 }
 
-function fieldExists(indexType: string, recordType: any, path: Array<string>, expectedTypes: Array<string>): Result<void, string> {
+function fieldExists(
+  indexType: string,
+  recordType: any,
+  path: Array<string>,
+  expectedTypes: Array<string>
+): Result<void, string> {
   let currentType = recordType
   for (let part of path) {
     currentType = currentType[part]
-    if (typeof currentType === 'undefined') {
+    if (typeof currentType === "undefined") {
       return Err(`field ${path} not found in type`)
     }
   }
@@ -235,7 +261,11 @@ function fieldExists(indexType: string, recordType: any, path: Array<string>, ex
   if (expectedTypes.includes(currentType)) {
     return Ok()
   } else {
-    return Err(`index type "${indexType}" works on fields of type "${expectedTypes.join(", ")}" but field "${path}" is of type "${currentType}"`)
+    return Err(
+      `index type "${indexType}" works on fields of type "${expectedTypes.join(
+        ", "
+      )}" but field "${path}" is of type "${currentType}"`
+    )
   }
 }
 
@@ -247,7 +277,7 @@ export const PRIVATE = {
   parseIndexDefinition,
   ExactIndexDecoder,
   MatchIndexDecoder,
-  RangeIndexDecoder
+  RangeIndexDecoder,
 }
 
 //----------------------------------------------------------------------------
@@ -266,20 +296,20 @@ const empty: Array<never> = []
 
 const make = <A>(value: A, forest: ReadonlyArray<Tree<A>> = empty): Tree<A> => ({
   value,
-  forest
+  forest,
 })
 
-const drawTree = (tree: Tree<string>): string => tree.value + drawForest('\n', tree.forest)
+const drawTree = (tree: Tree<string>): string => tree.value + drawForest("\n", tree.forest)
 
 const drawForest = (indentation: string, forest: ReadonlyArray<Tree<string>>): string => {
-  let r = ''
+  let r = ""
   const len = forest.length
   let tree: Tree<string>
   for (let i = 0; i < len; i++) {
     tree = forest[i]!
     const isLast = i === len - 1
-    r += indentation + (isLast ? '└' : '├') + '─ ' + tree.value
-    r += drawForest(indentation + (len > 1 && !isLast ? '│  ' : '   '), tree.forest)
+    r += indentation + (isLast ? "└" : "├") + "─ " + tree.value
+    r += drawForest(indentation + (len > 1 && !isLast ? "│  " : "   "), tree.forest)
   }
   return r
 }
@@ -290,7 +320,7 @@ const toTree: (e: DE.DecodeError<string>) => Tree<string> = DE.fold({
   Index: (index, kind, errors) => make(`${kind} index ${index}`, toForest(errors)),
   Member: (index, errors) => make(`member ${index}`, toForest(errors)),
   Lazy: (id, errors) => make(`lazy type ${id}`, toForest(errors)),
-  Wrap: (error, errors) => make(error, toForest(errors))
+  Wrap: (error, errors) => make(error, toForest(errors)),
 })
 
 const toForest = (e: D.DecodeError): ReadonlyArray<Tree<string>> => {
@@ -299,7 +329,7 @@ const toForest = (e: D.DecodeError): ReadonlyArray<Tree<string>> => {
   const res = []
   while (true) {
     switch (focus._tag) {
-      case 'Of':
+      case "Of":
         res.push(toTree(focus.value))
         const tmp = stack.pop()
         if (tmp === undefined) {
@@ -308,7 +338,7 @@ const toForest = (e: D.DecodeError): ReadonlyArray<Tree<string>> => {
           focus = tmp
         }
         break
-      case 'Concat':
+      case "Concat":
         stack.push(focus.right)
         focus = focus.left
         break
@@ -316,8 +346,8 @@ const toForest = (e: D.DecodeError): ReadonlyArray<Tree<string>> => {
   }
 }
 
-export const draw = (e: D.DecodeError): string => toForest(e).map(drawTree).join('\n')
+export const draw = (e: D.DecodeError): string => toForest(e).map(drawTree).join("\n")
 
 export const stringify: <A>(e: E.Either<D.DecodeError, A>) => string =
   /*#__PURE__*/
-  E.fold(draw, (a) => JSON.stringify(a, null, 2))
+  E.fold(draw, a => JSON.stringify(a, null, 2))

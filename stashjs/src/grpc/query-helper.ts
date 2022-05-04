@@ -1,8 +1,8 @@
-import { V1 } from "@cipherstash/stashjs-grpc";
-import { Aggregate, QueryResult } from "../collection-internal";
-import { CipherSuite } from "../crypto/cipher";
+import { V1 } from "@cipherstash/stashjs-grpc"
+import { Aggregate, QueryResult } from "../collection-internal"
+import { CipherSuite } from "../crypto/cipher"
 import { HasID, StashRecord } from "../dsl/mappings-dsl"
-import { DecryptionFailure } from "../errors";
+import { DecryptionFailure } from "../errors"
 import { AsyncResult, Err, gatherAsync, Ok } from "../result"
 import { durationSeconds } from "../utils"
 
@@ -16,10 +16,12 @@ export async function convertQueryReplyToQueryResult<R extends StashRecord & Has
     return Ok({
       took: durationSeconds(timerStart, process.hrtime.bigint()),
       documents: records.value,
-      aggregates: reply!.aggregates ? reply!.aggregates.map(agg => ({
-        name: agg.name! as Aggregate,
-        value: BigInt(agg.value!.toString())
-      })) : []
+      aggregates: reply!.aggregates
+        ? reply!.aggregates.map(agg => ({
+            name: agg.name! as Aggregate,
+            value: BigInt(agg.value!.toString()),
+          }))
+        : [],
     })
   } else {
     return Err(records.error)

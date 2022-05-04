@@ -5,20 +5,18 @@ import {
   CommitmentPolicy,
   NodeCachingMaterialsManager,
   getLocalCryptographicMaterialsCache,
-} from '@aws-crypto/client-node'
-import { getClient } from '@aws-crypto/client-node'
+} from "@aws-crypto/client-node"
+import { getClient } from "@aws-crypto/client-node"
 import { KMS as KMSv3 } from "@aws-sdk/client-kms"
-import * as crypto from 'crypto'
-import { deserialize, serialize } from '../serializer'
-import { AWSClientConfig } from '../auth/aws-client-config'
-import { AsyncResult, Ok, Err, fromPromise } from '../result'
-import { DecryptionFailure, EncryptionFailure, KMSError  } from '../errors'
+import * as crypto from "crypto"
+import { deserialize, serialize } from "../serializer"
+import { AWSClientConfig } from "../auth/aws-client-config"
+import { AsyncResult, Ok, Err, fromPromise } from "../result"
+import { DecryptionFailure, EncryptionFailure, KMSError } from "../errors"
 
 // TODO: Read https://docs.aws.amazon.com/encryption-sdk/latest/developer-guide/concepts.html#key-commitment
 
-const client = buildClient(
-  CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT
-)
+const client = buildClient(CommitmentPolicy.REQUIRE_ENCRYPT_REQUIRE_DECRYPT)
 
 type ThenArg<T> = T extends PromiseLike<infer U> ? U : never
 // This could be considered a bit hacky. The AWS SDK does not export the
@@ -27,7 +25,7 @@ type ThenArg<T> = T extends PromiseLike<infer U> ? U : never
 //
 // TODO: submit patch to export the EncryptOutput type (or figure out why it's
 // not exported).  Also publish the info on how to work around it (see below)
-export type EncryptOutput = ThenArg<ReturnType<ReturnType<typeof buildClient>['encrypt']>>
+export type EncryptOutput = ThenArg<ReturnType<ReturnType<typeof buildClient>["encrypt"]>>
 
 export const cacheCapacity = 1000
 
@@ -40,7 +38,7 @@ const maxAge = 1000 * 30
  * This value is optional,
  * but you should configure the lowest value possible.
  */
-const maxBytesEncrypted = 100*1000
+const maxBytesEncrypted = 100 * 1000
 
 /* The maximum number of messages that will be encrypted under a single data key.
  * This value is optional,
@@ -55,7 +53,10 @@ export type CipherSuite = {
   decrypt: <T>(ciphertext: Buffer) => AsyncResult<T, DecryptionFailure>
 }
 
-export function makeNodeCachingMaterialsManager(generatorKeyId: string, awsConfig: AWSClientConfig): NodeCachingMaterialsManager {
+export function makeNodeCachingMaterialsManager(
+  generatorKeyId: string,
+  awsConfig: AWSClientConfig
+): NodeCachingMaterialsManager {
   return new NodeCachingMaterialsManager({
     backingMaterials: new KmsKeyringNode({ generatorKeyId, clientProvider: getClient(KMSv2, awsConfig) }),
     cache: getLocalCryptographicMaterialsCache(cacheCapacity),
@@ -69,7 +70,7 @@ export function makeNodeCachingMaterialsManager(generatorKeyId: string, awsConfi
 export function makeCipherSuite(cmm: NodeCachingMaterialsManager): CipherSuite {
   const context = {
     version: "0.1",
-    format: "BSON"
+    format: "BSON",
   }
 
   return {
@@ -77,7 +78,7 @@ export function makeCipherSuite(cmm: NodeCachingMaterialsManager): CipherSuite {
       const buffer = serialize(plaintext)
       const promise = client.encrypt(cmm, buffer, {
         encryptionContext: context,
-        plaintextLength: buffer.byteLength
+        plaintextLength: buffer.byteLength,
       })
       return await fromPromise(promise, EncryptionFailure)
     },
@@ -90,7 +91,7 @@ export function makeCipherSuite(cmm: NodeCachingMaterialsManager): CipherSuite {
       } else {
         return Err(decrypted.error)
       }
-    }
+    },
   }
 }
 
@@ -107,12 +108,12 @@ export function makeCipherSuite(cmm: NodeCachingMaterialsManager): CipherSuite {
 export async function makeRefGenerator(kmsClient: KMSv3, namingKey: string): AsyncResult<MakeRefFn, KMSError> {
   // Do the expensive initialisation here instead of in `makeRef(string)`.  That
   // way it only happens once.
-  const promise = kmsClient.decrypt({ CiphertextBlob: Buffer.from(namingKey, 'base64') })
+  const promise = kmsClient.decrypt({ CiphertextBlob: Buffer.from(namingKey, "base64") })
   const key = await fromPromise(promise, KMSError)
 
   if (key.ok) {
     return Ok(function makeRef(name) {
-      const hmac = crypto.createHmac('sha256', key.value.Plaintext!)
+      const hmac = crypto.createHmac("sha256", key.value.Plaintext!)
       hmac.update(name)
       return hmac.digest()
     })

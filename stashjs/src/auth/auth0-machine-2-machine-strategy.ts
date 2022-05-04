@@ -1,11 +1,11 @@
-import { OauthAuthenticationInfo, stashOauth } from './oauth-utils'
-import { AuthStrategy } from './auth-strategy'
-import { Auth0Machine2Machine, StashConfiguration } from '../stash-config'
-import { AuthenticationFailure } from '../errors'
-import { AsyncResult, Err, Ok } from '../result'
+import { OauthAuthenticationInfo, stashOauth } from "./oauth-utils"
+import { AuthStrategy } from "./auth-strategy"
+import { Auth0Machine2Machine, StashConfiguration } from "../stash-config"
+import { AuthenticationFailure } from "../errors"
+import { AsyncResult, Err, Ok } from "../result"
 
 export type StashProfileAuth0Machine2Machine = {
-  config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0Machine2Machine }
+  config: Omit<StashConfiguration, "identityProvider"> & { identityProvider: Auth0Machine2Machine }
 }
 
 export class Auth0Machine2MachineStrategy implements AuthStrategy<OauthAuthenticationInfo> {
@@ -29,7 +29,7 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy<OauthAuthentic
   }
 
   private needsRefresh(): boolean {
-    return (Date.now() / 1000 - EXPIRY_BUFFER_SECONDS) > this.oauthCreds.expiry
+    return Date.now() / 1000 - EXPIRY_BUFFER_SECONDS > this.oauthCreds.expiry
   }
 
   private async acquireAccessToken(): AsyncResult<void, AuthenticationFailure> {
@@ -47,7 +47,7 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy<OauthAuthentic
       return Err(oauthInfo.error)
     }
   }
- }
+}
 
 /* Refresh tokens before the expiry to avoid API errors due
  * to race conditions. Expiry buffer is in seconds */
