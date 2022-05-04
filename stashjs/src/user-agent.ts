@@ -1,10 +1,8 @@
-import { arch, type } from "os";
-import { doesProjectUseTypeScript } from "./typescript";
+import { arch, type } from "os"
+import { doesProjectUseTypeScript } from "./typescript"
 
-const stashVersion = require(__dirname + "/../package.json").version;
+const stashVersion = require(__dirname + "/../package.json").version
 
 export function getUserAgent(): string {
-  return `stashjs/${stashVersion} (${type()} ${arch()}; ${
-    doesProjectUseTypeScript() ? "typescript" : "javascript"
-  })`;
+  return `stashjs/${stashVersion} (${type()} ${arch()}; ${doesProjectUseTypeScript() ? "typescript" : "javascript"})`
 }

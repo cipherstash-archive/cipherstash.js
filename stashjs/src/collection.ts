@@ -1,14 +1,10 @@
-import { V1 } from "@cipherstash/stashjs-grpc";
-import { CollectionInternal, QueryOptions, QueryResult } from "./collection-internal";
-import { HasID, Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl";
-import { Query, QueryBuilder } from "./dsl/query-dsl";
-import { convertPrivateApiResult } from "./result";
+import { V1 } from "@cipherstash/stashjs-grpc"
+import { CollectionInternal, QueryOptions, QueryResult } from "./collection-internal"
+import { HasID, Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
+import { Query, QueryBuilder } from "./dsl/query-dsl"
+import { convertPrivateApiResult } from "./result"
 
-export class Collection<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  MM extends MappingsMeta<M>
-> {
+export class Collection<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>> {
   constructor(private collection: CollectionInternal<R, M, MM>) {}
 
   /**
@@ -20,7 +16,9 @@ export class Collection<
    * @see Collection.name
    *
    */
-  public get id() { return this.collection.id }
+  public get id() {
+    return this.collection.id
+  }
 
   /**
    * A cryptographically secure identifier for the collection
@@ -28,7 +26,9 @@ export class Collection<
    * This field is generated using your profile's naming key, and the name of the
    * collection and is used when communicating with CipherStash.
    */
-  public get ref() { return this.collection.ref }
+  public get ref() {
+    return this.collection.ref
+  }
 
   /**
    * The name of the collection
@@ -39,12 +39,16 @@ export class Collection<
    * movies.name // 'movies'
    * ```
    */
-  public get name() { return this.collection.name }
+  public get name() {
+    return this.collection.name
+  }
 
   /**
    * The underlying `CollectionSchema` for the collection
    */
-  public get schema() { return this.collection.schema }
+  public get schema() {
+    return this.collection.schema
+  }
 
   /**
    * Retrieve a record by id
@@ -61,7 +65,7 @@ export class Collection<
    * @returns A promise containing the retrieved document if it exists
    *
    */
-  public get(id: string | Buffer): Promise<R & HasID | null> {
+  public get(id: string | Buffer): Promise<(R & HasID) | null> {
     return convertPrivateApiResult(this.collection.get(id))
   }
 

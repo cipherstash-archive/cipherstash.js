@@ -26,7 +26,7 @@ describe("buildRecordAnalyzer", () => {
       exact: { kind: "exact", fieldType: "string", field: "exact" },
       exactOptional: { kind: "exact", fieldType: "string", field: "exactOptional" },
       range: { kind: "range", fieldType: "float64", field: "range" },
-      rangeOptional: {kind: "range", fieldType: "float64", field: "rangeOptional"},
+      rangeOptional: { kind: "range", fieldType: "float64", field: "rangeOptional" },
       match: {
         kind: "match",
         fieldType: "string",
@@ -53,7 +53,7 @@ describe("buildRecordAnalyzer", () => {
     range: 123,
     rangeOptional: 123,
     match: "test",
-    matchOptional: "test"
+    matchOptional: "test",
   }
 
   function without(field: keyof SomeRecord): any {
@@ -62,12 +62,19 @@ describe("buildRecordAnalyzer", () => {
     return obj
   }
 
-  const cases: Array<[keyof SomeRecord]> = [['exact'], ['exactOptional'], ['match'], ['matchOptional'], ['range'], ['rangeOptional']]
+  const cases: Array<[keyof SomeRecord]> = [
+    ["exact"],
+    ["exactOptional"],
+    ["match"],
+    ["matchOptional"],
+    ["range"],
+    ["rangeOptional"],
+  ]
 
   test.each(cases)(
     `successfully analyzes record even when mapped field "%s" is missing in a record instance`,
     (field: keyof SomeRecord) => {
-      expect(analyze(without(field))).toHaveProperty('indexEntries')
+      expect(analyze(without(field))).toHaveProperty("indexEntries")
     }
   )
 })

@@ -5,8 +5,8 @@ import { unreachable } from "./type-utils"
  * result with a value or an error result.
  */
 export type Result<V, E> =
-  | Readonly<{ tag: 'Result.Ok', ok: true, value: V }>
-  | Readonly<{ tag: 'Result.Err', ok: false, error: E }>
+  | Readonly<{ tag: "Result.Ok"; ok: true; value: V }>
+  | Readonly<{ tag: "Result.Err"; ok: false; error: E }>
 
 /**
  * Produces a success result.
@@ -14,17 +14,17 @@ export type Result<V, E> =
  * @param value the value to wrap
  * @returns the success result
  */
-export function Ok<V>(value: V): Result<V, never>;
-export function Ok(): Result<void, never>;
+export function Ok<V>(value: V): Result<V, never>
+export function Ok(): Result<void, never>
 export function Ok<V>(value?: V): Result<typeof value, never> {
-  return { tag: 'Result.Ok', ok: true, value: value }
+  return { tag: "Result.Ok", ok: true, value: value }
 }
 
-export function isOk<V>(result: any): result is { tag: 'Result.Ok', ok: true, value: V } {
+export function isOk<V>(result: any): result is { tag: "Result.Ok"; ok: true; value: V } {
   return result?.ok === true
 }
 
-export function isErr<E>(result: any): result is { tag: 'Result.Err', ok: false, error: E } {
+export function isErr<E>(result: any): result is { tag: "Result.Err"; ok: false; error: E } {
   return result?.ok === false
 }
 
@@ -36,7 +36,7 @@ export function isErr<E>(result: any): result is { tag: 'Result.Err', ok: false,
  * @returns the failure result
  */
 export function Err<E>(error: E): Result<never, E> {
-  return { tag: 'Result.Err', ok: false, error: error }
+  return { tag: "Result.Err", ok: false, error: error }
 }
 
 /**
@@ -52,9 +52,8 @@ export function Err<E>(error: E): Result<never, E> {
  *
  * TODO: upgrade TypeScript then change definition to:
  * type AsyncResult<R, E> = Awaited<Result<R, E>>
-*/
+ */
 export type AsyncResult<V, E> = Promise<Result<V, E>>
-
 
 /**
  * Converts a success result into an asynchronous success result.
@@ -130,17 +129,18 @@ export async function gatherAsync<V, E>(asyncResults: Array<AsyncResult<V, E>>):
 }
 
 export function gatherTuple2<V1, E1, V2, E2>(results: [Result<V1, E1>, Result<V2, E2>]): Result<[V1, V2], E1 | E2> {
-  return (gatherTupleImpl(results) as any) as Result<[V1, V2], E1 | E2>
+  return gatherTupleImpl(results) as any as Result<[V1, V2], E1 | E2>
 }
 
-export function gatherTuple3<V1, E1, V2, E2, V3, E3>(results: [Result<V1, E1>, Result<V2, E2>, Result<V3, E3>]): Result<[V1, V2, V3], E1 | E2 | E3> {
+export function gatherTuple3<V1, E1, V2, E2, V3, E3>(
+  results: [Result<V1, E1>, Result<V2, E2>, Result<V3, E3>]
+): Result<[V1, V2, V3], E1 | E2 | E3> {
   return gatherTupleImpl(results) as any
 }
 
 function gatherTupleImpl(results: Array<Result<any, any>>): Result<Array<any>, any> {
   return results.reduce<Result<Array<any>, any>>(concat, Ok<Array<any>>([]))
 }
-
 
 /**
  * This is the primitive from which to build the 3 and 4 argument versions of sequence.
@@ -199,7 +199,7 @@ export function sequence<V1, V2, V3, E1, E2>(
 export function sequence<V1, V2, V3, V4, E1, E2, E3>(
   fn1: (value: V1) => AsyncResult<V2, E1>,
   fn2: (value: V2) => AsyncResult<V3, E2>,
-  fn3: (value: V3) => AsyncResult<V4, E3>,
+  fn3: (value: V3) => AsyncResult<V4, E3>
 ): (value: V1) => AsyncResult<V4, E1 | E2 | E3>
 /**
  * @see {@link sequence<V1, V2, V3, V4, E1, E2, E3>}
@@ -216,7 +216,7 @@ export function sequence<V1, V2, V3, V4, V5, E1, E2, E3, E4>(
   fn1: (value: V1) => AsyncResult<V2, E1>,
   fn2: (value: V2) => AsyncResult<V3, E2>,
   fn3: (value: V3) => AsyncResult<V4, E3>,
-  fn4: (value: V4) => AsyncResult<V5, E4>,
+  fn4: (value: V4) => AsyncResult<V5, E4>
 ): (value: V1) => AsyncResult<V5, E1 | E2 | E3 | E4>
 /**
  * Implementation.
@@ -227,13 +227,17 @@ export function sequence<V1, V2, V3, V4, V5, E1, E2, E3, E4>(
   fn1: (value: V1) => AsyncResult<V2, E1>,
   fn2: (value: V2) => AsyncResult<V3, E2>,
   fn3?: (value: V3) => AsyncResult<V4, E3>,
-  fn4?: (value: V4) => AsyncResult<V5, E4>,
+  fn4?: (value: V4) => AsyncResult<V5, E4>
 ): (value: V1) => AsyncResult<unknown, unknown> {
   switch (arguments.length) {
-    case 2: return sequence2(fn1, fn2)
-    case 3: return sequence2(sequence2(fn1, fn2), fn3!)
-    case 4: return sequence2(sequence2(sequence2(fn1, fn2), fn3!), fn4!)
-    default: return unreachable("Too many arguments to function `sequence`")
+    case 2:
+      return sequence2(fn1, fn2)
+    case 3:
+      return sequence2(sequence2(fn1, fn2), fn3!)
+    case 4:
+      return sequence2(sequence2(sequence2(fn1, fn2), fn3!), fn4!)
+    default:
+      return unreachable("Too many arguments to function `sequence`")
   }
 }
 
@@ -331,7 +335,7 @@ export async function fromPromise<V, E>(
 ): AsyncResult<V, E> {
   try {
     return Ok(await promise)
-  } catch(err: any) {
+  } catch (err: any) {
     return Err(errorConstructor(err))
   }
 }
@@ -343,7 +347,7 @@ export function fromPromiseFn1<V, E, T>(
   return async (arg: T) => {
     try {
       return Ok(await fn(arg))
-    } catch(err: any) {
+    } catch (err: any) {
       return Err(errorConstructor(err))
     }
   }
@@ -356,7 +360,7 @@ export function fromPromiseFn2<V, E, T1, T2>(
   return async (arg1: T1, arg2: T2) => {
     try {
       return Ok(await fn(arg1, arg2))
-    } catch(err: any) {
+    } catch (err: any) {
       return Err(errorConstructor(err))
     }
   }

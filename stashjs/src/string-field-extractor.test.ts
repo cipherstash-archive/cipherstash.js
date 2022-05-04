@@ -5,9 +5,9 @@ describe("string-field-extractor", () => {
     a: 123,
     b: {
       c: "hello",
-      d: true
+      d: true,
     },
-    e: "world"
+    e: "world",
   }
 
   test("extractStringFields works", () => {
@@ -15,6 +15,9 @@ describe("string-field-extractor", () => {
   })
 
   test("extractStringFieldsWithPath works", () => {
-    expect(extractStringFieldsWithPath(obj).sort()).toStrictEqual([["b.c", "hello"], ["e", "world"]])
+    expect(extractStringFieldsWithPath(obj).sort()).toStrictEqual([
+      ["b.c", "hello"],
+      ["e", "world"],
+    ])
   })
 })
