@@ -1,23 +1,23 @@
-import { GluegunCommand } from 'gluegun'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
+import { GluegunCommand } from "gluegun"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
 
-import { profileStore, Stash, describeError } from '@cipherstash/stashjs'
+import { profileStore, Stash, describeError } from "@cipherstash/stashjs"
 
 const command: GluegunCommand = {
-  name: 'logout',
-  description: 'Remove cached authentication token',
-  alias: 'lo',
+  name: "logout",
+  description: "Remove cached authentication token",
+  alias: "lo",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
     const options = parameters.options
 
     if (options.help) {
-      print.info('Usage: stash logout [--profile <profile>] [--help]')
-      print.info('')
-      print.info('Remove cached authentication token')
-      print.info('See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html')
-      print.info('')
+      print.info("Usage: stash logout [--profile <profile>] [--help]")
+      print.info("")
+      print.info("Remove cached authentication token")
+      print.info("See also https://docs.cipherstash.com/reference/stash-cli/stash-login.html")
+      print.info("")
       process.exit(0)
     }
 
@@ -35,7 +35,7 @@ const command: GluegunCommand = {
       print.error(`Failed to delete cached authentication token for profile ${profile.name}`)
       print.error(describeError(deleted.error))
     }
-  }
+  },
 }
 
 export default command

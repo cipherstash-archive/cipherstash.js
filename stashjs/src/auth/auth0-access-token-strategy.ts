@@ -1,11 +1,11 @@
-import { AuthStrategy } from "./auth-strategy";
-import { OauthAuthenticationInfo } from './oauth-utils';
-import { Auth0AccessToken, StashConfiguration } from "../stash-config";
-import { AuthenticationFailure } from "../errors";
-import { AsyncResult, Ok } from "../result";
+import { AuthStrategy } from "./auth-strategy"
+import { OauthAuthenticationInfo } from "./oauth-utils"
+import { Auth0AccessToken, StashConfiguration } from "../stash-config"
+import { AuthenticationFailure } from "../errors"
+import { AsyncResult, Ok } from "../result"
 
 export type StashProfileAuth0AccessToken = {
-  config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0AccessToken }
+  config: Omit<StashConfiguration, "identityProvider"> & { identityProvider: Auth0AccessToken }
 }
 
 export class Auth0AccessTokenStrategy implements AuthStrategy<OauthAuthenticationInfo> {
@@ -19,7 +19,7 @@ export class Auth0AccessTokenStrategy implements AuthStrategy<OauthAuthenticatio
     return Ok({
       accessToken: this.profile.config.identityProvider.accessToken,
       refreshToken: "",
-      expiry: 2**64-1
+      expiry: 2 ** 64 - 1,
     })
   }
 }

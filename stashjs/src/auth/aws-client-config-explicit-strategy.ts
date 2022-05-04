@@ -1,8 +1,8 @@
-import { AuthStrategy } from "./auth-strategy";
-import { ExplicitAwsCredentialsSource } from '../stash-config';
-import { AuthenticationFailure } from "../errors";
-import { AsyncResult, Ok } from "../result";
-import { AWSClientConfig } from './aws-client-config';
+import { AuthStrategy } from "./auth-strategy"
+import { ExplicitAwsCredentialsSource } from "../stash-config"
+import { AuthenticationFailure } from "../errors"
+import { AsyncResult, Ok } from "../result"
+import { AWSClientConfig } from "./aws-client-config"
 
 export class AWSClientConfigExplicitStrategy implements AuthStrategy<AWSClientConfig> {
   constructor(private credSource: ExplicitAwsCredentialsSource) {}
@@ -16,9 +16,9 @@ export class AWSClientConfigExplicitStrategy implements AuthStrategy<AWSClientCo
       credentials: {
         accessKeyId: this.credSource.accessKeyId,
         secretAccessKey: this.credSource.secretAccessKey,
-        sessionToken: this.credSource.sessionToken
+        sessionToken: this.credSource.sessionToken,
       },
-      region: this.credSource.region
+      region: this.credSource.region,
     })
   }
 }
