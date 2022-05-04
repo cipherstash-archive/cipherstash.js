@@ -17,7 +17,6 @@ import { EventEmitter } from "events"
  * their own pace.
  */
 export class AsyncQueue<T> implements AsyncIterator<T, T | undefined> {
-
   private items: Array<Item<T>> = []
   private events: EventEmitter = new EventEmitter()
 
@@ -33,11 +32,11 @@ export class AsyncQueue<T> implements AsyncIterator<T, T | undefined> {
         this.items = this.items.slice(1)
         const done = (frontItem as any).done && true
         if (done) {
-          this.events.emit('drained')
+          this.events.emit("drained")
         }
         return {
           done,
-          value: (frontItem as any).item
+          value: (frontItem as any).item,
         }
       } else {
         await this.waitForMore()
@@ -57,7 +56,7 @@ export class AsyncQueue<T> implements AsyncIterator<T, T | undefined> {
     }
 
     this.items.push({ item })
-    this.events.emit('push')
+    this.events.emit("push")
   }
 
   public end(): void {
@@ -66,16 +65,16 @@ export class AsyncQueue<T> implements AsyncIterator<T, T | undefined> {
     }
 
     this.items.push({ done: true })
-    this.events.emit('push')
+    this.events.emit("push")
   }
 
-  public once(event: 'drained', callback: () => void): void {
+  public once(event: "drained", callback: () => void): void {
     this.events.once(event, callback)
   }
 
   private waitForMore(): Promise<void> {
-    return new Promise((resolve) => {
-      this.events.once('push', resolve)
+    return new Promise(resolve => {
+      this.events.once("push", resolve)
     })
   }
   private isDone(): boolean {
@@ -83,6 +82,4 @@ export class AsyncQueue<T> implements AsyncIterator<T, T | undefined> {
   }
 }
 
-type Item<T> =
-  | { item: T }
-  | { done: true }
+type Item<T> = { item: T } | { done: true }

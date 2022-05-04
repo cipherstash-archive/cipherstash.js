@@ -1,4 +1,4 @@
-import { isPlainObject } from 'is-plain-object'
+import { isPlainObject } from "is-plain-object"
 
 export function extractStringFields(obj: object): Array<string> {
   return Object.values(obj).flatMap(v => {
@@ -13,11 +13,11 @@ export function extractStringFields(obj: object): Array<string> {
 }
 
 export function extractStringFieldsWithPath(obj: object): Array<[string, string]> {
-  return extractStringFieldsWithPathInternal(obj).map(({field, value}) => [field, value])
+  return extractStringFieldsWithPathInternal(obj).map(({ field, value }) => [field, value])
 }
 
 type FieldValue = {
-  field: string,
+  field: string
   value: string
 }
 
@@ -25,8 +25,8 @@ function extractStringFieldsWithPathInternal(obj: object, path: Array<string> = 
   return Object.entries(obj).flatMap<FieldValue>(([f, v]) => {
     if (typeof v == "string") {
       return {
-        field: path.concat(f).join('.'),
-        value: v
+        field: path.concat(f).join("."),
+        value: v,
       }
     } else if (isPlainObject(v)) {
       return extractStringFieldsWithPathInternal(v, path.concat(f))

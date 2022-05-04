@@ -1,19 +1,17 @@
-import { normalizeId, maybeGenerateId, describeError } from "./utils";
-import { ErrorTag, StashJSError } from "./errors";
+import { normalizeId, maybeGenerateId, describeError } from "./utils"
+import { ErrorTag, StashJSError } from "./errors"
 
 describe("utils", () => {
   it(`idToBuffer and maybeGenerateId are mutually consistent`, () => {
-    const uuidString = "aa85cde5-0bde-47a8-b1a6-b74bffbfde0d";
-    const obj = { id: uuidString, foo: 123 };
-    const objWithId = maybeGenerateId(obj);
-    const otherId = normalizeId(uuidString);
-    expect(objWithId.id).toEqual(otherId);
-  });
+    const uuidString = "aa85cde5-0bde-47a8-b1a6-b74bffbfde0d"
+    const obj = { id: uuidString, foo: 123 }
+    const objWithId = maybeGenerateId(obj)
+    const otherId = normalizeId(uuidString)
+    expect(objWithId.id).toEqual(otherId)
+  })
 
-  function createError(
-    error: StashJSError<ErrorTag, unknown>
-  ): StashJSError<ErrorTag, unknown> {
-    return error;
+  function createError(error: StashJSError<ErrorTag, unknown>): StashJSError<ErrorTag, unknown> {
+    return error
   }
 
   describe("describeError", () => {
@@ -31,7 +29,7 @@ describe("utils", () => {
             message: "An error happened",
           })
         )
-      ).toEqual("An error happened (testFunction in Test:1)");
+      ).toEqual("An error happened (testFunction in Test:1)")
 
       expect(
         describeError(
@@ -61,25 +59,23 @@ describe("utils", () => {
           "[IOError] Error occurred reading or writing to the filesystem or the network (testFunction in Test:1) (An error happened)",
           "  └ Another error happened (testFunction in Test:1)",
         ].join("\n")
-      );
-    });
+      )
+    })
 
     it("should describe a normal error", () => {
       function createError() {
-        return new Error("Uh oh!");
+        return new Error("Uh oh!")
       }
 
-      expect(describeError(createError())).toContain(
-        "Error: Uh oh!\n    at createError"
-      );
-    });
+      expect(describeError(createError())).toContain("Error: Uh oh!\n    at createError")
+    })
 
     it("should describe a normal object", () => {
-      expect(describeError({ name: "test" })).toEqual('Object {"name":"test"}');
-    });
+      expect(describeError({ name: "test" })).toEqual('Object {"name":"test"}')
+    })
 
     it("should describe a class", () => {
-      expect(describeError(new Promise(() => {}))).toEqual("Promise {}");
-    });
-  });
-});
+      expect(describeError(new Promise(() => {}))).toEqual("Promise {}")
+    })
+  })
+})
