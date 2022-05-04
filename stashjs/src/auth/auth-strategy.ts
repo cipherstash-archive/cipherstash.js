@@ -1,5 +1,5 @@
-import { AsyncResult, Err, Ok } from '../result'
-import { AuthenticationFailure } from '../errors'
+import { AsyncResult, Err, Ok } from "../result"
+import { AuthenticationFailure } from "../errors"
 
 export type MemoBuilder<A, R> = (input: A) => AsyncResult<R, AuthenticationFailure>
 
@@ -62,7 +62,7 @@ export function withFreshCredentials<A, R>(builder: MemoBuilder<A, R>, authStrat
           return Err(authDetails.error)
         }
       }
-    }
+    },
   }
 }
 

@@ -1,6 +1,6 @@
-import { GluegunCommand } from 'gluegun'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
-import * as fs from 'fs'
+import { GluegunCommand } from "gluegun"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
+import * as fs from "fs"
 
 import {
   Stash,
@@ -11,12 +11,12 @@ import {
   StashRecord,
   Result,
   Err,
-  Ok
-} from '@cipherstash/stashjs'
-import { parseCollectionSchemaJSON } from '@cipherstash/stashjs/dist/parsers/collection-schema-parser'
+  Ok,
+} from "@cipherstash/stashjs"
+import { parseCollectionSchemaJSON } from "@cipherstash/stashjs/dist/parsers/collection-schema-parser"
 
 function formatCollectionName(name: string): string {
-  if (name.includes(' ')) {
+  if (name.includes(" ")) {
     return `"${name}"`
   } else {
     return name
@@ -24,7 +24,7 @@ function formatCollectionName(name: string): string {
 }
 
 const command: GluegunCommand = {
-  name: 'create-collection',
+  name: "create-collection",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
@@ -32,12 +32,12 @@ const command: GluegunCommand = {
 
     function exitWithUsage(): never {
       print.info(
-        'Usage: stash create-collection <collection-name> [--profile <profile>] [--schema <schema>] [--no-schema] [--help]'
+        "Usage: stash create-collection <collection-name> [--profile <profile>] [--schema <schema>] [--no-schema] [--help]"
       )
-      print.info('')
-      print.info('Creates a collection in the workspace of the profile\n')
-      print.info('See also https://docs.cipherstash.com/reference/stash-cli/stash-create-collection.html')
-      print.info('')
+      print.info("")
+      print.info("Creates a collection in the workspace of the profile\n")
+      print.info("See also https://docs.cipherstash.com/reference/stash-cli/stash-create-collection.html")
+      print.info("")
       process.exit(0)
     }
 
@@ -53,7 +53,7 @@ const command: GluegunCommand = {
 
     if (unexpectedParameters.length > 0) {
       print.error(`Recieved more than one value for collection name. Did you mean to use quotes?`)
-      print.error(`Example: stash create-collection "${collectionName} ${unexpectedParameters.join(' ')}"`)
+      print.error(`Example: stash create-collection "${collectionName} ${unexpectedParameters.join(" ")}"`)
       process.exit(1)
     }
 
@@ -66,7 +66,7 @@ const command: GluegunCommand = {
     const profileName: string | undefined = parameters.options.profile
 
     const profile = await Stash.loadProfile({
-      profileName
+      profileName,
     }).catch(error => {
       print.error(`Unexpected error while loading profile. Reason: "${describeError(error)}"`)
       process.exit(1)
@@ -88,7 +88,7 @@ const command: GluegunCommand = {
       schema = buildCollectionSchema(collectionName, options.schema)
     } else {
       print.error(`Expected either --schema or --no-schema flags.`)
-      print.error('')
+      print.error("")
       print.error(`If you meant to create a collection without a schema, try passing the --no-schema flag.`)
       print.error(`Example: stash create-collection ${formatCollectionName(collectionName)} --no-schema`)
       process.exit(1)
@@ -107,7 +107,7 @@ const command: GluegunCommand = {
       print.error(`Failed to load schema from ${options.schema}: ${schema.error}`)
       process.exit(1)
     }
-  }
+  },
 }
 
 function buildCollectionSchema(
@@ -117,13 +117,13 @@ function buildCollectionSchema(
   if (fs.existsSync(schemaFile)) {
     let content: string
     try {
-      content = fs.readFileSync(schemaFile, { encoding: 'utf8' })
+      content = fs.readFileSync(schemaFile, { encoding: "utf8" })
     } catch (err) {
       return Err(
         `Failed to read schema from file ${schemaFile}. Please check the file exists and you have permissions to read it.`
       )
     }
-    let schema = parseCollectionSchemaJSON(content)
+    const schema = parseCollectionSchemaJSON(content)
     if (schema.ok) {
       return Ok(CollectionSchema.define(collectionName).fromCollectionSchemaDefinition(schema.value))
     } else {

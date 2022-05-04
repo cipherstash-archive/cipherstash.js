@@ -1,21 +1,21 @@
-import { GluegunCommand } from 'gluegun'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
+import { GluegunCommand } from "gluegun"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
 
-import { Stash, StashInternal, describeError, Ok, errors } from '@cipherstash/stashjs'
-import { makeHttpsClient } from '../https-client'
+import { Stash, StashInternal, describeError, Ok, errors } from "@cipherstash/stashjs"
+import { makeHttpsClient } from "../https-client"
 
 const command: GluegunCommand = {
-  name: 'revoke-key',
+  name: "revoke-key",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
     const options = parameters.options
 
     function exitWithUsage(): never {
-      print.info('Usage: stash revoke-key --name <name of access key> [--profile <profile>] [--help]')
-      print.info('')
-      print.info('Revokes the access key from the workspace\n')
-      print.info('')
+      print.info("Usage: stash revoke-key --name <name of access key> [--profile <profile>] [--help]")
+      print.info("")
+      print.info("Revokes the access key from the workspace\n")
+      print.info("")
       process.exit(0)
     }
 
@@ -39,7 +39,7 @@ const command: GluegunCommand = {
     const profileName: string | undefined = parameters.options.profile
 
     const profile = await Stash.loadProfile({
-      profileName
+      profileName,
     }).catch(error => {
       print.error(`Unexpected error while loading profile. Reason: "${describeError(error)}"`)
       process.exit(1)
@@ -60,12 +60,12 @@ const command: GluegunCommand = {
       process.exit(1)
     }
 
-    await makeHttpsClient('console.cipherstash.com', 443)
-      .delete('/api/access-key', {
+    await makeHttpsClient("console.cipherstash.com", 443)
+      .delete("/api/access-key", {
         headers: {
-          Authorization: `Bearer ${authInfo.value.accessToken}`
+          Authorization: `Bearer ${authInfo.value.accessToken}`,
         },
-        data: { workspaceId, keyName }
+        data: { workspaceId, keyName },
       })
       .catch(error => {
         print.error(
@@ -76,12 +76,12 @@ const command: GluegunCommand = {
         process.exit(1)
       })
 
-    print.info('')
-    print.info('')
+    print.info("")
+    print.info("")
     print.info(`Access Key ${keyName} for workspace ${workspaceId} revoked.`)
-    print.info('')
-    print.info('')
-  }
+    print.info("")
+    print.info("")
+  },
 }
 
 export default command

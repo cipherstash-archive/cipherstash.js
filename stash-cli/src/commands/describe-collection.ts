@@ -1,4 +1,4 @@
-import { GluegunCommand } from 'gluegun'
+import { GluegunCommand } from "gluegun"
 import {
   MappingOn,
   Stash,
@@ -9,11 +9,11 @@ import {
   isFieldDynamicMatchMapping,
   isMatchMapping,
   isRangeMapping,
-} from '@cipherstash/stashjs'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
+} from "@cipherstash/stashjs"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
 
 const command: GluegunCommand = {
-  name: 'describe-collection',
+  name: "describe-collection",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
@@ -29,47 +29,47 @@ const command: GluegunCommand = {
       const stash = await Stash.connect(profile)
       const collectionName = parameters.first
       if (collectionName === undefined) {
-        print.error('No collection name specified.')
+        print.error("No collection name specified.")
         process.exit(1)
       }
 
       const collection = await stash.loadCollection(collectionName)
-      let mappings = {}
+      const mappings = {}
 
       Object.entries(collection.schema.mappings).forEach(([indexName, mapping]) => {
         mappings[indexName] = {
           indexType: mapping.kind,
           fields: describeFields(mapping),
-          operators: describeOperators(mapping)
+          operators: describeOperators(mapping),
         }
       })
 
       if (parameters.options.json) {
         print.info(JSON.stringify(mappings, null, 2))
       } else {
-        let tbl = [['Index Name', 'Index Type', 'Field(s)', 'Query Operators']]
+        const tbl = [["Index Name", "Index Type", "Field(s)", "Query Operators"]]
 
         for (const k in mappings) {
           tbl.push([k, mappings[k].indexType, mappings[k].fields, mappings[k].operators])
         }
 
-        print.table(tbl, { format: 'lean' })
+        print.table(tbl, { format: "lean" })
       }
     } catch (error) {
       print.error(`Could not list collections. Reason: "${describeError(error)}"`)
     }
-  }
+  },
 }
 
 export default command
 
 function describeFields(mapping: MappingOn<StashRecord>): string {
   if (isDynamicMatchMapping(mapping) || isFieldDynamicMatchMapping(mapping)) {
-    return 'all string fields'
+    return "all string fields"
   }
 
   if (isMatchMapping(mapping)) {
-    return mapping.fields.join(', ')
+    return mapping.fields.join(", ")
   }
 
   if (isRangeMapping(mapping) || isExactMapping(mapping)) {
@@ -81,15 +81,15 @@ function describeFields(mapping: MappingOn<StashRecord>): string {
 
 function describeOperators(mapping: MappingOn<StashRecord>): string {
   if (isMatchMapping(mapping) || isDynamicMatchMapping(mapping) || isFieldDynamicMatchMapping(mapping)) {
-    return '=~'
+    return "=~"
   }
 
   if (isRangeMapping(mapping)) {
-    return '<, <=, =, >= >'
+    return "<, <=, =, >= >"
   }
 
   if (isExactMapping(mapping)) {
-    return '='
+    return "="
   }
 
   throw new Error(`Unreachable: unknown index type ${JSON.stringify(mapping)}`)

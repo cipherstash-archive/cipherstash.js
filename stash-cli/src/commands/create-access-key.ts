@@ -1,21 +1,21 @@
-import { GluegunCommand } from 'gluegun'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
+import { GluegunCommand } from "gluegun"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
 
-import { Stash, StashInternal, describeError, Ok, errors } from '@cipherstash/stashjs'
-import { makeHttpsClient } from '../https-client'
+import { Stash, StashInternal, describeError, Ok, errors } from "@cipherstash/stashjs"
+import { makeHttpsClient } from "../https-client"
 
 const command: GluegunCommand = {
-  name: 'create-key',
+  name: "create-key",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
     const options = parameters.options
 
     function exitWithUsage(): never {
-      print.info('Usage: stash create-key --name <name for access key> [--profile <profile>] [--help]')
-      print.info('')
-      print.info('Creates an access key for the workspace\n')
-      print.info('')
+      print.info("Usage: stash create-key --name <name for access key> [--profile <profile>] [--help]")
+      print.info("")
+      print.info("Creates an access key for the workspace\n")
+      print.info("")
       process.exit(0)
     }
 
@@ -36,13 +36,13 @@ const command: GluegunCommand = {
     }
 
     print.info(`Generating access key ${keyName}.........`)
-    print.info('')
-    print.info('')
+    print.info("")
+    print.info("")
 
     const profileName: string | undefined = parameters.options.profile
 
     const profile = await Stash.loadProfile({
-      profileName
+      profileName,
     }).catch(error => {
       print.error(`Unexpected error while loading profile. Reason: "${describeError(error)}"`)
       process.exit(1)
@@ -63,14 +63,14 @@ const command: GluegunCommand = {
       process.exit(1)
     }
 
-    const response = await makeHttpsClient('console.cipherstash.com', 443)
+    const response = await makeHttpsClient("console.cipherstash.com", 443)
       .post(
-        '/api/access-key',
+        "/api/access-key",
         { workspaceId, keyName },
         {
           headers: {
-            Authorization: `Bearer ${authInfo.value.accessToken}`
-          }
+            Authorization: `Bearer ${authInfo.value.accessToken}`,
+          },
         }
       )
       .catch(error => {
@@ -83,21 +83,21 @@ const command: GluegunCommand = {
       })
     const accessKey = response.data
 
-    print.info('Access Key created!')
-    print.info('')
-    print.info('')
+    print.info("Access Key created!")
+    print.info("")
+    print.info("")
     print.info(`The key ${keyName} for workspace ${workspaceId} is:`)
-    print.info('')
+    print.info("")
     print.info(`CS_IDP_CLIENT_SECRET=${accessKey}`)
-    print.info('')
+    print.info("")
     print.info(
-      'For more details on how to use this key visit https://docs.cipherstash.com/reference/client-configuration.html '
+      "For more details on how to use this key visit https://docs.cipherstash.com/reference/client-configuration.html "
     )
     // TODO: Update this link when docs are updated
-    print.info('')
-    print.info('')
-    print.info('')
-  }
+    print.info("")
+    print.info("")
+    print.info("")
+  },
 }
 
 export default command

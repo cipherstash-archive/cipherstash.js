@@ -1,24 +1,25 @@
 import { AuthStrategy } from "./auth-strategy"
-import { stashOauth, OauthAuthenticationInfo } from './oauth-utils'
+import { stashOauth, OauthAuthenticationInfo } from "./oauth-utils"
 import { Auth0DeviceCode, StashConfiguration } from "../stash-config"
-import * as open from 'open'
+import * as open from "open"
 import { AsyncResult, Ok, Err } from "../result"
 import { AuthenticationFailure } from "../errors"
-import { profileStore } from './profile-store'
-import { validateAccessToken } from './access-token';
+import { profileStore } from "./profile-store"
+import { validateAccessToken } from "./access-token"
 
-const SCOPES = "collection.create collection.delete collection.info collection.list document.put document.delete document.get document.query"
+const SCOPES =
+  "collection.create collection.delete collection.info collection.list document.put document.delete document.get document.query"
 
 export type StashProfileAuth0DeviceCode = {
-  name: string,
-  config: Omit<StashConfiguration, 'identityProvider'> & { identityProvider: Auth0DeviceCode }
+  name: string
+  config: Omit<StashConfiguration, "identityProvider"> & { identityProvider: Auth0DeviceCode }
 }
 
 export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthenticationInfo> {
   private oauthCreds: OauthAuthenticationInfo = { accessToken: "", refreshToken: "", expiry: 0 }
   private cacheRead: boolean = false
 
-  constructor(private profile: StashProfileAuth0DeviceCode) { }
+  constructor(private profile: StashProfileAuth0DeviceCode) {}
 
   public stillFresh(): boolean {
     return !this.needsRefresh()
@@ -40,7 +41,7 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
   }
 
   private needsRefresh(): boolean {
-    return (Date.now() / 1000 - EXPIRY_BUFFER_SECONDS) > this.oauthCreds.expiry
+    return Date.now() / 1000 - EXPIRY_BUFFER_SECONDS > this.oauthCreds.expiry
   }
 
   private async readCachedToken() {
@@ -60,11 +61,9 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
       await profileStore.writeAccessToken(this.profile.name, oauthInfo.value)
       return Ok()
     } else {
-      const { workspace } = this.profile.config.service;
+      const { workspace } = this.profile.config.service
 
-      const scope = !!workspace ?
-        `offline_access ${SCOPES} ws:${workspace}` :
-        `offline_access ${SCOPES}`
+      const scope = !!workspace ? `offline_access ${SCOPES} ws:${workspace}` : `offline_access ${SCOPES}`
 
       const pollingInfo = await stashOauth.loginViaDeviceCodeAuthentication(
         this.profile.config.identityProvider.host,
@@ -74,13 +73,15 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
       )
 
       if (pollingInfo.ok) {
-        console.info(`Visit ${pollingInfo.value.verificationUri} to complete authentication by following the below steps:`)
+        console.info(
+          `Visit ${pollingInfo.value.verificationUri} to complete authentication by following the below steps:`
+        )
         console.info("")
         console.info(`1. Verify that this code matches the code in your browser`)
         console.info(generateUserCodeDisplay(pollingInfo.value.userCode))
         console.info(`2. If the codes match, click on the confirm button in the browser`)
         console.info("")
-        console.info('Waiting for authentication...')
+        console.info("Waiting for authentication...")
 
         if (!isInteractive()) {
           open.default(pollingInfo.value.verificationUri)
@@ -94,19 +95,15 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
         )
 
         if (authInfo.ok) {
-          const oauthCreds = authInfo.value;
+          const oauthCreds = authInfo.value
 
-          const validationResult = validateAccessToken(
-            oauthCreds.accessToken,
-            scope,
-            workspace
-          );
+          const validationResult = validateAccessToken(oauthCreds.accessToken, scope, workspace)
 
           if (!validationResult.ok) {
             return Err(AuthenticationFailure(validationResult.error))
           }
 
-          this.oauthCreds = oauthCreds;
+          this.oauthCreds = oauthCreds
 
           await profileStore.writeAccessToken(this.profile.name, authInfo.value)
 
@@ -124,16 +121,18 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
 const EXPIRY_BUFFER_SECONDS = 20
 
 function isInteractive(): boolean {
-  return (
-    process.env['SSH_CLIENT'] !== undefined ||
-    process.env['SSH_TTY'] !== undefined
-  )
+  return process.env["SSH_CLIENT"] !== undefined || process.env["SSH_TTY"] !== undefined
 }
 
 function generateUserCodeDisplay(userCode: string): string {
-
-  const outerLine: string = userCode.split("").map(_ => "#").join("")
-  const whiteSpace: string = userCode.split("").map(_ => " ").join("")
+  const outerLine: string = userCode
+    .split("")
+    .map(_ => "#")
+    .join("")
+  const whiteSpace: string = userCode
+    .split("")
+    .map(_ => " ")
+    .join("")
 
   const outerBorder: string = `#${outerLine}${outerLine}${outerLine}#`
   const leftBorder: string = `#${whiteSpace}`
@@ -142,8 +141,7 @@ function generateUserCodeDisplay(userCode: string): string {
   const emptyLine: string = `${leftBorder}${whiteSpace}${rightBorder}`
   const userCodeLine = `${leftBorder}${userCode}${rightBorder}`
 
-  return (
-    `
+  return `
               ${outerBorder}
               ${emptyLine}
               ${userCodeLine}
@@ -151,5 +149,4 @@ function generateUserCodeDisplay(userCode: string): string {
               ${outerBorder}
               
         `
-  )
 }

@@ -1,9 +1,9 @@
-import { GluegunCommand } from 'gluegun'
-import { Stash, describeError } from '@cipherstash/stashjs'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
+import { GluegunCommand } from "gluegun"
+import { Stash, describeError } from "@cipherstash/stashjs"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
 
 const command: GluegunCommand = {
-  name: 'list-collections',
+  name: "list-collections",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
@@ -16,23 +16,23 @@ const command: GluegunCommand = {
     }
 
     try {
-      const profile = await Stash.loadProfile({ profileName });
+      const profile = await Stash.loadProfile({ profileName })
       const stash = await Stash.connect(profile)
       const collectionNames = await stash.listCollections()
       if (parameters.options.json) {
         print.info(JSON.stringify(collectionNames, null, 2))
       } else {
-        print.info('  Name')
-        print.info('  ------')
+        print.info("  Name")
+        print.info("  ------")
         collectionNames.forEach(collectionName => {
-          print.info('  ' + collectionName)
+          print.info("  " + collectionName)
         })
       }
     } catch (error) {
       print.error(describeError(error))
       process.exit(1)
     }
-  }
+  },
 }
 
 export default command

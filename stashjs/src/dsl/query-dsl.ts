@@ -52,14 +52,10 @@ import {
  *
  * Note that Condition is a recursive type via.
  */
-export type Query<
-  R extends StashRecord,
-  M extends Mappings<R>
-> =
-  Condition<R, M>
+export type Query<R extends StashRecord, M extends Mappings<R>> = Condition<R, M>
 
 export function isAnyQuery(value: unknown): value is Query<StashRecord, Mappings<StashRecord>> {
-  return isObject(value) && `kind` in value;
+  return isObject(value) && `kind` in value
 }
 
 /**
@@ -69,59 +65,50 @@ export function isAnyQuery(value: unknown): value is Query<StashRecord, Mappings
  * or a ConjuctiveCondition (to combine multiple conditions into a more complex
  * condition).
  */
-export type Condition<
-  R extends StashRecord,
-  M extends Mappings<R>
-> =
-  | IndexCondition<R, M>
-  | ConjunctiveCondition<R, M>
+export type Condition<R extends StashRecord, M extends Mappings<R>> = IndexCondition<R, M> | ConjunctiveCondition<R, M>
 
 /**
  * Currently only supports logical AND but will logical OR is coming soon.
  */
-export type ConjunctiveCondition<
-  R extends StashRecord,
-  M extends Mappings<R>
-> =
-  AllCondition<R, M>
+export type ConjunctiveCondition<R extends StashRecord, M extends Mappings<R>> = AllCondition<R, M>
 
 /**
  * A Condition representing a logical AND between two other Conditions.
  */
-export type AllCondition<
-  R extends StashRecord,
-  M extends Mappings<R>
-> =
-  { kind: "all", conditions: Array<Condition<R, M>> }
+export type AllCondition<R extends StashRecord, M extends Mappings<R>> = {
+  kind: "all"
+  conditions: Array<Condition<R, M>>
+}
 
 /**
  * Represents a condition defined in terms of an index.
  *
  * An IndexCondition can be one of ExactCondition, RangeCondition or MatchCondition.
  */
-export type IndexCondition<
-  R extends StashRecord,
-  M extends Mappings<R>
-> = {
-  [N in Extract<keyof M, string>]:
-    M[N] extends ExactMapping<R, infer _FOT> ? ExactCondition<R, M, N>
-    : M[N] extends RangeMapping<R, infer _FOT> ? RangeCondition<R, M, N>
-    : M[N] extends MatchMapping<R, infer _FOT> ? MatchCondition<R, M, N>
-    : M[N] extends DynamicMatchMapping ? DynamicMatchCondition<R, M, N>
-    : M[N] extends FieldDynamicMatchMapping ? FieldDynamicMatchCondition<R, M, N>
+export type IndexCondition<R extends StashRecord, M extends Mappings<R>> = {
+  [N in Extract<keyof M, string>]: M[N] extends ExactMapping<R, infer _FOT>
+    ? ExactCondition<R, M, N>
+    : M[N] extends RangeMapping<R, infer _FOT>
+    ? RangeCondition<R, M, N>
+    : M[N] extends MatchMapping<R, infer _FOT>
+    ? MatchCondition<R, M, N>
+    : M[N] extends DynamicMatchMapping
+    ? DynamicMatchCondition<R, M, N>
+    : M[N] extends FieldDynamicMatchMapping
+    ? FieldDynamicMatchCondition<R, M, N>
     : never
-  }[Extract<keyof M, string>]
+}[Extract<keyof M, string>]
 
 /**
  * A Condition that compares for equality a supplied value and the value from
  * the named index.
  */
-export type ExactCondition<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
-> = { kind: "exact", indexName: N, op: "eq", value: FieldTypeOfMapping<R, M[N]> }
-
+export type ExactCondition<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>> = {
+  kind: "exact"
+  indexName: N
+  op: "eq"
+  value: FieldTypeOfMapping<R, M[N]>
+}
 
 /**
  * A Condition that performs a comparison operation between a supplied value
@@ -130,33 +117,39 @@ export type ExactCondition<
 export type RangeCondition<
   R extends StashRecord,
   M extends Mappings<R>,
-  N extends Extract<keyof M, string>,
-> =
-  M[N] extends RangeMapping<R, infer F> ?
-    | { kind: "range", indexName: N, op: ("lt" | "lte" | "eq" | "gt" | "gte") & RangeOperator, value: FieldType<R, F> }
-    | { kind: "range", indexName: N, op: "between" & RangeOperator, min: FieldType<R, F>, max: FieldType<R, F> }
+  N extends Extract<keyof M, string>
+> = M[N] extends RangeMapping<R, infer F>
+  ?
+      | {
+          kind: "range"
+          indexName: N
+          op: ("lt" | "lte" | "eq" | "gt" | "gte") & RangeOperator
+          value: FieldType<R, F>
+        }
+      | { kind: "range"; indexName: N; op: "between" & RangeOperator; min: FieldType<R, F>; max: FieldType<R, F> }
   : never
 
 /**
  * A Condition that performs a textual match of a supplied string term with the
  * index.
  */
-export type MatchCondition<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
-> = { kind: "match", indexName: N, op: "match", value: string }
+export type MatchCondition<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>> = {
+  kind: "match"
+  indexName: N
+  op: "match"
+  value: string
+}
 
 /**
  * A Condition that performs a textual match of a supplied string term with the
  * index.
  */
-export type DynamicMatchCondition<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
-> =
-  | { kind: "dynamic-match", indexName: N, op: "match", value: string }
+export type DynamicMatchCondition<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>> = {
+  kind: "dynamic-match"
+  indexName: N
+  op: "match"
+  value: string
+}
 
 /**
  * A Condition that performs a textual match of a supplied string term with the
@@ -166,28 +159,19 @@ export type FieldDynamicMatchCondition<
   R extends StashRecord,
   M extends Mappings<R>,
   N extends Extract<keyof M, string>
-> =
-  | { kind: "field-dynamic-match", indexName: N, op: "match", fieldName: string, value: string }
+> = { kind: "field-dynamic-match"; indexName: N; op: "match"; fieldName: string; value: string }
 
 /**
  * The operations that can be performed on a Match index.
  */
-export type MatchOperators<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
-> = {
+export type MatchOperators<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>> = {
   match(value: string): MatchCondition<R, M, N>
 }
 
 /**
  * The operations that can be performed on a DynamicMatch index.
  */
-export type DynamicMatchOperators<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>,
-> = {
+export type DynamicMatchOperators<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>> = {
   match(field: string): DynamicMatchCondition<R, M, N>
 }
 
@@ -197,7 +181,7 @@ export type DynamicMatchOperators<
 export type FieldDynamicMatchOperators<
   R extends StashRecord,
   M extends Mappings<R>,
-  N extends Extract<keyof M, string>,
+  N extends Extract<keyof M, string>
 > = {
   match(field: string, value: string): FieldDynamicMatchCondition<R, M, N>
 }
@@ -205,11 +189,7 @@ export type FieldDynamicMatchOperators<
 /**
  * The operations that can be performed on an Exact index.
  */
-export type ExactOperators<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
-> = {
+export type ExactOperators<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>> = {
   eq(value: FieldTypeOfMapping<R, M[N]>): ExactCondition<R, M, N>
 }
 
@@ -220,7 +200,7 @@ export type RangeOperators<
   R extends StashRecord,
   M extends Mappings<R>,
   N extends Extract<keyof M, string>,
-  T extends FieldTypeOfMapping<R, M[N]> & RangeMappingFieldType= FieldTypeOfMapping<R, M[N]> & RangeMappingFieldType
+  T extends FieldTypeOfMapping<R, M[N]> & RangeMappingFieldType = FieldTypeOfMapping<R, M[N]> & RangeMappingFieldType
 > = {
   lt(value: T): RangeCondition<R, M, N>
   lte(value: T): RangeCondition<R, M, N>
@@ -230,17 +210,10 @@ export type RangeOperators<
   between(min: T, max: T): RangeCondition<R, M, N>
 }
 
-
 /**
  * The names of all of the range operators.
  */
-export type RangeOperator =
-  | "lt"
-  | "lte"
-  | "eq"
-  | "gt"
-  | "gte"
-  | "between"
+export type RangeOperator = "lt" | "lte" | "eq" | "gt" | "gte" | "between"
 
 /**
  * Utility type that when given a record, mappings and the name of an index,
@@ -249,16 +222,20 @@ export type RangeOperator =
 export type OperatorsForIndex<
   R extends StashRecord,
   M extends Mappings<R>,
-  N extends Extract<keyof M, string>,
-> =
-  M[N] extends ExactMapping<R, FieldOfType<R, ExactMappingFieldType>> ? ExactOperators<R, M, N>
-  : M[N] extends RangeMapping<R, FieldOfType<R, RangeMappingFieldType>> ? RangeOperators<R, M, N>
-  : M[N] extends MatchMapping<R, FieldOfType<R, MatchMappingFieldType>> ? MatchOperators<R, M, N>
-  : M[N] extends DynamicMatchMapping ? DynamicMatchOperators<R, M, N>
-  : M[N] extends FieldDynamicMatchMapping ? FieldDynamicMatchOperators<R, M, N>
+  N extends Extract<keyof M, string>
+> = M[N] extends ExactMapping<R, FieldOfType<R, ExactMappingFieldType>>
+  ? ExactOperators<R, M, N>
+  : M[N] extends RangeMapping<R, FieldOfType<R, RangeMappingFieldType>>
+  ? RangeOperators<R, M, N>
+  : M[N] extends MatchMapping<R, FieldOfType<R, MatchMappingFieldType>>
+  ? MatchOperators<R, M, N>
+  : M[N] extends DynamicMatchMapping
+  ? DynamicMatchOperators<R, M, N>
+  : M[N] extends FieldDynamicMatchMapping
+  ? FieldDynamicMatchOperators<R, M, N>
   : never
 
-type NeverObjectToAny<T> = T extends { [key: string]: never } ? any : T;
+type NeverObjectToAny<T> = T extends { [key: string]: never } ? any : T
 
 /**
  * This type represents the sole argument provided to the callback when building
@@ -268,20 +245,14 @@ type NeverObjectToAny<T> = T extends { [key: string]: never } ? any : T;
  * values are objects whose keys are the available operations that can be
  * performed on that index.
  */
-export type QueryBuilder<
-  R extends StashRecord,
-  M extends Mappings<R>
-> = NeverObjectToAny<{
+export type QueryBuilder<R extends StashRecord, M extends Mappings<R>> = NeverObjectToAny<{
   [F in Extract<keyof M, string>]: OperatorsForIndex<R, M, F>
 }>
 
 /**
  * Type guard to check if a Condition is a ConjunctiveCondition.
  */
-export function isConjunctiveCondition<
-  R extends StashRecord,
-  M extends Mappings<R>
->(
+export function isConjunctiveCondition<R extends StashRecord, M extends Mappings<R>>(
   condition: any
 ): condition is ConjunctiveCondition<R, M> {
   return condition.kind == "all"
@@ -290,11 +261,7 @@ export function isConjunctiveCondition<
 /**
  * Type guard to check if a Condition is an ExactCondition
  */
-export function isExactCondition<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
->(
+export function isExactCondition<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>>(
   condition: any
 ): condition is ExactCondition<R, M, N> {
   return condition.kind == "exact"
@@ -303,11 +270,7 @@ export function isExactCondition<
 /**
  * Type guard to check if a Condition is a RangeCondition
  */
-export function isRangeCondition<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
->(
+export function isRangeCondition<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>>(
   condition: any
 ): condition is RangeCondition<R, M, N> {
   return condition.kind == "range"
@@ -316,11 +279,7 @@ export function isRangeCondition<
 /**
  * Type guard to check if a Condition is a MatchCondition
  */
-export function isMatchCondition<
-  R extends StashRecord,
-  M extends Mappings<R>,
-  N extends Extract<keyof M, string>
->(
+export function isMatchCondition<R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>>(
   condition: any
 ): condition is MatchCondition<R, M, N> {
   return condition.kind == "match"
@@ -333,9 +292,7 @@ export function isDynamicMatchCondition<
   R extends StashRecord,
   M extends Mappings<R>,
   N extends Extract<keyof M, string>
->(
-  condition: any
-): condition is DynamicMatchCondition<R, M, N> {
+>(condition: any): condition is DynamicMatchCondition<R, M, N> {
   return condition.kind == "dynamic-match"
 }
 
@@ -346,9 +303,7 @@ export function isFieldDynamicMatchCondition<
   R extends StashRecord,
   M extends Mappings<R>,
   N extends Extract<keyof M, string>
->(
-  condition: any
-): condition is FieldDynamicMatchCondition<R, M, N> {
+>(condition: any): condition is FieldDynamicMatchCondition<R, M, N> {
   return condition.kind == "field-dynamic-match"
 }
 
@@ -364,10 +319,7 @@ export function isFieldDynamicMatchCondition<
  * @returns an AllCondition representing the logical AND of all of the provided
  * conditions.
  */
-export function all<
-  R extends StashRecord,
-  M extends Mappings<R>
->(
+export function all<R extends StashRecord, M extends Mappings<R>>(
   condition1: Condition<R, M>,
   condition2: Condition<R, M>,
   ...remainingConditions: Array<Condition<R, M>>
@@ -380,18 +332,11 @@ export function all<
  * index type.
  */
 export const operators = {
-
   /**
    * Return an object containing operators for performing `exact` operations on `indexName`.
    */
-  exact: <
-    R extends StashRecord,
-    M extends Mappings<R>,
-    N extends Extract<keyof M, string>
-  >(
-    indexName: N
-  ) => ({
-    eq: <T extends FieldTypeOfMapping<R, M[N]>>(value: T) => ({ kind: "exact", indexName, op: "eq", value })
+  exact: <R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>>(indexName: N) => ({
+    eq: <T extends FieldTypeOfMapping<R, M[N]>>(value: T) => ({ kind: "exact", indexName, op: "eq", value }),
   }),
 
   /**
@@ -418,39 +363,29 @@ export const operators = {
   /**
    * Return an object containing operators for performing `match` operations on `indexName`.
    */
-  match: <
-    R extends StashRecord,
-    M extends Mappings<R>,
-    N extends Extract<keyof M, string>,
-  >(
-    indexName: N
-  ) => ({
-    match: (value: string) => ({ kind: "match", indexName, op: "match", value })
+  match: <R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>>(indexName: N) => ({
+    match: (value: string) => ({ kind: "match", indexName, op: "match", value }),
   }),
 
   /**
    * Return an object containing operators for performing `dynamicMatch` operations on `indexName`.
    */
-  dynamicMatch: <
-    R extends StashRecord,
-    M extends Mappings<R>,
-    N extends Extract<keyof M, string>
-  >(
-    indexName: N
-  ) => ({
+  dynamicMatch: <R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>>(indexName: N) => ({
     match: (value: string) => ({ kind: "dynamic-match", indexName, op: "match", value }),
   }),
 
   /**
    * Return an object containing operators for performing `dynamicMatch` operations on `indexName` and scoped to a specified field.
    */
-  scopedDynamicMatch: <
-    R extends StashRecord,
-    M extends Mappings<R>,
-    N extends Extract<keyof M, string>
-  >(
+  scopedDynamicMatch: <R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>>(
     indexName: N
   ) => ({
-    match: (fieldName: string, value: string) => ({ kind: "field-dynamic-match", indexName, fieldName, op: "match", value })
-  })
+    match: (fieldName: string, value: string) => ({
+      kind: "field-dynamic-match",
+      indexName,
+      fieldName,
+      op: "match",
+      value,
+    }),
+  }),
 }

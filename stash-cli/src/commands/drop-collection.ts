@@ -1,9 +1,9 @@
-import { GluegunCommand } from 'gluegun'
-import { Stash, describeError } from '@cipherstash/stashjs'
-import { Toolbox } from 'gluegun/build/types/domain/toolbox'
+import { GluegunCommand } from "gluegun"
+import { Stash, describeError } from "@cipherstash/stashjs"
+import { Toolbox } from "gluegun/build/types/domain/toolbox"
 
 const command: GluegunCommand = {
-  name: 'drop-collection',
+  name: "drop-collection",
 
   run: async (toolbox: Toolbox) => {
     const { print, parameters } = toolbox
@@ -12,7 +12,7 @@ const command: GluegunCommand = {
 
     const collectionName: string | undefined = parameters.first
     if (collectionName === undefined) {
-      print.error('No collection name specified.')
+      print.error("No collection name specified.")
       process.exit(1)
     }
 
@@ -28,7 +28,7 @@ const command: GluegunCommand = {
     } catch (error) {
       print.error(`Could not drop collection ${collectionName}. Reason: "${describeError(error)}"`)
     }
-  }
+  },
 }
 
 export default command
