@@ -256,22 +256,6 @@ export function parallel<V0, V1, V2, E1, E2>(
   fn2: (initialValue: V0) => AsyncResult<V2, E2>
 ): (initialValue: V0) => AsyncResult<[V0, V1, V2], E1 | E2> {
   return async (initialValue: V0) => {
-    const result = await parallel3<V0, V1, V2, V2, E1, E2, E2>(fn1, fn2, fn2)(initialValue)
-    if (result.ok) {
-      const [r0, r1, r2, _] = result.value
-      return Ok([r0, r1, r2])
-    } else {
-      return Err(result.error)
-    }
-  }
-}
-
-export function parallel3<V0, V1, V2, V3, E1, E2, E3>(
-  fn1: (initialValue: V0) => AsyncResult<V1, E1>,
-  fn2: (initialValue: V0) => AsyncResult<V2, E2>,
-  fn3: (initialValue: V0) => AsyncResult<V3, E3>
-): (initialValue: V0) => AsyncResult<[V0, V1, V2, V3], E1 | E2 | E3> {
-  return async (initialValue: V0) => {
     // Naively, one would think the following three lines of code would be
     // simpler if we just called Promise.all.  However, Promise.all takes an
     // array of promises and returns an array of results. Arrays can only have a
@@ -280,8 +264,7 @@ export function parallel3<V0, V1, V2, V3, E1, E2, E3>(
     // the promises manually and then just wait until they are settled.
     const result1 = fn1(initialValue)
     const result2 = fn2(initialValue)
-    const result3 = fn3(initialValue)
-    await Promise.allSettled([result1, result2, result3])
+    await Promise.allSettled([result1, result2])
 
     // These will have already resolved. Unfortunately we need to await on them
     // again because JS does not provide a standard API to crack open a Promise
@@ -289,14 +272,12 @@ export function parallel3<V0, V1, V2, V3, E1, E2, E3>(
     // requires another lap around the event loop)
     const r1 = await result1
     const r2 = await result2
-    const r3 = await result3
 
-    if (r1.ok && r2.ok && r3.ok) {
-      return Ok([initialValue, r1.value, r2.value, r3.value])
+    if (r1.ok && r2.ok) {
+      return Ok([initialValue, r1.value, r2.value])
     } else {
       if (!r1.ok) return Err(r1.error)
       else if (!r2.ok) return Err(r2.error)
-      else if (!r3.ok) return Err(r3.error)
       else return unreachable("This cannot happen")
     }
   }
