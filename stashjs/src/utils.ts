@@ -1,13 +1,13 @@
-import { v4 as uuidv4, parse as parseUUID, stringify as stringifyUUID } from 'uuid'
-import stringifyObject from 'stringify-object'
-import { unreachable } from './type-utils'
-import { isAnyStashJSError, toErrorMessage } from './errors'
+import { v4 as uuidv4, parse as parseUUID, stringify as stringifyUUID } from "uuid"
+import stringifyObject from "stringify-object"
+import { unreachable } from "./type-utils"
+import { isAnyStashJSError, toErrorMessage } from "./errors"
 
 export function normalizeId(id: string): Uint8Array
 export function normalizeId(id: Buffer): Uint8Array
 export function normalizeId(id: Uint8Array): Uint8Array
-export function normalizeId(id: string | Buffer | Uint8Array): Uint8Array  {
-  if (typeof id === 'string') {
+export function normalizeId(id: string | Buffer | Uint8Array): Uint8Array {
+  if (typeof id === "string") {
     return parseUUID(id) as Uint8Array
   } else if (id instanceof Buffer) {
     return new Uint8Array(id)
@@ -18,10 +18,10 @@ export function normalizeId(id: string | Buffer | Uint8Array): Uint8Array  {
   }
 }
 
-export function maybeGenerateId<D>(doc: D): Omit<D, 'id'> & { id: Uint8Array } {
+export function maybeGenerateId<D>(doc: D): Omit<D, "id"> & { id: Uint8Array } {
   const id = (doc as any).id
-  if (typeof id === 'undefined') {
-     return { ...doc, id: makeId() }
+  if (typeof id === "undefined") {
+    return { ...doc, id: makeId() }
   } else {
     return { ...doc, id: normalizeId(id) }
   }
@@ -39,14 +39,14 @@ export function refBufferToString(ref: Buffer): string {
   if (ref.byteLength != 32) {
     throw new Error(`Expected a 16 byte Buffer; received: ${ref}`)
   }
-  return ref.toString('hex')
+  return ref.toString("hex")
 }
 
 export function refStringToBuffer(ref: string): Buffer {
   if (!ref.match(/^[0-9a-f]{64}$/)) {
     throw new Error("Expected a 64 character string of hex characters")
   }
-  return Buffer.from(ref, 'hex');
+  return Buffer.from(ref, "hex")
 }
 
 const NANOSECONDS_PER_SECOND = 1000000000n
@@ -58,7 +58,7 @@ const NANOSECONDS_PER_SECOND = 1000000000n
 export function durationSeconds(timeStart: bigint, timeEnd: bigint): number {
   const diff = timeEnd - timeStart
   const seconds = diff / NANOSECONDS_PER_SECOND
-  const nanos   = diff % NANOSECONDS_PER_SECOND
+  const nanos = diff % NANOSECONDS_PER_SECOND
 
   return Number(seconds) + Number(nanos) / Number(NANOSECONDS_PER_SECOND)
 }
@@ -70,8 +70,8 @@ export function durationSeconds(timeStart: bigint, timeEnd: bigint): number {
  */
 export function stringify(item: any): string {
   return stringifyObject(objectify(item), {
-    indent: '  ',
-    singleQuotes: false
+    indent: "  ",
+    singleQuotes: false,
   })
 }
 
@@ -79,12 +79,12 @@ function objectify(item: any): any {
   if (Array.isArray(item)) {
     return item.map(elem => objectify(elem))
   } else if (item instanceof Uint8Array) {
-    return (new Buffer(item)).toString('hex')
+    return new Buffer(item).toString("hex")
   } else if (Buffer.isBuffer(item)) {
-    return item.toString('hex')
-  } else if (typeof item == 'bigint') {
+    return item.toString("hex")
+  } else if (typeof item == "bigint") {
     return item.toString()
-  } else if (typeof item == 'object') {
+  } else if (typeof item == "object") {
     return Object.fromEntries(Object.keys(item).map(key => [key, objectify(item[key])]))
   } else {
     return item
@@ -93,31 +93,31 @@ function objectify(item: any): any {
 
 export function describePlainObject(value: unknown): string {
   if (value === undefined) {
-    return 'undefined';
+    return "undefined"
   }
 
   if (value === null) {
-    return 'null';
+    return "null"
   }
 
-  let stringified: string;
+  let stringified: string
 
   try {
-    stringified = JSON.stringify(value);
+    stringified = JSON.stringify(value)
   } catch (e) {
-    stringified = String(value);
+    stringified = String(value)
   }
 
-  return `${(value as any)?.constructor?.name ?? 'Unknown'} ${stringified}`;
+  return `${(value as any)?.constructor?.name ?? "Unknown"} ${stringified}`
 }
 
 export function describeError(err: unknown): string {
   if (isAnyStashJSError(err)) {
-    return toErrorMessage(err);
+    return toErrorMessage(err)
   } else if (err instanceof Error) {
-    return err.stack ? err.stack : String(err);
+    return err.stack ? err.stack : String(err)
   } else {
-    return describePlainObject(err);
+    return describePlainObject(err)
   }
 }
 

@@ -1,4 +1,4 @@
-import { build } from 'gluegun'
+import { build } from "gluegun"
 
 /**
  * Create the cli and kick it off
@@ -6,9 +6,9 @@ import { build } from 'gluegun'
 async function run(argv: string | Record<string, unknown>) {
   // create a CLI runtime
   const cli = build()
-    .brand('stash')
+    .brand("stash")
     .src(__dirname)
-    .plugins('./node_modules', { matching: 'stash-*', hidden: true })
+    .plugins("./node_modules", { matching: "stash-*", hidden: true })
     .help() // provides default for help, h, --help, -h
     .version() // provides default for version, v, --version, -v
     .defaultCommand()

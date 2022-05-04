@@ -1,4 +1,4 @@
-import * as BSON from 'bson'
+import * as BSON from "bson"
 
 export function serialize(plaintext: any): Buffer {
   return BSON.serialize(encodeToBson(plaintext))
@@ -13,7 +13,7 @@ function encodeToBson(plaintext: any): BSON.Document {
     return plaintext.map(el => encodeToBson(el))
   } else if (plaintext instanceof Date) {
     return BSON.Timestamp.fromNumber(plaintext.getTime())
-  } else if (typeof plaintext == 'bigint') {
+  } else if (typeof plaintext == "bigint") {
     return BSON.Long.fromBigInt(plaintext)
   } else if (plaintext instanceof Buffer) {
     return plaintext
@@ -24,7 +24,7 @@ function encodeToBson(plaintext: any): BSON.Document {
   }
 }
 
- function decodeFromBson(plaintext: BSON.Document): any {
+function decodeFromBson(plaintext: BSON.Document): any {
   if (Array.isArray(plaintext)) {
     return plaintext.map(pt => decodeFromBson(pt))
   } else if (plaintext instanceof BSON.Timestamp) {

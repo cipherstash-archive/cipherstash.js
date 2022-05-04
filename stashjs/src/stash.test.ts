@@ -1,5 +1,5 @@
-import { Stash } from "./stash";
-import { vol } from "memfs";
+import { Stash } from "./stash"
+import { vol } from "memfs"
 
 function createMockProfile(workspace: string): string {
   return JSON.stringify({
@@ -26,49 +26,47 @@ function createMockProfile(workspace: string): string {
         region: "ap-southeast-2",
       },
     },
-  });
+  })
 }
 
 describe("Stash.loadProfile", () => {
   beforeEach(() => {
     vol.fromJSON({
-      [`${process.env["HOME"]}/.cipherstash/config.json`]:
-        '{ "defaultProfile": "default-profile" }',
+      [`${process.env["HOME"]}/.cipherstash/config.json`]: '{ "defaultProfile": "default-profile" }',
       [`${process.env["HOME"]}/.cipherstash/default-profile/profile-config.json`]:
         createMockProfile("default-workspace"),
-      [`${process.env["HOME"]}/.cipherstash/env-profile/profile-config.json`]:
-        createMockProfile("env-workspace"),
+      [`${process.env["HOME"]}/.cipherstash/env-profile/profile-config.json`]: createMockProfile("env-workspace"),
       [`${process.env["HOME"]}/.cipherstash/by-name-profile/profile-config.json`]:
         createMockProfile("by-name-workspace"),
-    });
-  });
+    })
+  })
 
   afterEach(() => {
-    delete process.env["CS_PROFILE_NAME"];
-  });
+    delete process.env["CS_PROFILE_NAME"]
+  })
 
   it("should load a profile from the passed in name", async () => {
     const profile = await Stash.loadProfile({
       profileName: "by-name-profile",
-    });
+    })
 
-    expect(profile.name).toEqual("by-name-profile");
-    expect(profile.config.service.workspace).toEqual("by-name-workspace");
-  });
+    expect(profile.name).toEqual("by-name-profile")
+    expect(profile.config.service.workspace).toEqual("by-name-workspace")
+  })
 
   it("should load a profile from the passed in from the env", async () => {
-    process.env["CS_PROFILE_NAME"] = "env-profile";
+    process.env["CS_PROFILE_NAME"] = "env-profile"
 
-    const profile = await Stash.loadProfile();
+    const profile = await Stash.loadProfile()
 
-    expect(profile.name).toEqual("env-profile");
-    expect(profile.config.service.workspace).toEqual("env-workspace");
-  });
+    expect(profile.name).toEqual("env-profile")
+    expect(profile.config.service.workspace).toEqual("env-workspace")
+  })
 
   it("should load the default profile when nothing is passed in", async () => {
-    const profile = await Stash.loadProfile();
+    const profile = await Stash.loadProfile()
 
-    expect(profile.name).toEqual("default-profile");
-    expect(profile.config.service.workspace).toEqual("default-workspace");
-  });
-});
+    expect(profile.name).toEqual("default-profile")
+    expect(profile.config.service.workspace).toEqual("default-workspace")
+  })
+})

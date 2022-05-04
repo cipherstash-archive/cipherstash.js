@@ -1,8 +1,8 @@
-import { existsSync, readFileSync, realpathSync } from "fs";
-import { dirname, resolve } from "path";
-import { logger } from "./logger";
+import { existsSync, readFileSync, realpathSync } from "fs"
+import { dirname, resolve } from "path"
+import { logger } from "./logger"
 
-const MAX_DIRECTORY_POPS = 10;
+const MAX_DIRECTORY_POPS = 10
 
 /**
  * Test to see whether the currently running script is from a project that contains TypeScript.
@@ -24,41 +24,35 @@ export function doesProjectUseTypeScript(): boolean {
   // process.argv always seems to start with "node" even when:
   // - it's executed using shebang
   // - it's executed using a command like time
-  const [, runningFile] = process.argv;
+  const [, runningFile] = process.argv
 
   if (!runningFile) {
-    return false;
+    return false
   }
 
   try {
     // If the script is being run from the node_modules/.bin folder you might need to follow the symlink
     // to find the original package.
-    const realFile = realpathSync(runningFile);
+    const realFile = realpathSync(runningFile)
 
-    let directoryToTest = dirname(realFile);
+    let directoryToTest = dirname(realFile)
 
     for (let i = 0; i < MAX_DIRECTORY_POPS; i++) {
-      const packagePath = resolve(directoryToTest, "package.json");
+      const packagePath = resolve(directoryToTest, "package.json")
 
       if (existsSync(packagePath)) {
-        const packageJson = JSON.parse(readFileSync(packagePath).toString());
+        const packageJson = JSON.parse(readFileSync(packagePath).toString())
 
-        if (
-          !!packageJson?.devDependencies?.typescript ||
-          !!packageJson?.dependencies?.typescript
-        ) {
-          return true;
+        if (!!packageJson?.devDependencies?.typescript || !!packageJson?.dependencies?.typescript) {
+          return true
         }
       }
 
-      directoryToTest = resolve(directoryToTest, "..");
+      directoryToTest = resolve(directoryToTest, "..")
     }
   } catch (error) {
-    logger.warn(
-      "Failed to determine whether project is using TypeScript. Defaulting to false.",
-      { error }
-    );
+    logger.warn("Failed to determine whether project is using TypeScript. Defaulting to false.", { error })
   }
 
-  return false;
+  return false
 }

@@ -1,17 +1,17 @@
-import { downcaseFilter, ngramsTokenizer, standardTokenizer, textPipeline, upcaseFilter } from './text-processors'
+import { downcaseFilter, ngramsTokenizer, standardTokenizer, textPipeline, upcaseFilter } from "./text-processors"
 
 describe("tokenizers & filters", () => {
   describe("ngrams tokenizer", () => {
     it("produces ngrams", () => {
       let tokenizer = ngramsTokenizer({ tokenLength: 3 })
-      expect(tokenizer(["lovelace"])).toStrictEqual(['lov', 'ove', 'vel', 'ela', 'lac', 'ace'])
+      expect(tokenizer(["lovelace"])).toStrictEqual(["lov", "ove", "vel", "ela", "lac", "ace"])
     })
   })
 
   describe("standard tokenizer", () => {
     it("produces tokens", () => {
       let tokenizer = standardTokenizer
-      expect(tokenizer(["Hello from Ada Lovelace"])).toStrictEqual(['Hello', 'from', 'Ada', 'Lovelace'])
+      expect(tokenizer(["Hello from Ada Lovelace"])).toStrictEqual(["Hello", "from", "Ada", "Lovelace"])
     })
   })
 
@@ -29,7 +29,7 @@ describe("tokenizers & filters", () => {
 
   describe("chaining filters and tokenizers", () => {
     let pipeline = textPipeline([upcaseFilter, ngramsTokenizer({ tokenLength: 3 })])
-    expect(pipeline(["HeLlOwOrLd"])).toEqual(['HEL', 'ELL', 'LLO', 'LOW', 'OWO', 'WOR', 'ORL', 'RLD'])
+    expect(pipeline(["HeLlOwOrLd"])).toEqual(["HEL", "ELL", "LLO", "LOW", "OWO", "WOR", "ORL", "RLD"])
   })
 
   it("tokenizes before filters", () => {
@@ -47,7 +47,7 @@ describe("tokenizers & filters", () => {
       "ash",
       "Dev",
       "Tea",
-      "eam"
+      "eam",
     ])
   })
 })

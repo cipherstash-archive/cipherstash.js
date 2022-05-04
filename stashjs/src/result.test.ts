@@ -1,4 +1,4 @@
-import { Ok, Err, concat, Unit, parallel, convertErrorsTo, gather, fromPromise,  sequence } from "./result"
+import { Ok, Err, concat, Unit, parallel, convertErrorsTo, gather, fromPromise, sequence } from "./result"
 
 describe("Result", () => {
   describe("concat", () => {
@@ -71,10 +71,10 @@ describe("Result", () => {
 
   describe("convertErrorsTo", () => {
     type CustomError = { message: string }
-    const CustomError = (_: string): CustomError => ({ message: "OOPS!"})
+    const CustomError = (_: string): CustomError => ({ message: "OOPS!" })
 
     it("converts errors to a specified type", () => {
-      expect(convertErrorsTo(CustomError, Err("uh oh!"))).toEqual(Err({ message: "OOPS!"}))
+      expect(convertErrorsTo(CustomError, Err("uh oh!"))).toEqual(Err({ message: "OOPS!" }))
     })
 
     it("returns Ok results unmodified", () => {

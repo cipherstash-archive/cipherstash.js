@@ -9,23 +9,23 @@ import { idBufferToString, maybeGenerateId } from "./utils"
 import { Memo } from "./auth/auth-strategy"
 import { AsyncResult, Err, Ok } from "./result"
 import { AnalysisFailure } from "./errors"
-import { StashProfile } from './stash-profile'
-import { logger } from './logger';
+import { StashProfile } from "./stash-profile"
+import { logger } from "./logger"
 
 if (!isMainThread) {
   const recordAnalyzerCache: { [collectionName: string]: any } = {}
   let cipherMemo: Memo<CipherSuite>
 
-  async function performAnalysis(config: AnalysisConfig, record: StashRecord): AsyncResult<AnalysisResult, AnalysisFailure> {
+  async function performAnalysis(
+    config: AnalysisConfig,
+    record: StashRecord
+  ): AsyncResult<AnalysisResult, AnalysisFailure> {
     if (!cipherMemo) {
       const profile = new StashProfile(config.profile.name, config.profile.config)
-      cipherMemo = profile.withFreshKMSCredentials<CipherSuite>(async (awsConfig) => {
-        return Ok.Async(makeCipherSuite(
-          makeNodeCachingMaterialsManager(
-            config.profile.config.keyManagement.key.arn,
-            awsConfig
-          )
-        ))
+      cipherMemo = profile.withFreshKMSCredentials<CipherSuite>(async awsConfig => {
+        return Ok.Async(
+          makeCipherSuite(makeNodeCachingMaterialsManager(config.profile.config.keyManagement.key.arn, awsConfig))
+        )
       })
     }
 
@@ -42,7 +42,7 @@ if (!isMainThread) {
         const result = {
           docId: recordWithId.id,
           vectors,
-          encryptedSource: encryptedSource.value.result
+          encryptedSource: encryptedSource.value.result,
         }
         return Ok(result)
       } else {
@@ -55,11 +55,9 @@ if (!isMainThread) {
     }
   }
 
-  function getRecordAnalyzer<
-    R extends StashRecord,
-    M extends Mappings<R>,
-    MM extends MappingsMeta<M>
-  >(schema: CollectionSchema<R, M, MM>): RecordAnalyzer<R, M, MM> {
+  function getRecordAnalyzer<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>>(
+    schema: CollectionSchema<R, M, MM>
+  ): RecordAnalyzer<R, M, MM> {
     let analyzer = recordAnalyzerCache[schema.name]
     if (analyzer) {
       return analyzer
@@ -70,7 +68,7 @@ if (!isMainThread) {
     }
   }
 
-  parentPort!.on('message', async (record: StashRecord) => {
+  parentPort!.on("message", async (record: StashRecord) => {
     const config: AnalysisConfig = workerData.config
     const result = await performAnalysis(config, record)
     if (result.ok) {

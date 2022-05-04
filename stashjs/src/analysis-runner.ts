@@ -1,20 +1,20 @@
-import { V1 } from "@cipherstash/stashjs-grpc";
-import { StashRecord } from "./dsl/mappings-dsl";
-import { CollectionSchema } from "./collection-schema";
-import * as os from 'os'
-import { join } from 'path'
+import { V1 } from "@cipherstash/stashjs-grpc"
+import { StashRecord } from "./dsl/mappings-dsl"
+import { CollectionSchema } from "./collection-schema"
+import * as os from "os"
+import { join } from "path"
 import { Worker } from "worker_threads"
 import { EventEmitter } from "events"
-import { AsyncQueue } from "./async-queue";
-import { StashProfile } from './stash-profile';
-import { logger } from './logger';
-import { describeError } from "./utils";
+import { AsyncQueue } from "./async-queue"
+import { StashProfile } from "./stash-profile"
+import { logger } from "./logger"
+import { describeError } from "./utils"
 
-require('./analysis-worker') // force typescript to compile this file and make it available in "./dist"
+require("./analysis-worker") // force typescript to compile this file and make it available in "./dist"
 
 export type AnalysisResult = {
-  docId: Uint8Array,
-  vectors: Array<V1.Document.Vector>,
+  docId: Uint8Array
+  vectors: Array<V1.Document.Vector>
   encryptedSource: Buffer
 }
 
@@ -40,13 +40,13 @@ export class AnalysisRunner {
 
   private initialiseWorkers(): void {
     for (let workerId = 0; workerId < os.cpus().length; workerId++) {
-      const worker = new Worker(join(__dirname, './analysis-worker.js'), {
-        workerData: { config: this.config, workerId }
+      const worker = new Worker(join(__dirname, "./analysis-worker.js"), {
+        workerData: { config: this.config, workerId },
       })
-      worker.on('message', (message: WorkerMessage) => {
-        this.workerEvents.emit('result', message)
+      worker.on("message", (message: WorkerMessage) => {
+        this.workerEvents.emit("result", message)
       })
-      worker.on('error', (err) => logger.error(err))
+      worker.on("error", err => logger.error(err))
       this.workers.set(workerId, worker)
     }
   }
@@ -66,7 +66,7 @@ export class AnalysisRunner {
   }
 
   public analyze(jobsIter: AsyncIterator<StashRecord>): AsyncIterator<AnalysisResult> {
-    const queue =  new AsyncQueue<AnalysisResult>()
+    const queue = new AsyncQueue<AnalysisResult>()
 
     let successCount = 0
     let failureCount = 0
@@ -79,7 +79,7 @@ export class AnalysisRunner {
         }
       }
 
-      this.workerEvents.on('result', async (message: WorkerMessage) => {
+      this.workerEvents.on("result", async (message: WorkerMessage) => {
         successCount += 1
         queue.push(message.result)
         let job = await jobsIter.next()
@@ -93,9 +93,9 @@ export class AnalysisRunner {
         }
       })
 
-      this.workerEvents.on('messageerror', ({ error, record }) => {
+      this.workerEvents.on("messageerror", ({ error, record }) => {
         failureCount += 1
-        console.error(`Error report from AnalysisWorker while processing record: ${JSON.stringify(record) }`)
+        console.error(`Error report from AnalysisWorker while processing record: ${JSON.stringify(record)}`)
         console.error(describeError(error))
 
         if (this.allJobsCompleted(successCount, failureCount)) {

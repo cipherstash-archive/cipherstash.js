@@ -1,9 +1,9 @@
-import { StashProfile } from "./stash-profile";
-import { ProfileOptions, StashInternal } from "./stash-internal";
-import { convertPrivateApiResult } from "./result";
-import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl";
-import { CollectionSchema } from "./collection-schema";
-import { Collection } from "./collection";
+import { StashProfile } from "./stash-profile"
+import { ProfileOptions, StashInternal } from "./stash-internal"
+import { convertPrivateApiResult } from "./result"
+import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
+import { CollectionSchema } from "./collection-schema"
+import { Collection } from "./collection"
 
 /**
  * The main entry point to the Stash API.
@@ -21,7 +21,6 @@ import { Collection } from "./collection";
  * ```
  */
 export class Stash {
-
   private constructor(private stash: StashInternal) {}
 
   /**
@@ -131,11 +130,7 @@ export class Stash {
    * @returns The new collection with the specified schema
    *
    */
-  public async createCollection<
-    R extends StashRecord,
-    M extends Mappings<R>,
-    MM extends MappingsMeta<M>
-  >(
+  public async createCollection<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>>(
     schema: CollectionSchema<R, M, MM>
   ): Promise<Collection<R, M, MM>> {
     const collection = await this.stash.createCollection(schema)
@@ -165,9 +160,7 @@ export class Stash {
     R extends StashRecord,
     M extends Mappings<R> = Mappings<R>,
     MM extends MappingsMeta<M> = MappingsMeta<M>
-  >(
-    schemaOrName: CollectionSchema<R, M, MM> | string
-  ): Promise<Collection<R, M, MM>> {
+  >(schemaOrName: CollectionSchema<R, M, MM> | string): Promise<Collection<R, M, MM>> {
     const collection = await this.stash.loadCollection(schemaOrName)
     if (collection.ok) {
       return Promise.resolve(new Collection<R, M, MM>(collection.value))

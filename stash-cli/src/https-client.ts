@@ -1,5 +1,5 @@
-import * as https from 'https'
-import axios, { AxiosInstance } from 'axios'
+import * as https from "https"
+import axios, { AxiosInstance } from "axios"
 
 export function makeHttpsClient(host: string, port: number): AxiosInstance {
   if (port === 443) {
@@ -7,13 +7,13 @@ export function makeHttpsClient(host: string, port: number): AxiosInstance {
       baseURL: `https://${host}`,
       timeout: 15000,
       headers: {
-        Accept: 'application/vnd.github.v3+json'
+        Accept: "application/vnd.github.v3+json",
       },
       httpsAgent: new https.Agent({
         port,
         rejectUnauthorized: true,
-        minVersion: 'TLSv1.3'
-      })
+        minVersion: "TLSv1.3",
+      }),
     })
   } else {
     // FIXME: this is horrible but it allows us to test during development
@@ -22,8 +22,8 @@ export function makeHttpsClient(host: string, port: number): AxiosInstance {
       baseURL: `http://${host}:${port}`,
       timeout: 15000,
       headers: {
-        Accept: 'application/vnd.github.v3+json'
-      }
+        Accept: "application/vnd.github.v3+json",
+      },
     })
   }
 }
