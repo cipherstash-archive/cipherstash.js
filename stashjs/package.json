@@ -13,8 +13,8 @@
     "prepublishOnly": "pnpm build --filter ./",
     "clean": "rm -fr ./dist",
     "test": "pnpx jest",
-    "lint": "prettier ./src/**/*.ts --check",
-    "lint:fix": "prettier ./src/**/*.ts --write",
+    "lint": "prettier './src/**/*.ts' --check",
+    "lint:fix": "prettier './src/**/*.ts' --write",
     "lint:staged": "lint-staged"
   },
   "repository": {

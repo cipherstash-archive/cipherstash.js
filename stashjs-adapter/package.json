@@ -10,8 +10,8 @@
     "prepublishOnly": "pnpm build",
     "clean": "rm -fr ./dist",
     "test": "echo \"Error: no tests yet!\"",
-    "lint": "prettier ./src/**/*.ts --check",
-    "lint:fix": "prettier ./src/**/*.ts --write",
+    "lint": "prettier './src/**/*.ts' --check",
+    "lint:fix": "prettier './src/**/*.ts' --write",
     "lint:staged": "lint-staged"
   },
   "author": "",
