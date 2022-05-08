@@ -51,30 +51,24 @@ class StashOauth {
   public async authenticateViaConsoleAccessKey(
     accessKey: string
   ): AsyncResult<OauthAuthenticationInfo, AuthenticationFailure> {
-     const promise = makeOauthClient("console.cipherstash.com").post(
-       "/api/authorise",
-       querystring.stringify({
-         accessKey,
-       })
-     );
-     const response = await fromPromise(promise, OAuthFailure);
-     if (response.ok) {
-       if (response.value.status >= 200 && response.value.status < 400) {
-         return Ok(response.value.data as OauthAuthenticationInfo);
-       } else {
-         return Err(
-           AuthenticationFailure(
-             OAuthFailure(
-               PlainError(
-                 `An error status was returned: ${response.value.status}`
-               )
-             )
-           )
-         );
-       }
-     } else {
-       return Err(AuthenticationFailure(response.error));
-     }
+    const promise = makeOauthClient("console.cipherstash.com").post(
+      "/api/authorise",
+      querystring.stringify({
+        accessKey,
+      })
+    )
+    const response = await fromPromise(promise, OAuthFailure)
+    if (response.ok) {
+      if (response.value.status === 200) {
+        return Ok(response.value.data as OauthAuthenticationInfo)
+      } else {
+        return Err(
+          AuthenticationFailure(OAuthFailure(PlainError(`An error status was returned: ${response.value.status}`)))
+        )
+      }
+    } else {
+      return Err(AuthenticationFailure(response.error))
+    }
   }
 
   public async performTokenRefresh(
