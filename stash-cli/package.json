@@ -30,7 +30,6 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@cipherstash/stash-cli": "link:",
     "@cipherstash/stashjs": "workspace:*",
     "axios": "^0.26.1",
     "gluegun": "latest",
