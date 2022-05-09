@@ -11,13 +11,12 @@
     "url": "git+https://github.com/cipherstash/stashjs-cli.git"
   },
   "scripts": {
-    "format": "pnpx prettier --write **/*.{js,ts,tsx,json}",
     "lint": "prettier './src/**/*.ts' --check && eslint './src/**/*.ts'",
     "lint:fix": "prettier './src/**/*.ts' --write && eslint './src/**/*.ts' --fix",
     "clean-build": "rm -rf ./build",
     "compile": "tsc -p .",
     "copy-templates": "if [ -e ./src/templates ]; then cp -a ./src/templates ./build/; fi",
-    "build": "pnpm run format && pnpm run lint && pnpm run clean-build && pnpm run compile && pnpm run copy-templates",
+    "build": "pnpm run lint && pnpm run clean-build && pnpm run compile && pnpm run copy-templates",
     "prepublishOnly": "pnpm run build",
     "lint:staged": "lint-staged"
   },
