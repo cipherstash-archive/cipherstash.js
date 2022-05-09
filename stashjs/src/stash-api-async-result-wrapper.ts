@@ -29,30 +29,30 @@ export function makeAsyncResultApiWrapper(stub: V1.APIClient, profile: StashProf
   return {
     collection: {
       create: requestLogger("collection.create")(
-        secureEndpoint<V1.Collection.CreateRequest, V1.Collection.CreateReply>(stub.createCollection.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Collection.CreateRequest, V1.Collection.CreateReply>(stub.createCollection.bind(stub)))
       ),
       info: requestLogger("collection.info")(
-        secureEndpoint<V1.Collection.InfoRequest, V1.Collection.InfoReply>(stub.collectionInfo.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Collection.InfoRequest, V1.Collection.InfoReply>(stub.collectionInfo.bind(stub)))
       ),
       list: requestLogger("collection.list")(
-        secureEndpoint<V1.Collection.ListRequest, V1.Collection.ListReply>(stub.collectionList.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Collection.ListRequest, V1.Collection.ListReply>(stub.collectionList.bind(stub)))
       ),
       delete: requestLogger("collection.delete")(
-        secureEndpoint<V1.Collection.DeleteRequest, V1.Collection.InfoReply>(stub.deleteCollection.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Collection.DeleteRequest, V1.Collection.InfoReply>(stub.deleteCollection.bind(stub)))
       ),
     },
     document: {
       get: requestLogger("document.get")(
-        secureEndpoint<V1.Document.GetRequest, V1.Document.GetReply>(stub.get.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Document.GetRequest, V1.Document.GetReply>(stub.get.bind(stub)))
       ),
       getAll: requestLogger("document.getAll")(
-        secureEndpoint<V1.Document.GetAllRequest, V1.Document.GetAllReply>(stub.getAll.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Document.GetAllRequest, V1.Document.GetAllReply>(stub.getAll.bind(stub)))
       ),
       put: requestLogger("document.put")(
-        secureEndpoint<V1.Document.PutRequest, V1.Document.PutReply>(stub.put.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Document.PutRequest, V1.Document.PutReply>(stub.put.bind(stub)))
       ),
       delete: requestLogger("document.delete")(
-        secureEndpoint<V1.Document.DeleteRequest, V1.Document.DeleteReply>(stub.delete.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Document.DeleteRequest, V1.Document.DeleteReply>(stub.delete.bind(stub)))
       ),
 
       // `putStream` is a bit different. See the comments on the helper functions down below.
@@ -60,7 +60,7 @@ export function makeAsyncResultApiWrapper(stub: V1.APIClient, profile: StashProf
     },
     query: {
       query: requestLogger("query.query")(
-        secureEndpoint<V1.Query.QueryRequest, V1.Query.QueryReply>(stub.query.bind(stub))
+        retryOnConnectionReset(secureEndpoint<V1.Query.QueryRequest, V1.Query.QueryReply>(stub.query.bind(stub)))
       ),
     },
   }
@@ -102,6 +102,20 @@ const requestLogger = (endpoint: string) => {
         fn(request)
   }
 }
+
+const retryOnConnectionReset = <Request, Response>(
+  fn: (request: Request) => AsyncResult<Response, GRPCError>
+): ((request: Request) => AsyncResult<Response, GRPCError>) =>
+  async request => {
+    const response = await fn(request)
+    if (!response.ok) {
+      if (response.error.tag === 'GRPCError' && response.error.message?.includes("ECONNRESET")) {
+        // We simply retry the request (just once)
+        return await fn(request)
+      }
+    }
+    return response
+  }
 
 // Type of a gRPC endpoint that accepts two arguments: the request & metadata
 type EndpointFn2<Request, Response> = (request: Request, metadata: Metadata) => AsyncResult<Response, GRPCError>
@@ -169,14 +183,14 @@ type PutStreamResult = {
 // It's different enough that we have to special-case the handling of `putStream`.
 const authenticatePutStream =
   (credsGenerator: Memo<OauthAuthenticationInfo>) =>
-  (fn: V1.APIClient["putStream"]): (() => AsyncResult<PutStreamResult, GRPCError | AuthenticationFailure>) =>
-  async () => {
-    const authDetails = await credsGenerator.freshValue()
-    if (authDetails.ok) {
-      const [reply, callback] = capturePutStreamReply()
-      const stream = fn(grpcMetadata(authDetails.value.accessToken), callback)
-      return Ok({ stream, reply })
-    } else {
-      return Err(GRPCError(authDetails.error))
-    }
-  }
+    (fn: V1.APIClient["putStream"]): (() => AsyncResult<PutStreamResult, GRPCError | AuthenticationFailure>) =>
+      async () => {
+        const authDetails = await credsGenerator.freshValue()
+        if (authDetails.ok) {
+          const [reply, callback] = capturePutStreamReply()
+          const stream = fn(grpcMetadata(authDetails.value.accessToken), callback)
+          return Ok({ stream, reply })
+        } else {
+          return Err(GRPCError(authDetails.error))
+        }
+      }
