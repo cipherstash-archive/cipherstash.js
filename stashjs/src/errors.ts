@@ -52,6 +52,8 @@ export type NativeError = {
   readonly cause: JSError
   readonly caller: CallerInfo
 }
+export const NativeError: (cause: NativeError["cause"]) => NativeError = cause =>
+  addCaller({ tag: "NativeError", cause })
 
 /**
  * A StashJSError is an error that is not backed by a native JavaScript error (or
