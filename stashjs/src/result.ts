@@ -340,19 +340,20 @@ export async function fromPromise<V, E>(
   }
 }
 
-export function fromPromiseFn1<V, E, T>(
-  fn: (arg: T) => Promise<V>,
-  errorConstructor: (rejection: any) => E
-): (arg: T) => AsyncResult<V, E> {
-  return async (arg: T) => {
-    try {
-      return Ok(await fn(arg))
-    } catch (err: any) {
-      return Err(errorConstructor(err))
-    }
-  }
-}
-
+/**
+ * Converts a 2-argument function that returns a promise, into a 2-argument
+ * function that returns an AsyncResult.
+ *
+ * WARNING: you *must* ensure that the error constructor passed in will produce
+ * errors of the type you want. It is impossible to correctly type this function
+ * due to the error provided by a try-catch always having type `any` or
+ * `unknown`. This in turn forces us to use `any` for the type of the
+ * `errorConstructor` argument.
+ *
+ * @param fn the function that returns a promise
+ * @param errorConstructor an error constuctor
+ * @returns a 2-argument function that returns an AsyncResult
+ */
 export function fromPromiseFn2<V, E, T1, T2>(
   fn: (arg1: T1, arg2: T2) => Promise<V>,
   errorConstructor: (rejection: any) => E
@@ -360,7 +361,7 @@ export function fromPromiseFn2<V, E, T1, T2>(
   return async (arg1: T1, arg2: T2) => {
     try {
       return Ok(await fn(arg1, arg2))
-    } catch (err: any) {
+    } catch (err) {
       return Err(errorConstructor(err))
     }
   }
