@@ -60,11 +60,7 @@ export namespace V1  {
   export const connect = function(host: string, port: number = 443, options: ConnectOptions) {
     // TODO: ensure that the SSL cert is verified
     return new APIProto.GRPC.V1.API(`${host}:${port}`, gRPC.credentials.createSsl(), {
-      "grpc.secondary_user_agent": options?.userAgent,
-      "grpc.keepalive_timeout_ms": 10000,
-      "grpc.keepalive_time_ms": 20000,
-      "grpc.http2.max_pings_without_data": 0,
-      "grpc.keepalive_permit_without_calls": 1
+      "grpc.secondary_user_agent": options?.userAgent
     })
   }
 
