@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.2]
+## Changed
+
+- Remove keep alive timeout config from grpc-js settings
+
+## [0.3.3]
 
 ## Changed
 
