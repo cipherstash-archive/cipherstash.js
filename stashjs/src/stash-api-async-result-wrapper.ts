@@ -2,8 +2,9 @@ import { V1 } from "@cipherstash/stashjs-grpc"
 import { OauthAuthenticationInfo } from "./auth/oauth-utils"
 import { ClientUnaryCall, ClientWritableStream, Metadata, ServiceError } from "@grpc/grpc-js"
 import { promisify } from "util"
+import { compose } from "./fp-utils"
 import { AsyncResult, Err, fromPromise, fromPromiseFn2, Ok } from "./result"
-import { AuthenticationFailure, GRPCError } from "./errors"
+import { AuthenticationFailure, GRPCError, NativeError } from "./errors"
 import { grpcMetadata } from "./auth/grpc-metadata"
 import { stringify } from "./utils"
 import { Memo } from "./auth/auth-strategy"
@@ -78,6 +79,9 @@ export function makeAsyncResultApiWrapper(stub: V1.APIClient, profile: StashProf
   }
 }
 
+// Helper to wrap a NativeError inside a GRPCError.
+const WrappedNativeError = compose(GRPCError, NativeError)
+
 const secureWith =
   (credsGenerator: Memo<OauthAuthenticationInfo>) =>
   <Req, Reply>(
@@ -87,7 +91,9 @@ const secureWith =
       callback: (error?: ServiceError, result?: Reply | undefined) => void
     ) => ClientUnaryCall
   ) =>
-    makeAuthenticator2(credsGenerator)(fromPromiseFn2(promisify<Req, Metadata, Reply | undefined>(fn), GRPCError))
+    makeAuthenticator2(credsGenerator)(
+      fromPromiseFn2(promisify<Req, Metadata, Reply | undefined>(fn), WrappedNativeError)
+    )
 
 const requestLogger = (endpoint: string) => {
   if (isDebugLoggingEnabled()) {
@@ -122,7 +128,10 @@ const retryOnConnectionReset =
   async request => {
     const response = await fn(request)
     if (!response.ok) {
-      if (response.error.tag === "GRPCError" && response.error.message?.includes("ECONNRESET")) {
+      // NOTE: This `cause.cause.message` thing is terrible, but because a
+      // GRPCError wraps a NativeError which in turn wraps a JSError we have to
+      // unpack it this way.
+      if (response.error.tag === "GRPCError" && response.error.cause?.cause?.message?.includes("ECONNRESET")) {
         // We simply retry the request (just once)
         return await fn(request)
       }
