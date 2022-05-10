@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Console access key auth strategy
 
+## Fixed
+
+- When StashJS is used in a situation where an idle connection is held open for a period
+  longer than the max idle connection time ECONNRESET errors would be raised. StashJS now
+  will retry the request one time which causes grpc-js to re-connect.
+- Bug where UnknownError would be reported because a GRPCError was being instantiated with
+  a statically-unknown type due to use of `any`.
+
 ## [0.4.0]
 
 ## Fixed
