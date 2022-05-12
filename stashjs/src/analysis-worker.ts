@@ -2,18 +2,18 @@ import { parentPort, workerData, isMainThread } from "worker_threads"
 import { CipherSuite, makeCipherSuite, makeNodeCachingMaterialsManager } from "./crypto/cipher"
 import { CollectionSchema } from "./collection-schema"
 import { AnalysisConfig, AnalysisResult } from "./analysis-runner"
-import { buildRecordAnalyzer, RecordAnalyzer } from "./analyzer"
 import { Mappings, MappingsMeta, StashRecord } from "./dsl/mappings-dsl"
-import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { idBufferToString, maybeGenerateId } from "./utils"
 import { Memo } from "./auth/auth-strategy"
 import { AsyncResult, Err, Ok } from "./result"
 import { AnalysisFailure } from "./errors"
 import { StashProfile } from "./stash-profile"
 import { logger } from "./logger"
+import { RecordIndexer } from "@cipherstash/stash-rs"
+import { createRecordIndexer } from "./analyzer"
 
 if (!isMainThread) {
-  const recordAnalyzerCache: { [collectionName: string]: any } = {}
+  const recordIndexerCache: { [collectionName: string]: RecordIndexer } = {}
   let cipherMemo: Memo<CipherSuite>
 
   async function performAnalysis(
@@ -29,10 +29,9 @@ if (!isMainThread) {
       })
     }
 
-    const analyzer = getRecordAnalyzer(config.schema)
     const recordWithId = maybeGenerateId(record)
-    const analyzedRecord = analyzer(recordWithId)
-    const vectors = convertAnalyzedRecordToVectors(analyzedRecord)
+    const indexer = getRecordIndexer(config.schema)
+    const vectors = indexer.encryptRecord(recordWithId)
 
     const cipher = await cipherMemo.freshValue()
     if (cipher.ok) {
@@ -55,16 +54,16 @@ if (!isMainThread) {
     }
   }
 
-  function getRecordAnalyzer<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>>(
+  function getRecordIndexer<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>>(
     schema: CollectionSchema<R, M, MM>
-  ): RecordAnalyzer<R, M, MM> {
-    let analyzer = recordAnalyzerCache[schema.name]
-    if (analyzer) {
-      return analyzer
+  ): RecordIndexer {
+    let indexer = recordIndexerCache[schema.name]
+    if (indexer) {
+      return indexer
     } else {
-      analyzer = buildRecordAnalyzer<R, M, MM>(schema)
-      recordAnalyzerCache[schema.name] = analyzer
-      return analyzer
+      indexer = createRecordIndexer(schema)
+      recordIndexerCache[schema.name] = indexer
+      return indexer
     }
   }
 

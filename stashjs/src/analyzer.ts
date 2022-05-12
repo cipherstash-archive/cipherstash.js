@@ -3,19 +3,11 @@ import { CollectionSchema } from "./collection-schema"
 import { TokenFilter, Tokenizer } from "./dsl/filters-and-tokenizers-dsl"
 import {
   DynamicMatchMapping,
-  ExactMappingFieldType,
-  isDynamicMatchMapping,
-  isExactMapping,
-  isMatchMapping,
-  isRangeMapping,
-  isFieldDynamicMatchMapping,
-  MappableFieldType,
   Mappings,
   MappingsMeta,
   MatchMapping,
   MatchMappingFieldType,
   MatchOptions,
-  RangeMappingFieldType,
   FieldDynamicMatchMapping,
   StashRecord,
 } from "./dsl/mappings-dsl"
@@ -36,7 +28,6 @@ import {
   FieldDynamicMatchCondition,
 } from "./dsl/query-dsl"
 import { encodeTermType } from "./encoders/term-encoder"
-import { extractStringFields, extractStringFieldsWithPath } from "./string-field-extractor"
 import {
   TextProcessor,
   textPipeline,
@@ -45,122 +36,28 @@ import {
   downcaseFilter,
   upcaseFilter,
 } from "./text-processors"
-import { FieldOfType, FieldType, unreachable } from "./type-utils"
+import { FieldOfType, unreachable } from "./type-utils"
 import { normalizeId } from "./utils"
-import { ORE, OrePlainText } from "@cipherstash/ore-rs"
+import { ORE, OrePlainText, RecordIndexer } from "@cipherstash/stash-rs"
 import { TermType } from "./record-type-definition"
-import { Nothing, Option, Something, unwrapArray } from "./option"
 
-/**
- * Builds and returns a function that will analyze a record using the mapping
- * configuration for a collection.
- *
- * The basic premise is that some of the work can be performed upfront just once
- * (e.g. assembling the text processing pipelines) instead of for every record
- * that is processed.
- *
- * @param schema R the CollectionSchema from which to build an analyzer
- * @returns the analyzer function that is built
- */
-export function buildRecordAnalyzer<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>>(
+export function createRecordIndexer<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>>(
   schema: CollectionSchema<R, M, MM>
-): RecordAnalyzer<R, M, MM> {
-  const mappingAnalyzers: MappingAnalyzers<R> = Object.entries(schema.mappings).map(([indexName, mapping]) => {
-    const meta = schema.meta[indexName]!
-
-    // FIXME: handle missing data in records
-
-    if (isExactMapping<R, FieldOfType<R, ExactMappingFieldType>>(mapping)) {
-      const fieldExtractor = buildFieldExtractor(mapping.field)
-      const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const exactIndexer = indexOneTerm(encrypt, mapping.fieldType)
-      return (record: R) => {
-        const term = fieldExtractor(record)
-        if (typeof term !== "undefined" && term !== null) {
-          const indexed = exactIndexer(term)
-          return Something({
-            indexId: meta.$indexId,
-            encryptedTerms: [indexed],
-          })
-        } else {
-          return Nothing
-        }
-      }
-    }
-
-    if (isRangeMapping<R, FieldOfType<R, RangeMappingFieldType>>(mapping)) {
-      const fieldExtractor = buildFieldExtractor(mapping.field)
-      const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const rangeIndexer = indexOneTerm(encrypt, mapping.fieldType)
-      return (record: R) => {
-        const term = fieldExtractor(record)
-        if (typeof term !== "undefined" && term !== null) {
-          const indexed = rangeIndexer(term)
-          return Something({
-            indexId: meta.$indexId,
-            encryptedTerms: [indexed],
-          })
-        } else {
-          return Nothing
-        }
-      }
-    }
-
-    if (isMatchMapping<R, FieldOfType<R, MatchMappingFieldType>>(mapping)) {
-      const fieldExtractors = mapping.fields.map(f => buildFieldExtractor(f))
-      const pipeline = buildTextProcessingPipeline(mapping)
-      const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexOneTerm(encrypt, "string")
-      return (record: R) =>
-        Something({
-          indexId: meta.$indexId,
-          encryptedTerms: pipeline(fieldExtractors.map(fe => fe(record)).filter(t => !!t)).map(matchIndexer),
-        })
-    }
-
-    if (isDynamicMatchMapping(mapping)) {
-      const pipeline = buildTextProcessingPipeline(mapping)
-      const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexOneTerm(encrypt, "string")
-      return (record: R) =>
-        Something({
-          indexId: meta.$indexId,
-          encryptedTerms: pipeline(extractStringFields(record)).map(matchIndexer),
-        })
-    }
-
-    if (isFieldDynamicMatchMapping(mapping)) {
-      const pipeline = buildTextProcessingPipeline(mapping)
-      const { encrypt } = ORE.init(meta.$prfKey, meta.$prpKey)
-      const matchIndexer = indexOneTerm(encrypt, "string")
-      return (record: R) =>
-        Something({
-          indexId: meta.$indexId,
-          encryptedTerms: extractStringFieldsWithPath(record)
-            .flatMap(([f, v]) => {
-              return pipeline([v]).map(t => `${f}:${t}`)
-            })
-            .map(matchIndexer),
-        })
-    }
-
-    return unreachable(`Internal error: unreachable code reached. Unknown mapping: ${JSON.stringify(mapping)}`)
-  })
-
-  return (record: R) =>
-    ({
-      recordId: record.id,
-      indexEntries: unwrapArray(mappingAnalyzers.map(analyzer => analyzer(record))).reduce(
-        (acc, { indexId, encryptedTerms }) => {
-          if (encryptedTerms.length > 0) {
-            return Object.assign(acc, { [indexId]: encryptedTerms })
-          } else {
-            return acc
-          }
+): RecordIndexer {
+  return RecordIndexer.init({
+    type: schema.recordType,
+    indexes: Object.fromEntries(
+      Object.entries(schema.mappings).map(([key, mapping]) => [
+        key,
+        {
+          mapping,
+          prp_key: schema.meta[key]!.$prpKey,
+          prf_key: schema.meta[key]!.$prfKey,
+          index_id: Buffer.prototype.slice.call(normalizeId(schema.meta[key]!.$indexId)),
         },
-        {}
-      ),
-    } as AnalyzedRecord<R, M, MM>)
+      ])
+    ),
+  })
 }
 
 export function buildQueryAnalyzer<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>>(
@@ -281,19 +178,6 @@ export type AnalyzedQuery = {
   constraints: Array<V1.Query.Constraint>
 }
 
-const buildFieldExtractor: <R extends { [key: string]: any }, F extends FieldOfType<R, MappableFieldType>>(
-  field: F
-) => (record: any) => FieldType<R, F> = field => {
-  const path = field.split(".")
-  return record => {
-    let current = record
-    path.forEach(part => {
-      current = current?.[part]
-    })
-    return current
-  }
-}
-
 type RangeMinMaxHelper = {
   [op in RangeOperator]: <R extends StashRecord, M extends Mappings<R>, N extends Extract<keyof M, string>>(
     condition: RangeCondition<R, M, N> & { op: op }
@@ -318,12 +202,5 @@ const rangeMinMax: RangeMinMaxHelper = {
   gte: ({ value }) => ORE.encodeRangeGte(value),
   eq: ({ value }) => ORE.encodeRangeEq(value),
 }
-
-type MappingAnalyzers<R> = Array<
-  (record: R) => Option<{
-    indexId: string
-    encryptedTerms: Array<Array<Buffer>>
-  }>
->
 
 type EncryptFn = (input: OrePlainText) => Buffer
