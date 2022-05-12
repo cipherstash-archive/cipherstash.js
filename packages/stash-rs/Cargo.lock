@@ -58,12 +58,66 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "ciborium"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0c137568cc60b904a7724001b35ce2630fd00d5d84805fbb608ab89509d788f"
+dependencies = [
+ "ciborium-io",
+ "ciborium-ll",
+ "serde",
+]
+
+[[package]]
+name = "ciborium-io"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "346de753af073cc87b52b2083a506b38ac176a44cfb05497b622e27be899b369"
+
+[[package]]
+name = "ciborium-ll"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "213030a2b5a4e0c0892b6652260cf6ccac84827b83a85a534e178e3906c4cf1b"
+dependencies = [
+ "ciborium-io",
+ "half",
+]
+
+[[package]]
 name = "cipher"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7ee52072ec15386f770805afd189a01c8841be8696bed250fa2f13c4c0d6dfb7"
 dependencies = [
  "generic-array",
+]
+
+[[package]]
+name = "cipherstash-client"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f15019e4dfa895578767bf6c8a99920f3ba3c8a564af055911545a7dd1523936"
+dependencies = [
+ "ciborium",
+ "conv",
+ "hex-literal",
+ "minicbor",
+ "ore-encoding-rs",
+ "ore-rs",
+ "serde",
+ "serde_bytes",
+ "thiserror",
+ "unicode-normalization",
+]
+
+[[package]]
+name = "conv"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "78ff10625fd0ac447827aa30ea8b861fead473bb60aeb73af6c1c58caf0d1299"
+dependencies = [
+ "custom_derive",
 ]
 
 [[package]]
@@ -80,6 +134,12 @@ name = "cslice"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "697c714f50560202b1f4e2e09cd50a421881c83e9025db75d15f276616f04f40"
+
+[[package]]
+name = "custom_derive"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef8ae57c4978a2acd8b869ce6b9ca1dfe817bff704c220209fdef2c0b75a01b9"
 
 [[package]]
 name = "env_logger"
@@ -119,6 +179,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "half"
+version = "1.8.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eabb4a44450da02c90444cf74558da904edde8fb4e9035a9a6a4e15445af0bd7"
+
+[[package]]
 name = "hex-literal"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -154,6 +220,15 @@ name = "memchr"
 version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
+
+[[package]]
+name = "minicbor"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b419e66bd98ccf5824dd4b8f4141f7431d1d07733c3e13c946278204a437d2b"
+dependencies = [
+ "half",
+]
 
 [[package]]
 name = "neon"
@@ -280,8 +355,9 @@ checksum = "624a8340c38c1b80fd549087862da4ba43e08858af025b236e509b6649fc13d5"
 
 [[package]]
 name = "ore-encoding-rs"
-version = "0.23.2"
-source = "git+https://github.com/cipherstash/ore_encoding.rs?tag=0.23.2#d704ca9cae6f9236357e9b320e13b82f0d8f4612"
+version = "0.23.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "828aa5f4f8eb04ce2ddf4b34c166ada44d8b1718191f8f5c863cf57143fd16c2"
 dependencies = [
  "num",
  "siphasher",
@@ -289,8 +365,9 @@ dependencies = [
 
 [[package]]
 name = "ore-rs"
-version = "0.1.0"
-source = "git+https://github.com/cipherstash/ore.rs#f7abeebede9ce890ed579c77078c6452ad6e679a"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3b5f6efbcad962a82bd2ec10cd2d2d32f2bc9e8bfc82a7dee6a88a66c3453136"
 dependencies = [
  "aes",
  "block-modes",
@@ -299,18 +376,6 @@ dependencies = [
  "num",
  "rand 0.3.23",
  "rand_chacha",
-]
-
-[[package]]
-name = "ore-rs"
-version = "0.4.6"
-dependencies = [
- "hex-literal",
- "neon",
- "ore-encoding-rs",
- "ore-rs 0.1.0",
- "quickcheck",
- "unicode-normalization",
 ]
 
 [[package]]
@@ -456,6 +521,35 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
+name = "serde"
+version = "1.0.137"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61ea8d54c77f8315140a05f4c7237403bf38b72704d031543aa1d16abbf517d1"
+dependencies = [
+ "serde_derive",
+]
+
+[[package]]
+name = "serde_bytes"
+version = "0.11.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "212e73464ebcde48d723aa02eb270ba62eff38a9b732df31f33f1b4e145f3a54"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "serde_derive"
+version = "1.0.137"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f26faba0c3959972377d3b2d306ee9f71faee9714294e41bb777f83f88578be"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "siphasher"
 version = "0.3.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -468,14 +562,47 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2dd574626839106c320a323308629dcb1acfc96e32a8cba364ddc61ac23ee83"
 
 [[package]]
+name = "stash-rs"
+version = "0.4.6"
+dependencies = [
+ "cipherstash-client",
+ "hex-literal",
+ "neon",
+ "ore-encoding-rs",
+ "ore-rs",
+ "quickcheck",
+ "unicode-normalization",
+]
+
+[[package]]
 name = "syn"
-version = "1.0.86"
+version = "1.0.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a65b3f4ffa0092e9887669db0eae07941f023991ab58ea44da8fe8e2d511c6b"
+checksum = "04066589568b72ec65f42d65a1a52436e954b168773148893c020269563decf2"
 dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
+]
+
+[[package]]
+name = "thiserror"
+version = "1.0.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd829fe32373d27f76265620b5309d0340cb8550f523c1dda251d6298069069a"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0396bc89e626244658bef819e22d0cc459e795a5ebe878e6ec336d1674a8d79a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

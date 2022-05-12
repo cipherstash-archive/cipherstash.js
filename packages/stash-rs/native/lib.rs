@@ -12,16 +12,46 @@ use ore_encoding_rs::siphash;
 use unicode_normalization::UnicodeNormalization;
 use std::cell::RefCell;
 use std::cmp::Ordering;
+use cipherstash_client::indexer::RecordIndexer;
 
 struct Cipher(OREAES128);
+struct Indexer(RecordIndexer);
 
 /* Note that this will Drop the Cipher at which point Zeroize will be called
  * from within the ore.rs crate */
 impl Finalize for Cipher {}
 
-type BoxedCipher = JsBox<RefCell<Cipher>>;
+impl Finalize for Indexer {}
 
-fn init(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
+type BoxedCipher = JsBox<RefCell<Cipher>>;
+type BoxedRecordIndexer = JsBox<RefCell<Indexer>>;
+
+fn init_indexer(mut cx: FunctionContext) -> JsResult<BoxedRecordIndexer> {
+    let cbor_schema = cx.argument::<JsBuffer>(0)?;
+
+    let indexer = cx
+        .borrow(&cbor_schema, |buf| {
+            RecordIndexer::decode_from_cbor(buf.as_slice())
+        })
+        .or_else(|e| cx.throw_error(e.to_string()))?;
+
+    Ok(JsBox::new(&mut cx, RefCell::new(Indexer(indexer))))
+}
+
+fn encrypt_record(mut cx: FunctionContext) -> JsResult<JsBuffer> {
+    let indexer = cx.argument::<BoxedRecordIndexer>(0)?;
+    let cbor_record = cx.argument::<JsBuffer>(1)?;
+
+    let indexer = &mut *indexer.borrow_mut();
+
+    let term_vector_buf = cx
+        .borrow(&cbor_record, |buf| indexer.0.encrypt_cbor(&buf.as_slice()))
+        .or_else(|e| cx.throw_error(e.to_string()))?;
+
+    Ok(JsBuffer::external(&mut cx, term_vector_buf))
+}
+
+fn init_cipher(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
     let arg0 = cx.argument::<JsBuffer>(0)?;
     let arg1 = cx.argument::<JsBuffer>(1)?;
     let seed = hex!("00010203 04050607");
@@ -235,9 +265,12 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("encodeRangeLte", encode_range_lte)?;
     cx.export_function("encodeRangeBetween", encode_range_between)?;
 
-    cx.export_function("initCipher", init)?;
+    cx.export_function("initCipher", init_cipher)?;
     cx.export_function("encrypt", encrypt)?;
     cx.export_function("encryptLeft", encrypt_left)?;
+
+    cx.export_function("initIndexer", init_indexer)?;
+    cx.export_function("encryptRecord", encrypt_record)?;
 
     cx.export_function("compare", compare)?;
     Ok(())

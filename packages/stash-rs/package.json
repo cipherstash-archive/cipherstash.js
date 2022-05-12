@@ -1,7 +1,7 @@
 {
-  "name": "@cipherstash/ore-rs",
-  "version": "0.5.1",
-  "description": "Node bindings for ore.rs",
+  "name": "@cipherstash/stash-rs",
+  "version": "0.1.0",
+  "description": "Node bindings for the CipherStash Rust client.",
   "main": "dist/index.js",
   "scripts": {
     "build": "npx cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics && npx tsc",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cipherstash/node-ore-rs.git"
+    "url": "git+https://github.com/cipherstash/node-stash-rs.git"
   },
   "publishConfig": {
     "access": "public",
@@ -40,7 +40,8 @@
   ],
   "license": "GPLv3",
   "dependencies": {
-    "cargo-cp-artifact": "^0.1"
+    "cargo-cp-artifact": "^0.1",
+    "cbor": "^8.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",
@@ -59,6 +60,7 @@
       "d.ts",
       "json"
     ],
+    "testEnvironment": "node",
     "testMatch": [
       "**/*.test.ts"
     ]
