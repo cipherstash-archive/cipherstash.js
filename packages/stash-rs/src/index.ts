@@ -20,6 +20,8 @@ export type CipherText = Buffer
 export type OrePlainText = Buffer
 export type OreRange = { min: OrePlainText, max: OrePlainText }
 
+export * from './record-indexer';
+
 export type ORECipher = {
   /*
    * Encrypt the given `PlainText` outputting a "full" CipherText (i.e. a
