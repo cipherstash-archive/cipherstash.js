@@ -1,5 +1,5 @@
 [package]
-name = "ore-rs"
+name = "stash-rs"
 version = "0.4.6"
 description = "Node bindings for ore.rs"
 license = "ISC"
@@ -13,8 +13,9 @@ path = "native/lib.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ore-rs = { git = "https://github.com/cipherstash/ore.rs" }
-ore-encoding-rs = { git = "https://github.com/cipherstash/ore_encoding.rs", tag = "0.23.2" }
+cipherstash-client = "0.1.0"
+ore-rs = "0.2.0"
+ore-encoding-rs = "0.23.2"
 hex-literal = "0.3.2"
 unicode-normalization = "0.1.19"
 
