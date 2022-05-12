@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## Changed
+
+- Updated record indexing to use `@cipherstash/stash-rs`
+
 ## [0.4.2]
 
 ## Added
