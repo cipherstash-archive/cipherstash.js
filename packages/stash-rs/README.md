@@ -1,12 +1,12 @@
-# ore-rs
+# @cipherstash/stash-rs
 
-**ore-rs:** Node bindings for [ore.rs](https://github.com/cipherstash/ore.rs).
+This project includes Node bindings for [ore.rs](https://github.com/cipherstash/ore.rs) and [cipherstash-client](https://github.com/cipherstash/cipherstash-rs).
 
 This project was bootstrapped by [create-neon](https://www.npmjs.com/package/create-neon).
 
-## Installing ore-rs
+## Installing stash-rs
 
-Installing ore-rs requires a [supported version of Node and Rust](https://github.com/neon-bindings/neon#platform-support).
+Installing stash-rs requires a [supported version of Node and Rust](https://github.com/neon-bindings/neon#platform-support).
 
 You can install the project with npm. In the project directory, run:
 
@@ -16,7 +16,7 @@ $ npm install
 
 This fully installs the project, including installing any dependencies and running the build.
 
-## Building ore-rs
+## Building stash-rs
 
 If you have already installed the project and only want to run the build, run:
 
@@ -29,15 +29,14 @@ This command performs 2 steps:
 1. It uses the [cargo-cp-artifact](https://github.com/neon-bindings/cargo-cp-artifact) utility to run the Rust build and copy the built library into `./index.node`.
 2. It compiles the TypeScript code (in `src/index.ts`) with the output being stored in `dist`
 
-## Exploring ore-rs
+## Exploring stash-rs
 
-After building ore-rs, you can explore its exports at the TS Node REPL:
+After building stash-rs, you can explore its exports at the TS Node REPL.
 
 ```sh
 $ npm install
 $ npx ts-node
-> const ORE = require('.')
-> import { ORE } from '@cipherstash/ore-rs'
+> import { ORE } from '@cipherstash/stash-rs'
 > let k1 = Buffer.from("1216a6700004fe46c5c07166025e681e", "hex")
 > let k2 = Buffer.from("3f13a569d5d2c6ce8d2a85cb9e347804", "hex")
 > let cipher = new ORE(k1, k2)
@@ -45,7 +44,9 @@ $ npx ts-node
 > cipher.encrypt(ORE.encodeNumber(100))
 ```
 
-## Comparison
+## ORE
+
+### Comparison
 
 To compare two encrypted ciphertext values, you can use the `ORE.compare` function which returns -1, 0 or 1 if the first
 operand is less-than, equal-to or greater than the second operand respectively.
@@ -58,11 +59,11 @@ let b = ore.encrypt(ORE.encodeNumber(1560))
 ORE.compare(a, b) // => -1
 ```
 
-## Data Types
+### Data Types
 
-`ore-rs` can encrypt the following types:
+`ORE` can encrypt the following types:
 
-### Number
+#### Number
 
 JavaScript numbers are 64-bit floats which the underlying ORE library converts into an order-preserving integer. The
 underlying value no longer represents the source number (unlike `f64::from(i)`) but guarantees ordering is preserved.
@@ -74,7 +75,7 @@ cipher.encrypt(ORE.encodeNumber(3.14159))
 cipher.encrypt(ORE.encodeNumber(-100))
 ```
 
-### String
+#### String
 
 `ORE.encodeString` performs unicode normalisation (NFC) on the input string, then hashes the result using siphash.
 The resulting number can be encrypted. However, because strings are hashed only equality comparisons make sense.
@@ -120,7 +121,7 @@ Runs the unit tests in Rust by calling `cargo test` and in TypeScript (Jest) by 
 The directory structure of this project is:
 
 ```
-ore-rs/
+node-stash-rs/
 ├── Cargo.toml
 ├── README.md
 ├── index.node
