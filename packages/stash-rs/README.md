@@ -86,6 +86,49 @@ let s2 = cipher.encrypt(ORE.encodeString("Hello from CipherStash!")) // OK
 ORE.compare(s1, s2) // => 0
 ```
 
+## RecordIndexer
+
+The record indexer can perform a variety of ORE operations on JavaScript objects based on a [specified schema](https://docs.cipherstash.com/reference/schema-definition.html).
+The "terms" returned by the indexer can be used to create a searchable encrypted database index like [CipherStash](https://cipherstash.com).
+
+### Encrypt
+
+```typescript
+const indexer = RecordIndexer.init({
+  type: {
+    title: "string",
+    runningTime: "uint64"
+  },
+  indexes: {
+    exactTitle: {
+      mapping: { kind: "exact", field: "title" },
+      index_id: makeId(),
+      prf_key: <Buffer ..>
+      prp_key: <Buffer ..>
+    },
+    title: {
+      mapping: {
+        kind: "match",
+        fields: ["title"],
+        tokenFilters: [{ kind: "downcase" }],
+        tokenizer: { kind: "ngram", tokenLength: 3 }
+      },
+      index_id: makeId(),
+      prf_key: <Buffer ..>
+      prp_key: <Buffer ..>
+    }
+  }
+})
+
+// The returned terms contain the ORE ciphertext for the "match" and "exact" indexes defined
+// in the schema.
+const terms = indexer.encrypt({
+  id: makeId(),
+  title: "Great movie!",
+  runningTime: 120
+})
+```
+
 ## Available Scripts
 
 In the project directory, you can run:
