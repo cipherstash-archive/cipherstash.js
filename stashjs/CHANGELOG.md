@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 
 - Updated record indexing to use `@cipherstash/stash-rs`
+- Fixed auth strategy token refresh logic
 
 ## [0.4.2]
 
