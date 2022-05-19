@@ -1,4 +1,4 @@
-import { OauthAuthenticationInfo, stashOauth } from "./oauth-utils"
+import { isExpired, OauthAuthenticationInfo, stashOauth } from "./oauth-utils"
 import { AuthStrategy } from "./auth-strategy"
 import { Auth0Machine2Machine, StashConfiguration } from "../stash-config"
 import { AuthenticationFailure } from "../errors"
@@ -29,7 +29,7 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy<OauthAuthentic
   }
 
   private needsRefresh(): boolean {
-    return Date.now() / 1000 - EXPIRY_BUFFER_SECONDS > this.oauthCreds.expiry
+    return isExpired(this.oauthCreds.expiry, EXPIRY_BUFFER_MILLIS)
   }
 
   private async acquireAccessToken(): AsyncResult<void, AuthenticationFailure> {
@@ -50,5 +50,5 @@ export class Auth0Machine2MachineStrategy implements AuthStrategy<OauthAuthentic
 }
 
 /* Refresh tokens before the expiry to avoid API errors due
- * to race conditions. Expiry buffer is in seconds */
-const EXPIRY_BUFFER_SECONDS = 20
+ * to race conditions. Expiry buffer is in milliseconds */
+const EXPIRY_BUFFER_MILLIS = 20000
