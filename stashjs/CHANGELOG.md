@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Revert Migrate indexing to use stash-rs (#961)
+
 ## [0.4.3]
 
 ## Changed

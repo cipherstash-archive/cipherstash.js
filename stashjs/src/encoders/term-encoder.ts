@@ -1,4 +1,4 @@
-import { ORE, OrePlainText } from "@cipherstash/stash-rs"
+import { ORE, OrePlainText } from "@cipherstash/ore-rs"
 import { unreachable } from "../type-utils"
 import { utcDateWithResolution } from "./date-encoding-helpers"
 import { TermType } from "../record-type-definition"
