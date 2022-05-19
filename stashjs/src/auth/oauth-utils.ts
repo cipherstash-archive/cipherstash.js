@@ -232,3 +232,7 @@ function makeOauthClient(idpHost: string): AxiosInstance {
 }
 
 export const stashOauth = new StashOauth()
+
+export function isExpired(expiryBufferSecs: number, expirySecs: number, nowSecs: number = Date.now() / 1000) {
+  return nowSecs + expiryBufferSecs >= expirySecs
+}
