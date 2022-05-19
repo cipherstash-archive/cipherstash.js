@@ -1,5 +1,5 @@
 import { AuthStrategy } from "./auth-strategy"
-import { stashOauth, OauthAuthenticationInfo } from "./oauth-utils"
+import { stashOauth, OauthAuthenticationInfo, isExpired } from "./oauth-utils"
 import { Auth0DeviceCode, StashConfiguration } from "../stash-config"
 import * as open from "open"
 import { AsyncResult, Ok, Err } from "../result"
@@ -41,7 +41,7 @@ export class Auth0DeviceCodeStrategy implements AuthStrategy<OauthAuthentication
   }
 
   private needsRefresh(): boolean {
-    return Date.now() / 1000 - EXPIRY_BUFFER_SECONDS > this.oauthCreds.expiry
+    return isExpired(EXPIRY_BUFFER_SECONDS, this.oauthCreds.expiry)
   }
 
   private async readCachedToken() {

@@ -233,6 +233,8 @@ function makeOauthClient(idpHost: string): AxiosInstance {
 
 export const stashOauth = new StashOauth()
 
+// The expiry (exp) and iat on a JWT is in seconds since epoch.
+// This comes from the standard https://www.rfc-editor.org/rfc/rfc7519#section-2
 export function isExpired(expiryBufferSecs: number, expirySecs: number, nowSecs: number = Date.now() / 1000) {
   return nowSecs + expiryBufferSecs >= expirySecs
 }
