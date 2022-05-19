@@ -1,4 +1,4 @@
-import { OauthAuthenticationInfo, stashOauth } from "./oauth-utils"
+import { isExpired, OauthAuthenticationInfo, stashOauth } from "./oauth-utils"
 import { AuthStrategy } from "./auth-strategy"
 import { ConsoleAccessKey, StashConfiguration } from "../stash-config"
 import { AuthenticationFailure } from "../errors"
@@ -35,7 +35,7 @@ export class ConsoleAccessKeyStrategy implements AuthStrategy<OauthAuthenticatio
   }
 
   private needsRefresh(): boolean {
-    return Date.now() / 1000 - EXPIRY_BUFFER_SECONDS > this.oauthCreds.expiry
+    return isExpired(EXPIRY_BUFFER_SECONDS, this.oauthCreds.expiry)
   }
 
   private async acquireAccessToken(): AsyncResult<void, AuthenticationFailure> {

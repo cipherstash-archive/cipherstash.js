@@ -1,4 +1,4 @@
-import { OauthAuthenticationInfo } from "./oauth-utils"
+import { isExpired, OauthAuthenticationInfo } from "./oauth-utils"
 import { AuthStrategy } from "./auth-strategy"
 import { OAuthCallback, StashConfiguration } from "../stash-config"
 import { AuthenticationFailure, OAuthFailure, PlainError } from "../errors"
@@ -42,6 +42,6 @@ export class OAuthCallbackStrategy implements AuthStrategy<OauthAuthenticationIn
   }
 
   private needsRefresh(): boolean {
-    return Date.now() / 1000 - EXPIRY_BUFFER_SECONDS > this.expiry
+    return isExpired(EXPIRY_BUFFER_SECONDS, this.expiry)
   }
 }
