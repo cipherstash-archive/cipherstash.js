@@ -7,13 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.4.4]
+
+## Changed
+
 - Revert Migrate indexing to use stash-rs (#961)
+- Revert auth strategy token refresh logic
 
 ## [0.4.3]
 
 ## Changed
 
 - Updated record indexing to use `@cipherstash/stash-rs`
+- Updated auth strategy token refresh logic
 
 ## [0.4.2]
 
