@@ -1,5 +1,5 @@
 import { AssumeRoleWithWebIdentityCommandOutput, STS } from "@aws-sdk/client-sts"
-import { isExpired, OauthAuthenticationInfo } from "./oauth-utils"
+import { OauthAuthenticationInfo } from "./oauth-utils"
 import { AuthStrategy } from "./auth-strategy"
 import { FederatedAwsCredentialsSource } from "../stash-config"
 import { AuthenticationFailure, AWSFederationFailure, wrap } from "../errors"
@@ -34,7 +34,7 @@ export class AWSClientConfigFederatedStrategy implements AuthStrategy<AWSClientC
   }
 
   private needsRefresh() {
-    return isExpired(this.expiryDate.getTime(), EXPIRY_BUFFER_MILLIS)
+    return this.expiryDate.getTime() - Date.now() < EXPIRY_BUFFER_MILLIS
   }
 
   private async acquireAwsConfig(): AsyncResult<void, AuthenticationFailure> {
