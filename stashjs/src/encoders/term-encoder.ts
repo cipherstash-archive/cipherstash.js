@@ -10,9 +10,12 @@ export function asUint64(term: unknown): Buffer {
     throw new Error("Expected term of type 'uint64'")
   }
 
-  const buf = Buffer.allocUnsafe(8)
-  buf.writeBigUInt64BE(term)
-  return buf
+  if (term > UINT64_MAX) {
+    throw new Error("Bigint term is greater than uint64 max")
+  }
+
+  // Create a native endian buffer that contains a u64
+  return Buffer.from(BigUint64Array.from([term]).buffer, 0, 8)
 }
 
 export function asDate(term: unknown): number {
