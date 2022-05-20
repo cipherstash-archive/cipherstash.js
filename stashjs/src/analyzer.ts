@@ -35,7 +35,7 @@ import {
   RangeOperator,
   FieldDynamicMatchCondition,
 } from "./dsl/query-dsl"
-import { encodeTermType } from "./encoders/term-encoder"
+import { asDate, asFloat64, asUint64, encodeTermType } from "./encoders/term-encoder"
 import { extractStringFields, extractStringFieldsWithPath } from "./string-field-extractor"
 import {
   TextProcessor,
@@ -47,7 +47,7 @@ import {
 } from "./text-processors"
 import { FieldOfType, FieldType, unreachable } from "./type-utils"
 import { normalizeId } from "./utils"
-import { ORE, OrePlainText } from "@cipherstash/ore-rs"
+import { ORE, OrePlainText } from "@cipherstash/stash-rs"
 import { TermType } from "./record-type-definition"
 import { Nothing, Option, Something, unwrapArray } from "./option"
 
@@ -199,7 +199,8 @@ function flattenCondition<R extends StashRecord, M extends Mappings<R>, MM exten
   } else if (isRangeCondition<R, M, Extract<keyof M, string>>(condition)) {
     const indexMeta = meta[condition.indexName]!
     const { encrypt } = ORE.init(indexMeta.$prfKey, indexMeta.$prpKey)
-    const helper = rangeMinMax[condition.op]
+    const mapping = mappings[condition.indexName]!
+    const helper = createRangeHelpers(mapping.fieldType)[condition.op]
     const { min, max } = (helper as any)(condition)
     return [
       {
@@ -310,13 +311,28 @@ export type AnalyzedRecord<R extends StashRecord, M extends Mappings<R>, MM exte
   }
 }
 
-const rangeMinMax: RangeMinMaxHelper = {
-  between: ({ min, max }) => ORE.encodeRangeBetween(min, max),
-  lt: ({ value }) => ORE.encodeRangeLt(value),
-  lte: ({ value }) => ORE.encodeRangeLte(value),
-  gt: ({ value }) => ORE.encodeRangeGt(value),
-  gte: ({ value }) => ORE.encodeRangeGte(value),
-  eq: ({ value }) => ORE.encodeRangeEq(value),
+const createRangeHelpers = (termType: TermType): RangeMinMaxHelper => {
+  const cast = (term: unknown) => {
+    switch (termType) {
+      case "uint64":
+        return asUint64(term)
+      case "date":
+        return asDate(term)
+      case "float64":
+        return asFloat64(term)
+      default:
+        throw new Error(`Data type "${termType}" is not supported by range`)
+    }
+  }
+
+  return {
+    between: ({ min, max }) => ORE.encodeRangeBetween(cast(min), cast(max)),
+    lt: ({ value }) => ORE.encodeRangeLt(cast(value)),
+    lte: ({ value }) => ORE.encodeRangeLte(cast(value)),
+    gt: ({ value }) => ORE.encodeRangeGt(cast(value)),
+    gte: ({ value }) => ORE.encodeRangeGte(cast(value)),
+    eq: ({ value }) => ORE.encodeRangeEq(cast(value)),
+  }
 }
 
 type MappingAnalyzers<R> = Array<
