@@ -1,10 +1,36 @@
-import { ORE, OrePlainText } from "@cipherstash/ore-rs"
+import { ORE, OrePlainText } from "@cipherstash/stash-rs"
 import { unreachable } from "../type-utils"
 import { utcDateWithResolution } from "./date-encoding-helpers"
 import { TermType } from "../record-type-definition"
 
 export const UINT64_MIN: bigint = 0n
 export const UINT64_MAX: bigint = 18446744073709551615n
+
+export function asUint64(term: unknown): Buffer {
+  if (typeof term !== "bigint") {
+    throw new Error("Expected term of type 'uint64'")
+  }
+
+  const buf = Buffer.allocUnsafe(8)
+  buf.writeBigUInt64BE(term)
+  return buf
+}
+
+export function asDate(term: unknown): number {
+  if (!(term instanceof Date)) {
+    throw new Error("Expected term of type 'date'")
+  }
+
+  return utcDateWithResolution(term, "millisecond")
+}
+
+export function asFloat64(term: unknown): number {
+  if (typeof term !== "number") {
+    throw new Error("Expected term of type 'float64'")
+  }
+
+  return term
+}
 
 export const encodeTermType: (termType: TermType) => (term: any) => Array<OrePlainText> = termType => {
   switch (termType) {
@@ -29,19 +55,11 @@ function encodeString(term: any): Array<OrePlainText> {
 }
 
 function encodeNumber(term: any): Array<OrePlainText> {
-  if (typeof term === "number") {
-    return [ORE.encodeNumber(term)]
-  }
-  throw unreachable("Expected term of type 'float64'")
+  return [ORE.encodeNumber(asFloat64(term))]
 }
 
 function encodeBigint(term: any): Array<OrePlainText> {
-  if (typeof term === "bigint") {
-    let buf = Buffer.allocUnsafe(8)
-    buf.writeBigUInt64BE(term)
-    return [ORE.encodeBuffer(buf)]
-  }
-  throw unreachable("Expected term of type 'uint64'")
+  return [ORE.encodeBuffer(asUint64(term))]
 }
 
 function encodeBoolean(term: any): Array<OrePlainText> {
@@ -52,8 +70,5 @@ function encodeBoolean(term: any): Array<OrePlainText> {
 }
 
 function encodeDate(term: any): Array<OrePlainText> {
-  if (term instanceof Date) {
-    return [ORE.encodeNumber(utcDateWithResolution(term, "millisecond"))]
-  }
-  throw unreachable("Expected term of type 'date'")
+  return [ORE.encodeNumber(asDate(term))]
 }
