@@ -1,6 +1,5 @@
 import { ORE, OrePlainText } from "@cipherstash/stash-rs"
 import { unreachable } from "../type-utils"
-import { utcDateWithResolution } from "./date-encoding-helpers"
 import { TermType } from "../record-type-definition"
 
 export const UINT64_MIN: bigint = 0n
@@ -21,7 +20,8 @@ export function asDate(term: unknown): number {
     throw new Error("Expected term of type 'date'")
   }
 
-  return utcDateWithResolution(term, "millisecond")
+  // Get the number of milliseconds since Jan 1, 1970 UTC
+  return term.getTime()
 }
 
 export function asFloat64(term: unknown): number {
