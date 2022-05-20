@@ -1,4 +1,5 @@
 use hex_literal::hex;
+use neon::result::Throw;
 use neon::{prelude::*};
 use ore_encoding_rs::OreRange;
 use ore_encoding_rs::encode_between;
@@ -212,42 +213,64 @@ fn make_range_object(mut cx: FunctionContext, min: OrePlaintext<u64>, max: OrePl
     Ok(obj)
 }
 
+/// Get a range-supported plaintext from a certain argument
+///
+/// The supported arguments from JavaScript are:
+///
+/// - Number (float64, Date)
+/// - Buffer (uint64)
+fn get_range_plaintext_from_argument(cx: &mut FunctionContext, arg: i32) -> Result<OrePlaintext<u64>, Throw> {
+    let input = cx.argument::<JsValue>(arg)?;
+
+    if input.is_a::<JsNumber, FunctionContext>(cx) {
+        Ok(input.downcast_or_throw::<JsNumber, FunctionContext>(cx)?.value(cx).into())
+    } else if input.is_a::<JsBuffer, FunctionContext>(cx) {
+        let buffer = input.downcast_or_throw::<JsBuffer, FunctionContext>(cx)?;
+        Ok(u64_from_buffer(cx, buffer).or_else(|e| cx.throw_error(e))?.into())
+    } else {
+        cx.throw_error("Expected first argument to be number or buffer")
+    }
+}
+
 fn encode_range_lt(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_lt(OrePlaintext::<u64>::from(value.value(&mut cx)));
+    let OreRange{ min, max } = encode_lt(
+        get_range_plaintext_from_argument(&mut cx, 0)?
+    );
     make_range_object(cx, min, max)
 }
 
 fn encode_range_lte(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_lte(OrePlaintext::<u64>::from(value.value(&mut cx)));
+    let OreRange{ min, max } = encode_lte(
+        get_range_plaintext_from_argument(&mut cx, 0)?
+    );
     make_range_object(cx, min, max)
 }
 
 fn encode_range_gt(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_gt(OrePlaintext::<u64>::from(value.value(&mut cx)));
+    let OreRange{ min, max } = encode_gt(
+        get_range_plaintext_from_argument(&mut cx, 0)?
+    );
     make_range_object(cx, min, max)
 }
 
 fn encode_range_gte(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_gte(OrePlaintext::<u64>::from(value.value(&mut cx)));
+    let OreRange{ min, max } = encode_gte(
+        get_range_plaintext_from_argument(&mut cx, 0)?
+    );
     make_range_object(cx, min, max)
 }
 
 fn encode_range_eq(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let value = cx.argument::<JsNumber>(0)?;
-    let OreRange{ min, max } = encode_eq(OrePlaintext::<u64>::from(value.value(&mut cx)));
+    let OreRange{ min, max } = encode_eq(
+        get_range_plaintext_from_argument(&mut cx, 0)?
+    );
     make_range_object(cx, min, max)
 }
 
 fn encode_range_between(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let value1 = cx.argument::<JsNumber>(0)?;
-    let value2 = cx.argument::<JsNumber>(1)?;
     let OreRange{ min, max } = encode_between(
-        OrePlaintext::<u64>::from(value1.value(&mut cx)),
-        OrePlaintext::<u64>::from(value2.value(&mut cx)),
+        get_range_plaintext_from_argument(&mut cx, 0)?,
+        get_range_plaintext_from_argument(&mut cx, 1)?
     );
     make_range_object(cx, min, max)
 }

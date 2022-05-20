@@ -75,12 +75,12 @@ export interface ORE {
   encode: (input: number | Buffer | string) => OrePlainText
 
 
-  encodeRangeLt: (value: number) => OreRange
-  encodeRangeLte: (value: number) => OreRange
-  encodeRangeGt: (value: number) => OreRange
-  encodeRangeGte: (value: number) => OreRange
-  encodeRangeEq: (value: number) => OreRange
-  encodeRangeBetween: (min: number, max: number) => OreRange
+  encodeRangeLt: (value: number | Buffer) => OreRange
+  encodeRangeLte: (value: number | Buffer) => OreRange
+  encodeRangeGt: (value: number | Buffer) => OreRange
+  encodeRangeGte: (value: number | Buffer) => OreRange
+  encodeRangeEq: (value: number | Buffer) => OreRange
+  encodeRangeBetween: (min: number | Buffer, max: number | Buffer) => OreRange
 
   /**
    * Initialize a new ORE cipher with a key pair (both keys must be 16-byte
