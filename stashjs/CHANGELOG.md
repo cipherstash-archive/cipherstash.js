@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## Changed
+
+- Migrate indexing to use stash-rs (again)
+
 ## Fixed
 
 - Range queries on date or uint64 would immediately throw errors

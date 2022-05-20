@@ -2,11 +2,10 @@ import { StashRecord, Mappings, MappingsMeta, HasID } from "./dsl/mappings-dsl"
 import { Query, QueryBuilder } from "./dsl/query-dsl"
 import { StashInternal } from "./stash-internal"
 import { idBufferToString, maybeGenerateId, normalizeId } from "./utils"
-import { convertAnalyzedRecordToVectors } from "./grpc/put-helper"
 import { convertQueryReplyToQueryResult } from "./grpc/query-helper"
 import { convertGetReplyToUserRecord, convertGetAllReplyToUserRecords } from "./grpc/get-helper"
 import { CollectionSchema } from "./collection-schema"
-import { buildQueryAnalyzer, buildRecordAnalyzer, QueryAnalyzer, RecordAnalyzer, AnalyzedQuery } from "./analyzer"
+import { buildQueryAnalyzer, QueryAnalyzer, AnalyzedQuery, createRecordIndexer } from "./analyzer"
 import { StreamWriter } from "./stream-writer"
 import { V1 } from "@cipherstash/stashjs-grpc"
 import { AsyncResult, convertErrorsTo, Err, Ok, parallel, sequence, Unit } from "./result"
@@ -22,6 +21,7 @@ import {
 } from "./errors"
 import { stringify as stringifyUUID } from "uuid"
 import { RecordTypeDefinition } from "./record-type-definition"
+import { RecordIndexer } from "@cipherstash/stash-rs"
 
 const DEFAULT_QUERY_LIMIT = 50
 
@@ -31,7 +31,7 @@ const DEFAULT_QUERY_LIMIT = 50
  * All methods of manipulating and interacting with a Collection can be found here.
  */
 export class CollectionInternal<R extends StashRecord, M extends Mappings<R>, MM extends MappingsMeta<M>> {
-  private analyzeRecord: RecordAnalyzer<R, M, MM>
+  private recordIndexer: RecordIndexer
   private analyzeQuery: QueryAnalyzer<R, M>
 
   public constructor(
@@ -40,7 +40,7 @@ export class CollectionInternal<R extends StashRecord, M extends Mappings<R>, MM
     public readonly ref: string,
     public readonly schema: CollectionSchema<R, M, MM>
   ) {
-    this.analyzeRecord = buildRecordAnalyzer(schema)
+    this.recordIndexer = createRecordIndexer(schema)
     this.analyzeQuery = buildQueryAnalyzer(schema)
   }
 
@@ -80,7 +80,7 @@ export class CollectionInternal<R extends StashRecord, M extends Mappings<R>, MM
   public async put(doc: R): AsyncResult<string, DocumentPutFailure> {
     const collectionId = normalizeId(this.id)
     const docWithId = maybeGenerateId(doc)
-    const vectors = convertAnalyzedRecordToVectors(this.analyzeRecord(docWithId as any as R))
+    const vectors = this.recordIndexer.encryptRecord(docWithId)
 
     return convertErrorsTo(
       DocumentPutFailure,
