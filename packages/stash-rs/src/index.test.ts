@@ -206,4 +206,14 @@ describe("encodeRangeBetween", () => {
   test('correct min and max generated in range', () => {
     expect(ORE.encodeRangeBetween(1, 100)).toEqual({ min: ORE.encode(1), max: ORE.encode(100)})
   })
+
+  test('correct min and max generated in range for u64', () => {
+    let left = Buffer.alloc(8);
+    left.writeBigUInt64BE(1n);
+
+    let right = Buffer.alloc(8);
+    right.writeBigUInt64BE(100n);
+
+    expect(ORE.encodeRangeBetween(left, right)).toEqual({ min: ORE.encode(left), max: ORE.encode(right) })
+  })
 })
