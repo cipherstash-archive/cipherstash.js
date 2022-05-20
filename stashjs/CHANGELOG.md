@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Range queries on date or uint64 would immediately throw errors
 - Date timestamps in index were encoding the day of the month wrong
+- Uint64 was being turned into a buffer and reinterpreted with the wrong endianness
 
 ## [0.4.5]
 
