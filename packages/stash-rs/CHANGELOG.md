@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0]
+
+- Upgrade cipherstash-client to 0.2.0
+
+## [0.1.0]
+
+- Rename to @cipherstash/stash-rs
+
 ## [0.5.1]
 
 Add `cargo-cp-artifact` as a dependency so that installation does not silently fail.
