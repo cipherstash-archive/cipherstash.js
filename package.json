@@ -1,0 +1,26 @@
+{
+  "name": "stashjs-benchmark",
+  "version": "1.0.0",
+  "description": "Benchmark suite for StashJS",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc && cp ./users.schema.json ./dist/users.schema.json",
+    "collection:create": "node dist/create-collection.js",
+    "collection:drop": "node dist/drop-collection.js",
+    "bench": "node dist/benchmark.js"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@cipherstash/stashjs": "^0.4.6",
+    "@types/faker": "^5.5.7",
+    "@types/node": "16.0.1",
+    "@types/uuid": "^8.3.2",
+    "faker": "^5.5.3",
+    "timer-node": "^5.0.5",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.7.4"
+  }
+}

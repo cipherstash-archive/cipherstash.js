@@ -1,0 +1,5 @@
+# When testing against a local data-service, you'll need to tell NodeJS where to find your custom root CA.
+#export NODE_EXTRA_CA_CERTS=<root CA store>
+
+# Building StashJS depends on Rust nightly features.
+export ASDF_RUST_VERSION=nightly
