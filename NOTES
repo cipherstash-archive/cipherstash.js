@@ -1,0 +1,9 @@
+Thursday
+- Added schema builder
+- Collection manager to create and drop collections based on the schema
+
+Next
+- Set up a Subscriber to sync data into collection
+- Add an reindex function to collection manager
+- Wrap typeorm-encrypted
+- Create a wrapper Repository type which decorates the findBy etc methods
