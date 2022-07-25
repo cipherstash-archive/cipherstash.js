@@ -1,19 +1,19 @@
+use cipherstash_client::indexer::RecordIndexer;
 use hex_literal::hex;
+use neon::prelude::*;
 use neon::result::Throw;
-use neon::{prelude::*};
-use ore_encoding_rs::OreRange;
 use ore_encoding_rs::encode_between;
+use ore_encoding_rs::encode_eq;
 use ore_encoding_rs::encode_gt;
 use ore_encoding_rs::encode_gte;
-use ore_encoding_rs::{encode_lt, encode_lte};
-use ore_encoding_rs::encode_eq;
-use ore_rs::{scheme::bit2::OREAES128, ORECipher, OREEncrypt};
-use ore_encoding_rs::OrePlaintext;
 use ore_encoding_rs::siphash;
-use unicode_normalization::UnicodeNormalization;
+use ore_encoding_rs::OrePlaintext;
+use ore_encoding_rs::OreRange;
+use ore_encoding_rs::{encode_lt, encode_lte};
+use ore_rs::{scheme::bit2::OREAES128, ORECipher, OREEncrypt};
 use std::cell::RefCell;
 use std::cmp::Ordering;
-use cipherstash_client::indexer::RecordIndexer;
+use unicode_normalization::UnicodeNormalization;
 
 struct Cipher(OREAES128);
 struct Indexer(RecordIndexer);
@@ -84,7 +84,7 @@ fn encrypt(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let arg = cx.argument::<JsBuffer>(1)?;
     let input: u64 = match u64_from_buffer(&cx, arg) {
         Ok(u) => u,
-        Err(e) => return cx.throw_error(e)
+        Err(e) => return cx.throw_error(e),
     };
 
     let result = input
@@ -130,18 +130,21 @@ fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
     }
 }
 
-fn buffer_from_u64<'a>(cx: &mut FunctionContext<'a>, n: u64) -> Result<Handle<'a, JsBuffer>, String> {
+fn buffer_from_u64<'a>(
+    cx: &mut FunctionContext<'a>,
+    n: u64,
+) -> Result<Handle<'a, JsBuffer>, String> {
     let bytes = n.to_ne_bytes();
     let mut buf = match cx.buffer(8) {
         Ok(b) => b,
-        Err(e) => return Err(format!("Failed to allocate buffer: {:?}", e))
+        Err(e) => return Err(format!("Failed to allocate buffer: {:?}", e)),
     };
 
     cx.borrow_mut(&mut buf, |data| {
         let slice = data.as_mut_slice::<u8>();
         for i in 0..8 {
             slice[i] = bytes[i];
-        };
+        }
     });
 
     Ok(buf)
@@ -151,10 +154,15 @@ fn u64_from_buffer<'a>(cx: &FunctionContext<'a>, buf: Handle<'a, JsBuffer>) -> R
     cx.borrow(&buf, |data| {
         let slice = data.as_slice::<u8>();
         if slice.len() != 8 {
-            return Err(format!("Invalid plaintext buffer length {} (expected 8)", slice.len()));
+            return Err(format!(
+                "Invalid plaintext buffer length {} (expected 8)",
+                slice.len()
+            ));
         }
 
-        let slice8: [u8; 8] = [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7]];
+        let slice8: [u8; 8] = [
+            slice[0], slice[1], slice[2], slice[3], slice[4], slice[5], slice[6], slice[7],
+        ];
         Ok(u64::from_ne_bytes(slice8))
     })
 }
@@ -178,33 +186,38 @@ fn encode_buffer(mut cx: FunctionContext) -> JsResult<JsBuffer> {
     let input = cx.argument::<JsBuffer>(0)?;
     let mut buf = match cx.buffer(8) {
         Ok(b) => b,
-        Err(e) => return cx.throw_error(format!("Failed to allocate buffer: {:?}", e))
+        Err(e) => return cx.throw_error(format!("Failed to allocate buffer: {:?}", e)),
     };
 
-    let result = cx.borrow(&input, |data| {
-        let input_slice = data.as_slice::<u8>();
-        if input_slice.len() != 8 {
-            return Err("Invalid input buffer length");
-        }
+    let result = cx
+        .borrow(&input, |data| {
+            let input_slice = data.as_slice::<u8>();
+            if input_slice.len() != 8 {
+                return Err("Invalid input buffer length");
+            }
 
-        cx.borrow_mut(&mut buf, |data| {
-            let output_slice = data.as_mut_slice::<u8>();
-            for i in 0..8 {
-                output_slice[i] = input_slice[i];
-            };
-        });
+            cx.borrow_mut(&mut buf, |data| {
+                let output_slice = data.as_mut_slice::<u8>();
+                for i in 0..8 {
+                    output_slice[i] = input_slice[i];
+                }
+            });
 
-        Ok(buf)
-    })
-    .or_else(|e| cx.throw_error(e));
+            Ok(buf)
+        })
+        .or_else(|e| cx.throw_error(e));
 
     match result {
         Ok(buf) => Ok(buf),
-        Err(err) => Err(err)
+        Err(err) => Err(err),
     }
 }
 
-fn make_range_object(mut cx: FunctionContext, min: OrePlaintext<u64>, max: OrePlaintext<u64>) -> JsResult<JsObject> {
+fn make_range_object(
+    mut cx: FunctionContext,
+    min: OrePlaintext<u64>,
+    max: OrePlaintext<u64>,
+) -> JsResult<JsObject> {
     let obj = cx.empty_object();
     let js_min = buffer_from_u64(&mut cx, min.0).or_else(|e| cx.throw_error(e))?;
     let js_max = buffer_from_u64(&mut cx, max.0).or_else(|e| cx.throw_error(e))?;
@@ -219,58 +232,56 @@ fn make_range_object(mut cx: FunctionContext, min: OrePlaintext<u64>, max: OrePl
 ///
 /// - Number (float64, Date)
 /// - Buffer (uint64)
-fn get_range_plaintext_from_argument(cx: &mut FunctionContext, arg: i32) -> Result<OrePlaintext<u64>, Throw> {
+fn get_range_plaintext_from_argument(
+    cx: &mut FunctionContext,
+    arg: i32,
+) -> Result<OrePlaintext<u64>, Throw> {
     let input = cx.argument::<JsValue>(arg)?;
 
     if input.is_a::<JsNumber, FunctionContext>(cx) {
-        Ok(input.downcast_or_throw::<JsNumber, FunctionContext>(cx)?.value(cx).into())
+        Ok(input
+            .downcast_or_throw::<JsNumber, FunctionContext>(cx)?
+            .value(cx)
+            .into())
     } else if input.is_a::<JsBuffer, FunctionContext>(cx) {
         let buffer = input.downcast_or_throw::<JsBuffer, FunctionContext>(cx)?;
-        Ok(u64_from_buffer(cx, buffer).or_else(|e| cx.throw_error(e))?.into())
+        Ok(u64_from_buffer(cx, buffer)
+            .or_else(|e| cx.throw_error(e))?
+            .into())
     } else {
         cx.throw_error("Expected first argument to be number or buffer")
     }
 }
 
 fn encode_range_lt(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange{ min, max } = encode_lt(
-        get_range_plaintext_from_argument(&mut cx, 0)?
-    );
+    let OreRange { min, max } = encode_lt(get_range_plaintext_from_argument(&mut cx, 0)?);
     make_range_object(cx, min, max)
 }
 
 fn encode_range_lte(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange{ min, max } = encode_lte(
-        get_range_plaintext_from_argument(&mut cx, 0)?
-    );
+    let OreRange { min, max } = encode_lte(get_range_plaintext_from_argument(&mut cx, 0)?);
     make_range_object(cx, min, max)
 }
 
 fn encode_range_gt(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange{ min, max } = encode_gt(
-        get_range_plaintext_from_argument(&mut cx, 0)?
-    );
+    let OreRange { min, max } = encode_gt(get_range_plaintext_from_argument(&mut cx, 0)?);
     make_range_object(cx, min, max)
 }
 
 fn encode_range_gte(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange{ min, max } = encode_gte(
-        get_range_plaintext_from_argument(&mut cx, 0)?
-    );
+    let OreRange { min, max } = encode_gte(get_range_plaintext_from_argument(&mut cx, 0)?);
     make_range_object(cx, min, max)
 }
 
 fn encode_range_eq(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange{ min, max } = encode_eq(
-        get_range_plaintext_from_argument(&mut cx, 0)?
-    );
+    let OreRange { min, max } = encode_eq(get_range_plaintext_from_argument(&mut cx, 0)?);
     make_range_object(cx, min, max)
 }
 
 fn encode_range_between(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange{ min, max } = encode_between(
+    let OreRange { min, max } = encode_between(
         get_range_plaintext_from_argument(&mut cx, 0)?,
-        get_range_plaintext_from_argument(&mut cx, 1)?
+        get_range_plaintext_from_argument(&mut cx, 1)?,
     );
     make_range_object(cx, min, max)
 }
