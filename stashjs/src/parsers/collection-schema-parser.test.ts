@@ -161,42 +161,23 @@ describe("Typechecking", () => {
     })
   })
 
-  describe("when there is a range index type error", () => {
-    it("type checking should fail", () => {
-      const schema = JSON.stringify({
-        type: {
-          title: "string",
-        },
-        indexes: {
-          title: { kind: "range", field: "title" },
-        },
-      })
-
-      const checked = parseCollectionSchemaJSON(schema)
-      if (checked.ok) {
-        fail("type checking should have failed")
-        return
-      }
-
-      expect(checked.error).toEqual(
-        `index type "range" works on fields of type "float64, uint64, date, boolean" but field "title" is of type "string"`
-      )
-    })
-  })
-
   describe("when there are multiple type errors", () => {
     it("type checking should fail and we only return the first encountered error", () => {
       const schema = JSON.stringify({
         type: {
-          title: "string",
+          productionStartedAt: "date",
           runningTime: "float64",
         },
         indexes: {
-          title: { kind: "range", field: "title" },
           runningTime: {
             kind: "match",
-            fieldType: "string",
             fields: ["runningTime"],
+            tokenFilters: [{ kind: "downcase" }, { kind: "ngram", tokenLength: 3 }],
+            tokenizer: { kind: "standard" },
+          },
+          productionStartedAt: {
+            kind: "match",
+            fields: ["productionStartedAt"],
             tokenFilters: [{ kind: "downcase" }, { kind: "ngram", tokenLength: 3 }],
             tokenizer: { kind: "standard" },
           },
@@ -210,7 +191,7 @@ describe("Typechecking", () => {
       }
 
       expect(checked.error).toEqual(
-        `index type "range" works on fields of type "float64, uint64, date, boolean" but field "title" is of type "string"`
+        `index type "match" works on fields of type "string" but field "runningTime" is of type "float64"`
       )
     })
   })
