@@ -4,6 +4,7 @@ import { generateSchemaDefinitionFromJSON, parseCollectionSchemaJSON, PRIVATE } 
 const { ExactIndexDecoder, MatchIndexDecoder, RangeIndexDecoder, parseIndexDefinition } = PRIVATE
 
 import { isErr, isOk } from "../result"
+import { hasUncaughtExceptionCaptureCallback } from "process"
 
 describe("Index definition: Exact", () => {
   it("parses valid index definition", () => {
@@ -130,6 +131,24 @@ describe("Typechecking", () => {
 
       const checked = parseCollectionSchemaJSON(schema)
       expect(isOk(checked)).toBe(true)
+    })
+  })
+
+  describe("given a range index", () => {
+    ;["string", "float64", "uint64", "date", "boolean"].forEach(fieldType => {
+      it(`allows a field of type: ${fieldType}`, () => {
+        const schema = JSON.stringify({
+          type: {
+            someField: fieldType,
+          },
+          indexes: {
+            someField: { kind: "range", field: "someField" },
+          },
+        })
+
+        const checked = parseCollectionSchemaJSON(schema)
+        expect(isOk(checked)).toBe(true)
+      })
     })
   })
 
