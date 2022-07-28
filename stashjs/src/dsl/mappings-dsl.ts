@@ -23,7 +23,7 @@ export type ExactMappingFieldType = string | number | bigint | Date | boolean
 /**
  * The types that range mappings  can be defined on.
  */
-export type RangeMappingFieldType = number | bigint | Date | boolean
+export type RangeMappingFieldType = string | number | bigint | Date | boolean
 
 /**
  * The types that match mappings can be defined on.

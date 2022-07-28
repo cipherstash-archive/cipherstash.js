@@ -226,7 +226,7 @@ type TypeName<T> = T extends string
   : never
 
 const EXACT_TYPES: Array<TypeName<ExactMappingFieldType>> = ["string", "float64", "uint64", "date", "boolean"]
-const RANGE_TYPES: Array<TypeName<RangeMappingFieldType>> = ["float64", "uint64", "date", "boolean"]
+const RANGE_TYPES: Array<TypeName<RangeMappingFieldType>> = ["string", "float64", "uint64", "date", "boolean"]
 const MATCH_TYPES: Array<TypeName<MatchMappingFieldType>> = ["string"]
 
 function typecheckIndex(recordType: unknown, index: Index): Result<void | Array<void>, string> {
