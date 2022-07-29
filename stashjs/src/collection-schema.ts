@@ -168,7 +168,7 @@ export class CollectionSchema<R extends StashRecord, M extends Mappings<R>, MM e
       case "exact":
         return operators.exact(indexName) as OperatorsForIndex<R, M, N>
       case "range":
-        return operators.range(indexName) as OperatorsForIndex<R, M, N>
+        return operators.range(indexName) as unknown as OperatorsForIndex<R, M, N> // FIXME: remove unknown (this was added when upgraded to TS 4.7.3)
       case "match":
         return operators.match(indexName) as OperatorsForIndex<R, M, N>
       case "dynamic-match":
