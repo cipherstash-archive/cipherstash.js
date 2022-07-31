@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Add support for ordering by range indexes on string fields
+
 ## Fixed
 
 - Multiple code-point Unicode characters break indexing
