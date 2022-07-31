@@ -206,7 +206,7 @@ const createRangeHelpers = (termType: TermType): RangeMinMaxHelper => {
       case "float64":
         return asFloat64(term)
       default:
-        throw new Error(`Data type "${termType}" is not supported by range`)
+        throw new Error(`Data type "${termType}" is not supported for operations on ranges`)
     }
   }
 
