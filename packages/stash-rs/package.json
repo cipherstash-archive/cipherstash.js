@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stash-rs",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Node bindings for the CipherStash Rust client.",
   "main": "dist/index.js",
   "scripts": {
