@@ -1,16 +1,8 @@
-import { Stash } from "@cipherstash/stashjs"
-import { Mappings, MappingsMeta, Collection } from "@cipherstash/stashjs"
-import { EntityTarget } from "typeorm"
-import { CollectionProxy } from "./collection-proxy"
-
-// TODO: Move these to a common file
-type Indexed<T> = Omit<T, "id"> & { id: string }
-type MappingsWrapper<T> = Mappings<T>
-type MappingsMetaWrapper<T> = MappingsMeta<MappingsWrapper<T>>
-type CollectionWrapper<T> = Collection<T, MappingsWrapper<T>, MappingsMetaWrapper<T>>
+import { HasID, Mappings, Stash } from "@cipherstash/stashjs"
+import { CollectionSchemaWrapper, CollectionWrapper, Indexed } from "./collection"
 
 type CollectionCache = {
-  [key: string]: CollectionProxy<any>
+  [key: string]: any //CollectionWrapper<any> FIXME: Don't use any
 }
 
 class CollectionManagerSingleton {
@@ -27,14 +19,26 @@ class CollectionManagerSingleton {
     return await Stash.connect().then(s => (this.stash = s))
   }
 
-  async get<T>(entityTarget: EntityTarget<T>): Promise<CollectionProxy<T>> {
+  async getCollection<T>(name: string): Promise<CollectionWrapper<T>> {
+    try {
+      if (this.cache[name]) return this.cache[name]
+      const stash = await this.getStash()
+      const collection = await stash.loadCollection<T, Mappings<T>>(name)
+      this.cache[name] = collection
+      return collection
+    } catch (e) {
+      return Promise.reject(e)
+    }
+  }
+
+  async create(schema: CollectionSchemaWrapper): Promise<CollectionWrapper<Indexed>> {
     const stash = await this.getStash()
-    // TODO: Extract collection name out of proxy
-    const proxy = new CollectionProxy(stash, entityTarget)
-    let name = proxy.collectionName()
-    if (this.cache[name]) return this.cache[name]
-    this.cache[name] = proxy
-    return proxy
+    return stash.createCollection(schema)
+  }
+
+  async drop(name: string): Promise<void> {
+    const stash = await this.getStash()
+    await stash.deleteCollection(name)
   }
 }
 
