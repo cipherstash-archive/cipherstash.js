@@ -1,3 +1,4 @@
+import { HasID, Mappings, StashRecord } from "@cipherstash/stashjs"
 import { randomUUID } from "crypto"
 import {
   EntitySubscriberInterface,
@@ -27,29 +28,6 @@ const logStashEvent = (logger: Logger, event: StashSyncEvent, stashId: string): 
   logger.log("info", `Stash[${event}]: ID ${stashId}`)
 }
 
-// TODO: These functions feel like they belong in the collection manager!
-// TODO: Add wrapper functions in the collection manager for put and delete that take an entity
-// Put a try/catch block with error logging in each of the callbacks below
-const putDocument = async (entity: Required<Stashable>): Promise<void> => {
-  try {
-    const collection = await CollectionManager.get(entity.constructor)
-    await collection.put({ ...entity, id: entity.stashId })
-  } catch (e) {
-    console.error(e) // TODO: Use a logger
-    return Promise.reject(e) //.cause.cause.details)
-  }
-}
-
-const deleteDocument = async (entity: Stashed): Promise<void> => {
-  try {
-    const collection = await CollectionManager.get(entity.constructor)
-    await collection.delete(entity.stashId)
-  } catch (e) {
-    console.error(e) // TODO: Use a logger
-    return Promise.reject(e) //.cause.cause.details)
-  }
-}
-
 @EventSubscriber()
 export class IndexingSubscriber implements EntitySubscriberInterface {
   /* Ensure stashID is set on insertion */
@@ -59,8 +37,14 @@ export class IndexingSubscriber implements EntitySubscriberInterface {
 
   /* Sync to collection after insert */
   async afterInsert(event: InsertEvent<Stashed>): Promise<void> {
-    logStashEvent(event.connection.logger, "insert", event.entity.stashId)
-    await putDocument(event.entity)
+    try {
+      logStashEvent(event.connection.logger, "insert", event.entity.stashId)
+      const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
+      const { stashId, ...record } = event.entity
+      await collection.put({ ...record, id: stashId })
+    } catch (e) {
+      return Promise.reject(e)
+    }
   }
 
   /* Ensure stashID is set on update */
@@ -70,23 +54,39 @@ export class IndexingSubscriber implements EntitySubscriberInterface {
 
   /* Sync to collection after update */
   async afterUpdate(event: UpdateEvent<Stashed>): Promise<void> {
-    logStashEvent(event.connection.logger, "update", event.entity.stashId)
-    await putDocument(event.entity as Stashed)
+    try {
+      logStashEvent(event.connection.logger, "update", event.entity.stashId)
+      const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
+      const { stashId, ...record } = event.entity
+      await collection.put({ ...record, id: stashId })
+    } catch (e) {
+      return Promise.reject(e)
+    }
   }
 
   /* Remove from collection after DB removal */
   async afterRemove(event: RemoveEvent<Stashable>): Promise<void> {
-    if (isStashed(event.databaseEntity)) {
-      logStashEvent(event.connection.logger, "remove", event.entity.stashId)
-      await deleteDocument(event.databaseEntity)
+    try {
+      if (isStashed(event.databaseEntity)) {
+        logStashEvent(event.connection.logger, "remove", event.entity.stashId)
+        const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
+        collection.delete(event.databaseEntity.stashId)
+      }
+    } catch (e) {
+      return Promise.reject(e)
     }
   }
 
   /* Remove from collection after DB soft removal */
   async afterSoftRemove(event: SoftRemoveEvent<Stashable>): Promise<void> {
-    if (isStashed(event.databaseEntity)) {
-      logStashEvent(event.connection.logger, "remove", event.entity.stashId)
-      await deleteDocument(event.databaseEntity)
+    try {
+      if (isStashed(event.databaseEntity)) {
+        logStashEvent(event.connection.logger, "remove", event.entity.stashId)
+        const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
+        collection.delete(event.databaseEntity.stashId)
+      }
+    } catch (e) {
+      return Promise.reject(e)
     }
   }
 
@@ -97,7 +97,13 @@ export class IndexingSubscriber implements EntitySubscriberInterface {
 
   /* Sync to collection after recovery */
   async afterRecover(event: RecoverEvent<Stashed>): Promise<void> {
-    logStashEvent(event.connection.logger, "insert", event.entity.stashId)
-    await putDocument(event.entity)
+    try {
+      logStashEvent(event.connection.logger, "update", event.entity.stashId)
+      const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
+      const { stashId, ...record } = event.entity
+      await collection.put({ ...record, id: stashId })
+    } catch (e) {
+      return Promise.reject(e)
+    }
   }
 }
