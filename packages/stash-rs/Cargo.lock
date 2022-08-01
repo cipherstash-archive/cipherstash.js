@@ -369,9 +369,9 @@ dependencies = [
 
 [[package]]
 name = "cipherstash-client"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf0a43227624ced06f5cebf827d1d0ff0603ee4b157650cd5fa14e36fa0fa608"
+checksum = "485783ed8c87b8d74e3e6a5d51bdbe19b513f97f62237085b71d98a7e6f0b7c5"
 dependencies = [
  "async-mutex",
  "async-trait",
@@ -381,9 +381,12 @@ dependencies = [
  "conv",
  "envelopers",
  "hex-literal",
+ "lazy_static",
  "minicbor",
+ "num-bigint",
  "ore-encoding-rs",
  "ore-rs",
+ "regex",
  "serde",
  "serde_bytes",
  "serde_json",
