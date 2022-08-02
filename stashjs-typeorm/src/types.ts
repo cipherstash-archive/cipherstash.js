@@ -17,8 +17,17 @@ export type StashLinkableEntity = { stashId?: string; id: number | string }
 export type StashInternalRecord = { originalId: any; id: string }
 
 // Type which *must* have stashID set
-export type StashLinkedEntity = Required<StashLinkableEntity>
+export type StashLinkedEntity = WithRequiredProperty<StashLinkableEntity, "stashId">
 
 export const isStashed = (data: StashLinkableEntity): data is StashLinkedEntity => {
   return data.hasOwnProperty("stashId")
+}
+
+export type WithRequiredStashId<T extends { stashId?: string } | { stashId: string }> = WithRequiredProperty<
+  T,
+  "stashId"
+>
+
+export type WithRequiredProperty<Type, Key extends keyof Type> = Type & {
+  [Property in Key]-?: Type[Property]
 }

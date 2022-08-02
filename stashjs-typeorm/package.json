@@ -29,5 +29,11 @@
   },
   "lint-staged": {
     "*.ts": "prettier --write"
-  }
+  },
+  "files": [
+    "scripts/*",
+    "src/**",
+    "dist/**",
+    "tsconfig.json"
+  ]
 }
