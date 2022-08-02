@@ -1,10 +1,13 @@
-import { Mappings, MappingsMeta, MatchOptions, QueryBuilder, StashRecord } from "@cipherstash/stashjs"
+import { Mappings, MappingsMeta, MatchOptions, QueryBuilder, QueryOptions, StashRecord } from "@cipherstash/stashjs"
 
 import { Repository, SelectQueryBuilder } from "typeorm"
 import { collectionSchema } from "./schema-builder"
 import { CollectionManager } from "./collection-manager"
 import { StashLinkable, StashedRecord, StashLinked } from "./types"
 import { ensureStashID, mapAndPutEntity } from "./collection-adapter"
+import { QueryExpressionMap } from "typeorm/query-builder/QueryExpressionMap"
+import { off } from "process"
+import { NoDefaultProfileSet } from "@cipherstash/stashjs/dist/errors"
 
 interface CipherStashSelectQueryBuilder<T extends StashLinked> extends SelectQueryBuilder<T> {
   originalGetRawAndEntities: SelectQueryBuilder<T>["getRawAndEntities"]
@@ -12,28 +15,48 @@ interface CipherStashSelectQueryBuilder<T extends StashLinked> extends SelectQue
   stashBuilder?: QueryBuilder<StashRecord, Mappings<StashRecord>>
 }
 
-function extend<T extends StashLinked>(target: SelectQueryBuilder<T>): CipherStashSelectQueryBuilder<T> {
+// TODO: We may want to handle skip and take, too
+function queryOptionsFromExpressionMap<T>({ limit, offset }: QueryExpressionMap): QueryOptions<T, Mappings<T>> {
+  return { limit, offset }
+}
+
+function tranformSelectQuery<T extends StashLinked>(
+  target: CipherStashSelectQueryBuilder<T>,
+  stashIds: Array<string>,
+  alias: string
+): CipherStashSelectQueryBuilder<T> {
+  return target
+    .limit(undefined)
+    .offset(undefined)
+    .skip(undefined)
+    .take(undefined)
+    .where(`${alias}.stashId in (:...ids)`, { ids: stashIds }) // FIXME: SQLi vuln?? - does TypeORM have this issue anyway!?
+}
+
+function extend<T extends StashLinked>(
+  target: SelectQueryBuilder<T>,
+  collectionName: string
+): CipherStashSelectQueryBuilder<T> {
   const getRawAndEntities = target.getRawAndEntities
   const newQb = { ...target, originalGetRawEntities: target.getRawAndEntities }
   const output = target as CipherStashSelectQueryBuilder<T>
   output.originalGetRawAndEntities = target.getRawAndEntities
+
   output.getRawAndEntities = async () => {
-    console.log("IN GET RAW", output.alias)
-    const collection = await CollectionManager.getCollection("node_users") // TODO: Where is the name?
-    const stashResults = await collection.query(output.stashBuilder)
+    const options = queryOptionsFromExpressionMap(output.expressionMap)
+    const collection = await CollectionManager.getCollection(collectionName)
+    const stashResults = await collection.query(output.stashBuilder, options)
     const stashIds = stashResults.documents.map(result => result.id)
 
-    // Remap the constraints
-    // TODO: How do we deal with the table alias?
-    return await output
-      .where(`${output.alias}.stashId in (:...ids)`, { ids: stashIds }) // FIXME: SQLi vuln?? - does TypeORM have this issue anyway!?
-      .originalGetRawAndEntities()
+    // Transform query and load the data
+    return await tranformSelectQuery(output, stashIds, output.alias).originalGetRawAndEntities()
   }
 
+  // TODO: Can we make this cleaner with bind?
   output.query = stashBuilder => {
     output.stashBuilder = stashBuilder
     return output
-  } // TODO: Can we make this cleaner with bind?
+  }
   return output
 }
 
@@ -42,7 +65,7 @@ export function wrapRepo<T extends StashLinked>(repo: Repository<T>) {
   return repo.extend({
     // TODO: This approach will require a full query parser to process the wheres in qb.expressionMap.wheres
     createCSQueryBuilder<R extends StashedRecord>(alias: string): CipherStashSelectQueryBuilder<StashLinked> {
-      const qb = extend<StashLinked>(this.createQueryBuilder(alias))
+      const qb = extend<StashLinked>(this.createQueryBuilder(alias), this.metadata.tablePath)
       return qb
     },
 
