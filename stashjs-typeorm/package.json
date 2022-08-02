@@ -25,7 +25,8 @@
   "dependencies": {
     "@cipherstash/stashjs": "workspace:^0.4.6",
     "lint-staged": "12.4.1",
-    "typeorm": "0.3.7"
+    "typeorm": "0.3.7",
+    "typeorm-encrypted": "^0.8.0"
   },
   "lint-staged": {
     "*.ts": "prettier --write"
