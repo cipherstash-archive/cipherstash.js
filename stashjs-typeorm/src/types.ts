@@ -11,14 +11,14 @@ export type CollectionWrapper<T> = Collection<T, MappingsWrapper<T>, MappingsMet
 export type CollectionSchemaWrapper = CollectionSchema<Indexed, MappingsWrapper<Indexed>, MappingsMetaWrapper<Indexed>>
 
 // Type which may have stashID set
-export type StashLinkable = { stashId?: string; id: number | string }
+export type StashLinkableEntity = { stashId?: string; id: number | string }
 
 // Type of data actually stored in CipherStash
-export type StashedRecord = { originalId: any; id: string }
+export type StashInternalRecord = { originalId: any; id: string }
 
 // Type which *must* have stashID set
-export type StashLinked = Required<StashLinkable>
+export type StashLinkedEntity = Required<StashLinkableEntity>
 
-export const isStashed = (data: StashLinkable): data is StashLinked => {
+export const isStashed = (data: StashLinkableEntity): data is StashLinkedEntity => {
   return data.hasOwnProperty("stashId")
 }
