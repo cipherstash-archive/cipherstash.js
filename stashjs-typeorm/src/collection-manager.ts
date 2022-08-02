@@ -1,5 +1,5 @@
-import { HasID, Mappings, Stash } from "@cipherstash/stashjs"
-import { CollectionSchemaWrapper, CollectionWrapper, Indexed } from "./collection"
+import { Mappings, Stash } from "@cipherstash/stashjs"
+import { CollectionSchemaWrapper, CollectionWrapper, Indexed } from "./types"
 
 type CollectionCache = {
   [key: string]: any //CollectionWrapper<any> FIXME: Don't use any

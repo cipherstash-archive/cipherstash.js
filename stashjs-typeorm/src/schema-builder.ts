@@ -1,8 +1,69 @@
-import { Collection, CollectionSchema, HasID, Mappings, MappingsMeta, MatchOptions } from "@cipherstash/stashjs"
+import { CollectionSchema, MatchOptions } from "@cipherstash/stashjs"
 import { TermType } from "@cipherstash/stashjs/dist/record-type-definition"
 import { unreachable } from "@cipherstash/stashjs/dist/type-utils"
 import { ColumnType, getMetadataArgsStorage } from "typeorm"
 import { ConfigurationMetadata } from "./protected-column"
+import { CollectionSchemaWrapper, Indexed } from "./types"
+
+export function collectionSchema(target: any, name: string): CollectionSchemaWrapper {
+  const type = indexedTypeForEntity(target)
+  const indexes = indexesFor(type)
+
+  return CollectionSchema.define<Indexed>(name).fromCollectionSchemaDefinition({ type, indexes })
+}
+
+function indexedTypeForEntity(entity: any): Indexed {
+  const properties = ConfigurationMetadata.searchableColumnsFor(entity)
+
+  return getMetadataArgsStorage().columns.reduce((output, { options, mode, target, propertyName }) => {
+    if (entity === target && mode === "regular") {
+      let prop = properties.find(p => p == propertyName)
+      if (prop) output[propertyName] = mapType(options.type)
+    }
+    return output
+  }, {})
+}
+
+// TODO: This logic could probably be moved into stashjs
+// TODO: This should create an object
+function indexesFor(indexedType: Indexed): Mapping {
+  return Object.entries(indexedType).reduce((indexes, [propertyName, type]) => {
+    switch (type) {
+      case "string":
+        // Orderable strings are lossy so we need to keep an exact index
+        indexes[propertyName] = makeExactFn(propertyName, type)
+        indexes[`${propertyName}_match`] = makeMatchFn(propertyName)
+        indexes[`${propertyName}_range`] = makeRangeFn(propertyName, type)
+        return indexes
+
+      case "uint64":
+      case "float64":
+      case "date":
+        indexes[`${propertyName}_range`] = makeRangeFn(propertyName, type)
+        return indexes
+
+      case "boolean":
+        indexes[propertyName] = makeExactFn(propertyName, type)
+        return indexes
+
+      default:
+        unreachable("Unhandled type")
+    }
+  }, {})
+}
+
+// TODO: use the functions from stashjs but they aren't *quite* the same
+function makeExactFn(field, fieldType): ExactIndex {
+  return { kind: "exact", field, fieldType }
+}
+const makeRangeFn = (field, fieldType): RangeIndex => ({ kind: "range", field, fieldType })
+const makeMatchFn = (field): MatchIndex => ({
+  kind: "match",
+  fields: [field],
+  fieldType: "string",
+  tokenFilters: [{ kind: "downcase" }, { kind: "ngram", tokenLength: 3 }],
+  tokenizer: { kind: "standard" },
+})
 
 // TODO: are these actually Mapping types from stashjs?
 type ExactIndex = {
@@ -27,27 +88,6 @@ type Index = ExactIndex | RangeIndex | MatchIndex
 
 type Mapping = {
   [key: string]: Index
-}
-
-export type Indexed = {
-  [key: string]: TermType
-}
-
-export type MappingsWrapper<T> = Mappings<T>
-export type MappingsMetaWrapper<T> = MappingsMeta<MappingsWrapper<T>>
-export type CollectionWrapper<T> = Collection<T, MappingsWrapper<T>, MappingsMetaWrapper<T>>
-export type CollectionSchemaWrapper = CollectionSchema<Indexed, MappingsWrapper<Indexed>, MappingsMetaWrapper<Indexed>>
-
-function indexedTypeForEntity(entity: any): Indexed {
-  const properties = ConfigurationMetadata.searchableColumnsFor(entity)
-
-  return getMetadataArgsStorage().columns.reduce((output, { options, mode, target, propertyName }) => {
-    if (entity === target && options["index"] && mode === "regular") {
-      let prop = properties.find(p => p == propertyName)
-      if (prop) output[propertyName] = mapType(options.type)
-    }
-    return output
-  }, {})
 }
 
 const StringTypes = [
@@ -130,52 +170,4 @@ function mapType(type: TargetType): TermType {
   if (isBooleanType(type)) return "boolean"
   if (isFloat64Type(type)) return "float64"
   throw new Error(`Type ${type} is unsuppored for queryable encryption`)
-}
-
-// TODO: This logic could probably be moved into stashjs
-// TODO: This should create an object
-function indexesFor(indexedType: Indexed): Mapping {
-  return Object.entries(indexedType).reduce((indexes, [propertyName, type]) => {
-    switch (type) {
-      case "string":
-        // Orderable strings are lossy so we need to keep an exact index
-        indexes[propertyName] = makeExactFn(propertyName, type)
-        indexes[`${propertyName}_match`] = makeMatchFn(propertyName)
-        indexes[`${propertyName}_range`] = makeRangeFn(propertyName, type)
-        return indexes
-
-      case "uint64":
-      case "float64":
-      case "date":
-        indexes[`${propertyName}_range`] = makeRangeFn(propertyName, type)
-        return indexes
-
-      case "boolean":
-        indexes[propertyName] = makeExactFn(propertyName, type)
-        return indexes
-
-      default:
-        unreachable("Unhandled type")
-    }
-  }, {})
-}
-
-// TODO: use the functions from stashjs but they aren't *quite* the same
-function makeExactFn(field, fieldType): ExactIndex {
-  return { kind: "exact", field, fieldType }
-}
-const makeRangeFn = (field, fieldType): RangeIndex => ({ kind: "range", field, fieldType })
-const makeMatchFn = (field): MatchIndex => ({
-  kind: "match",
-  fields: [field],
-  fieldType: "string",
-  tokenFilters: [{ kind: "downcase" }, { kind: "ngram", tokenLength: 3 }],
-  tokenizer: { kind: "standard" },
-})
-
-export function collectionSchema(target: any, name: string): CollectionSchemaWrapper {
-  const type = indexedTypeForEntity(target)
-  const indexes = indexesFor(type)
-
-  return CollectionSchema.define<Indexed>(name).fromCollectionSchemaDefinition({ type, indexes })
 }
