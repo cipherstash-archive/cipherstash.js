@@ -1,5 +1,3 @@
-import { HasID, Mappings, StashRecord } from "@cipherstash/stashjs"
-import { randomUUID } from "crypto"
 import {
   EntitySubscriberInterface,
   EventSubscriber,
@@ -10,100 +8,74 @@ import {
   RecoverEvent,
   Logger,
 } from "typeorm"
-
-import { CollectionManager } from "./collection-manager"
-
-type Stashable = { stashId?: string }
-type Stashed = Required<Stashable>
+import { deleteEntity, ensureStashID, mapAndPutEntity } from "./collection-adapter"
+import { isStashed, StashLinkable, StashLinked } from "./types"
 
 type StashSyncEvent = "insert" | "update" | "remove"
 
-const isStashed = (data: Stashable): data is Stashed => {
-  return data.hasOwnProperty("stashId")
-}
-
-const ensureStashID = (entity: Stashable) => (entity.stashId = randomUUID())
-
-const logStashEvent = (logger: Logger, event: StashSyncEvent, stashId: string): void => {
+function logStashEvent(logger: Logger, event: StashSyncEvent, stashId: string): string {
   logger.log("info", `Stash[${event}]: ID ${stashId}`)
+  return stashId
 }
 
 @EventSubscriber()
 export class IndexingSubscriber implements EntitySubscriberInterface {
   /* Ensure stashID is set on insertion */
-  beforeInsert({ entity }: InsertEvent<Stashable>): void {
+  beforeInsert({ entity }: InsertEvent<StashLinkable>): void {
     ensureStashID(entity)
   }
 
-  /* Sync to collection after insert */
-  async afterInsert(event: InsertEvent<Stashed>): Promise<void> {
-    try {
-      logStashEvent(event.connection.logger, "insert", event.entity.stashId)
-      const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
-      const { stashId, ...record } = event.entity
-      await collection.put({ ...record, id: stashId })
-    } catch (e) {
-      return Promise.reject(e)
-    }
+  /* Ensure stashID is set on recovered records */
+  beforeRecover({ entity }: RecoverEvent<StashLinkable>): void {
+    ensureStashID(entity)
   }
 
   /* Ensure stashID is set on update */
-  beforeUpdate({ entity }: UpdateEvent<Stashable>): void {
-    ensureStashID(entity)
+  beforeUpdate({ entity }: UpdateEvent<StashLinkable>): void {
+    ensureStashID(entity as StashLinkable)
+  }
+
+  /* Sync to collection after insert */
+  async afterInsert({ connection, entity, metadata }: InsertEvent<StashLinked>): Promise<string> {
+    return await mapAndPutEntity(entity, metadata.tablePath).then(stashId =>
+      logStashEvent(connection.logger, "insert", stashId)
+    )
   }
 
   /* Sync to collection after update */
-  async afterUpdate(event: UpdateEvent<Stashed>): Promise<void> {
-    try {
-      logStashEvent(event.connection.logger, "update", event.entity.stashId)
-      const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
-      const { stashId, ...record } = event.entity
-      await collection.put({ ...record, id: stashId })
-    } catch (e) {
-      return Promise.reject(e)
-    }
+  async afterUpdate({ connection, entity, metadata }: UpdateEvent<StashLinked>): Promise<string> {
+    return await mapAndPutEntity(entity as StashLinked, metadata.tablePath).then(stashId =>
+      logStashEvent(connection.logger, "update", stashId)
+    )
   }
 
   /* Remove from collection after DB removal */
-  async afterRemove(event: RemoveEvent<Stashable>): Promise<void> {
-    try {
-      if (isStashed(event.databaseEntity)) {
-        logStashEvent(event.connection.logger, "remove", event.entity.stashId)
-        const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
-        collection.delete(event.databaseEntity.stashId)
-      }
-    } catch (e) {
-      return Promise.reject(e)
+  async afterRemove({ databaseEntity, connection, entity, metadata }: RemoveEvent<StashLinkable>): Promise<string> {
+    if (isStashed(databaseEntity)) {
+      return await deleteEntity(databaseEntity, metadata.tableName).then(stashId =>
+        logStashEvent(connection.logger, "remove", stashId)
+      )
     }
   }
 
   /* Remove from collection after DB soft removal */
-  async afterSoftRemove(event: SoftRemoveEvent<Stashable>): Promise<void> {
-    try {
-      if (isStashed(event.databaseEntity)) {
-        logStashEvent(event.connection.logger, "remove", event.entity.stashId)
-        const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
-        collection.delete(event.databaseEntity.stashId)
-      }
-    } catch (e) {
-      return Promise.reject(e)
+  async afterSoftRemove({
+    databaseEntity,
+    connection,
+    entity,
+    metadata,
+  }: SoftRemoveEvent<StashLinkable>): Promise<string> {
+    if (isStashed(databaseEntity)) {
+      return await deleteEntity(databaseEntity, metadata.tableName).then(stashId =>
+        logStashEvent(connection.logger, "remove", stashId)
+      )
     }
-  }
-
-  /* Ensure stashID is set on recovered records */
-  beforeRecover({ entity }: RecoverEvent<Stashable>): void {
-    ensureStashID(entity)
   }
 
   /* Sync to collection after recovery */
-  async afterRecover(event: RecoverEvent<Stashed>): Promise<void> {
-    try {
-      logStashEvent(event.connection.logger, "update", event.entity.stashId)
-      const collection = await CollectionManager.getCollection<StashRecord>(event.metadata.tablePath)
-      const { stashId, ...record } = event.entity
-      await collection.put({ ...record, id: stashId })
-    } catch (e) {
-      return Promise.reject(e)
-    }
+  async afterRecover({ connection, entity, metadata }: RecoverEvent<StashLinked>): Promise<string> {
+    return await mapAndPutEntity(entity, metadata.tablePath).then(stashId =>
+      logStashEvent(connection.logger, "update", stashId)
+    )
   }
 }
