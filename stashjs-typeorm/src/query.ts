@@ -74,7 +74,7 @@ function queryOptionsFromExpressionMap<T extends StashInternalRecord, M extends 
 
 function tranformSelectQuery<T extends StashLinkedEntity>(
   target: LookasideSelectQueryBuilder<T>,
-  stashIds: Array<string>,
+  ids: Array<string>,
   alias: string
 ): LookasideSelectQueryBuilder<T> {
   return target
@@ -83,6 +83,6 @@ function tranformSelectQuery<T extends StashLinkedEntity>(
     .skip()
     .take()
     .orderBy()
-    .inOrderOf(stashIds) // TODO: This is only needed if we had an ordering option
-    .where(`${alias}.stashId in (:...ids)`, { ids: stashIds }) // FIXME: SQLi vuln?? - does TypeORM have this issue anyway!?
+    .inOrderOf(ids) // TODO: This is only needed if we had an ordering option
+    .where(`${alias}.stashId in (:...ids)`, { ids }) // FIXME: SQLi vuln?? - does TypeORM have this issue anyway!?
 }

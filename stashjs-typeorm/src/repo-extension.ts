@@ -1,14 +1,32 @@
 import { Repository } from "typeorm"
 import { collectionSchema } from "./schema-builder"
 import { CollectionManager } from "./collection-manager"
-import { StashLinkedEntity } from "./types"
+import { StashLinkableEntity, WithRequiredStashId } from "./types"
 import { ensureStashID, mapAndPutEntity } from "./collection-adapter"
 import { extendQueryBuilder, LookasideSelectQueryBuilder } from "./query"
 
-export function wrapRepo<T extends StashLinkedEntity>(repo: Repository<T>) {
+/*
+ * Extends a TypeORM Repository to give it special powers.
+ * That is, queryable encryption via a CipherStash collection.
+ */
+export type WrappedRepository<T extends StashLinkableEntity> = Repository<T> & {
+  /*
+   * Creates a CipherStash collection with indexes based on the entity.
+   * Any properties in the entity that have been decorated with `@Queryable()`
+   * will have queryable indexes created.
+   *
+   * The collection will have the same name as the database table for the entity.
+   */
+  createCSQueryBuilder(alias: string): LookasideSelectQueryBuilder<WithRequiredStashId<T>>
+  createCollection(): Promise<void>
+  dropCollection(): Promise<void>
+  reindex(): Promise<void>
+}
+
+export function wrapRepo<T extends StashLinkableEntity>(repo: Repository<T>): WrappedRepository<T> {
   return repo.extend({
-    createCSQueryBuilder(alias: string): LookasideSelectQueryBuilder<T> {
-      return extendQueryBuilder<T>(this.createQueryBuilder(alias), this.metadata.tablePath)
+    createCSQueryBuilder(alias: string): LookasideSelectQueryBuilder<WithRequiredStashId<T>> {
+      return extendQueryBuilder<T & { stashId: string }>(this.createQueryBuilder(alias), this.metadata.tablePath)
     },
 
     async createCollection(): Promise<void> {
@@ -20,6 +38,9 @@ export function wrapRepo<T extends StashLinkedEntity>(repo: Repository<T>) {
       }
     },
 
+    /*
+     * Drops any coresponding CipherStash collection for the entity
+     */
     async dropCollection(): Promise<void> {
       try {
         await CollectionManager.drop(this.metadata.tablePath)
@@ -28,6 +49,11 @@ export function wrapRepo<T extends StashLinkedEntity>(repo: Repository<T>) {
       }
     },
 
+    /*
+     * Reindexes all entity records into the CipherStash collection.
+     * Only typically needed when adding CipherStash to an existing app
+     * or when reindexing (say after adding/remove queryable properties on the entity).
+     */
     async reindex(): Promise<void> {
       //const logger = this.manager.connection.logger
 
