@@ -105,7 +105,6 @@ export class CollectionInternal<R extends StashRecord, M extends Mappings<R>, MM
         queryOptions ? queryOptions : {}
       )
     } else {
-      console.log("000", queryOptions)
       return this.queryWithoutConstraints(callbackOrQueryOptions as QueryOptions<R, M>)
     }
   }
@@ -166,9 +165,6 @@ export class CollectionInternal<R extends StashRecord, M extends Mappings<R>, MM
   ): AsyncResult<QueryResult<R & HasID>, DocumentQueryFailure> {
     const timerStart = process.hrtime.bigint()
 
-    const request = await this.buildQueryRequest(options, { constraints: [] })
-    if (request.ok) console.log("111", options, request.value)
-
     return convertErrorsTo(
       DocumentQueryFailure,
       await sequence(
@@ -187,11 +183,7 @@ export class CollectionInternal<R extends StashRecord, M extends Mappings<R>, MM
   ): AsyncResult<V1.Query.QueryRequest, never> {
     const constraints = query.constraints
 
-    console.log("META", this.schema.meta)
-    console.log("META 2", normalizeId(this.schema.meta["dob_range"]!.$indexId))
-
-    console.log({ options })
-    const result = {
+    return Ok.Async({
       collectionId: normalizeId(this.id),
       query: {
         limit: options.limit || DEFAULT_QUERY_LIMIT,
@@ -211,11 +203,7 @@ export class CollectionInternal<R extends StashRecord, M extends Mappings<R>, MM
             }))
           : [],
       },
-    }
-
-    console.log(result)
-
-    return Ok.Async(result)
+    })
   }
 }
 
