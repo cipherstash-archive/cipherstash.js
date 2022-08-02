@@ -179,7 +179,7 @@ export type MappingsMeta<M> = M extends Mappings<infer _R>
 // TODO: support options for string (token filters etc)
 // TODO: support options for date (resolution etc)
 // TODO: support options for bigint (clamp or throw for out-of-range)
-type ExactFn<R extends StashRecord> = <F extends FieldOfType<R, ExactMappingFieldType>>(
+export type ExactFn<R extends StashRecord> = <F extends FieldOfType<R, ExactMappingFieldType>>(
   field: F,
   fieldType: TermType
 ) => ExactMapping<R, F>
@@ -227,6 +227,8 @@ export type FieldDynamicMatchFn = (options: MatchOptions) => FieldDynamicMatchMa
 export function makeFieldDynamicMatchFn(): FieldDynamicMatchFn {
   return options => ({ kind: "field-dynamic-match", fieldType: "string", ...options })
 }
+
+export type IndexFn<R extends StashRecord> = ExactFn<R> | RangeFn<R> | MatchFn<R> | DynamicMatchFn | FieldDynamicMatchFn
 
 export type MappingsDSL<R extends StashRecord> = {
   Exact: ExactFn<R>
