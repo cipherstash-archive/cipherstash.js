@@ -7,24 +7,20 @@ export interface IndexOptions {
 
 export interface ProtectedColumnOptions extends ColumnOptions {
   index?: IndexOptions
+  key: string
 }
 
-export const ProtectedColumn = (options?: ProtectedColumnOptions) => {
+export const ProtectedColumn = (options: ProtectedColumnOptions) => {
   return Column({
     index: {},
     transformer: new EncryptionTransformer({
-      key: "e41c966f21f9e1577802463f8924e6a3fe3e9751f201304213b2f845d8841d61", // TODO: Don't hardcode key
+      key: options.key,
       algorithm: "aes-256-gcm",
       ivLength: 16,
     }),
     ...options,
   })
 }
-
-// TODO: ProtectedColumn or EncryptedColumn probably has to wrap the Type ORM Column decorator
-// But we could probably add a @Queryable decorator that sets the CipherStash meta data
-// The encrypted column can wrap typeorm-encrypted with specific settings applied to the transformer
-// such as the use of aes-gcm
 
 export const Queryable = (): PropertyDecorator => {
   return (target: Object, propertyKey: string): void => {
