@@ -5,3 +5,5 @@
 * Docs
 * README
 * Tighter tsconfig
+* Tests
+* Support encrypting non-string field types
