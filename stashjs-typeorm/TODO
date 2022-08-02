@@ -1,7 +1,6 @@
 * Map query function DSL (e.g. dob.gt(..) instead of dob_range.gt(..))
 * Use stream for Reindex
 * Logging during Reindex
-* Rename ProtectedRecord to EncryptedRecord and wrap typeorm-encrypted
 * Docs
 * README
 * Tighter tsconfig
