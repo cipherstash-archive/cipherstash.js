@@ -5,12 +5,12 @@ export interface IndexOptions {
   kind?: string
 }
 
-export interface ProtectedColumnOptions extends ColumnOptions {
+export interface EncryptedColumnOptions extends ColumnOptions {
   index?: IndexOptions
   key: string
 }
 
-export const ProtectedColumn = (options: ProtectedColumnOptions) => {
+export const EncryptedColumn = (options: EncryptedColumnOptions) => {
   return Column({
     index: {},
     transformer: new EncryptionTransformer({
