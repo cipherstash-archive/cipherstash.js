@@ -2,7 +2,7 @@ import { CollectionSchema, MatchOptions } from "@cipherstash/stashjs"
 import { TermType } from "@cipherstash/stashjs/dist/record-type-definition"
 import { unreachable } from "@cipherstash/stashjs/dist/type-utils"
 import { ColumnType, getMetadataArgsStorage } from "typeorm"
-import { ConfigurationMetadata } from "./protected-column"
+import { ConfigurationMetadata } from "./encrypted-column"
 import { CollectionSchemaWrapper, Indexed } from "./types"
 
 export function collectionSchema(target: any, name: string): CollectionSchemaWrapper {
