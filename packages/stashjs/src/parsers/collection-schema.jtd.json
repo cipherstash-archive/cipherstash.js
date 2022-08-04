@@ -18,7 +18,7 @@
         },
         "match": {
           "properties": {
-            "fields": { "elements": { "type": "string" }},
+            "fields": { "elements": { "type": "string" } },
             "tokenFilters": {
               "elements": { "ref": "tokenFilter" }
             },

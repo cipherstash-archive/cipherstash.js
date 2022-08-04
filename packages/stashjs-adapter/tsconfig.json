@@ -26,7 +26,7 @@
     "noPropertyAccessFromIndexSignature": true,
     "noStrictGenericChecks": false,
     "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": false,
+    "noUnusedLocals": true,
     "noUnusedParameters": true,
     "preserveConstEnums": false,
     "removeComments": false,
@@ -39,15 +39,12 @@
     "target": "ES2020",
     "useDefineForClassFields": false
   },
-  "include": [ "src/*", "generated/*", "index.ts" ],
-  "exclude": [ "dist", "node_modules" ],
+  "include": ["src/*"],
+  "exclude": ["dist", "node_modules"],
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",
     "fallbackPolling": "dynamicPriority",
-    "excludeDirectories": [
-      "node_modules",
-      "build"
-    ]
+    "excludeDirectories": ["node_modules", "build"]
   }
 }
