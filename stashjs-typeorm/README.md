@@ -21,6 +21,7 @@ before saving and decrypt when loading.
 For example, to encrypt the `firstName` and `lastName` fields:
 
 ```typescript
+import { Entity, PrimaryGeneratedColumn } from "typeorm"
 import { EncryptedColumn } from "@cipherstash/stashjs-typeorm"
 
 @Entity()
@@ -51,9 +52,12 @@ Standard encryption is not searchable.
 `@EncryptedColumn` uses AES-256-GCM with a random IV to protect the data which is
 excellent for security but makes normal queries impossible.
 
-To address that, we are going to use the `@Queryable()` decorator:
+To address that, we are going to use the `@Queryable()` decorator.
+We also need to add a field to our entity called `stashId` which
+will store an ID linking each record to the CipherStash index.
 
 ```typescript
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
 import { EncryptedColumn, Queryable } from "@cipherstash/stashjs-typeorm"
 
 @Entity()
@@ -68,6 +72,10 @@ export class User {
   @Queryable()
   @EncryptedColumn({ key })
   lastName: string
+
+  // Links records to CipherStash
+  @Column({ nullable: true })
+  stashId: string
 }
 ```
 
@@ -82,6 +90,11 @@ You will need a [CipherStash Workspace](https://docs.cipherstash.com/tutorials/g
 for this to work.
 
 ```typescript
+// The Data source for your app (see https://typeorm.io/data-source
+import { AppDataSource } from "./data-source"
+// Your User Entity
+import { User } from "./entity/User"
+// Repo extension wrapper
 import { wrapRepo } from "@cipherstash/stashjs-typeorm"
 
 // Create a CipherStash collection for the User entity
