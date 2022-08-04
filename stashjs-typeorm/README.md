@@ -96,7 +96,7 @@ To index all of your data you can use the `reindex` function on the `userRepo`
 await userRepo.reindex()
 ```
 
-Now we can query our data! We'll use the wrapped Repo again.
+Now we can query our data! We'll use the wrapped repo again.
 
 ```typescript
 # Get a CipherStash enabled query builder
