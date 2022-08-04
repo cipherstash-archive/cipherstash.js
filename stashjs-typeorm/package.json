@@ -29,7 +29,8 @@
     "typeorm-encrypted": "^0.8.0"
   },
   "lint-staged": {
-    "*.ts": "prettier --write"
+    "*.ts": "prettier --write",
+    "*.md": "prettier --write"
   },
   "files": [
     "scripts/*",
