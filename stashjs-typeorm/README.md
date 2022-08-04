@@ -13,7 +13,7 @@ To get started, add the package to your app:
 npm install @cipherstash/stashjs-typeorm --save
 ```
 
-You can use Decorators to protect the fields in an Entity with encryption.
+You can use decorators to protect the fields in an `Entity` with encryption.
 
 The `EncryptedColumn` decorator will encrypt the target field
 before saving and decrypt when loading.
