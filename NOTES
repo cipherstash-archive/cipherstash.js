@@ -3,7 +3,11 @@ Thursday
 - Collection manager to create and drop collections based on the schema
 
 Next
-- Set up a Subscriber to sync data into collection
 - Add an reindex function to collection manager
 - Wrap typeorm-encrypted
 - Create a wrapper Repository type which decorates the findBy etc methods
+- Work out how to handle all the different types of errors from Stashjs - they're all nested JSON from gRPC (we should have a humanError function)
+
+
+Console
+- It would be really handy to see my list of collections in console!
