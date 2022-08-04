@@ -12,8 +12,8 @@ does not attempt to mirror existing ORM interfaces like Prisma (though it may of
 
 The primary goals of this module are:
 
-* To abstract the mapping of numeric to "secure" IDs
-* To provide an API to CipherStash that uses an existing type
+- To abstract the mapping of numeric to "secure" IDs
+- To provide an API to CipherStash that uses an existing type
 
 ## Usage
 
@@ -22,10 +22,10 @@ First create a module to represent a model (say User) in CipherStash.
 ```ts title="user-vault.ts"
 // -- user-vault.ts ==
 // Existing User type
-import { User } from '@prisma/client'
-import CollectionAPI from '@cipherstash/stashjs-adapter'
+import { User } from "@prisma/client"
+import CollectionAPI from "@cipherstash/stashjs-adapter"
 
-const ID_NAMESPACE = '1b671a64-40d5-491e-99b0-da01ff1f3341'
+const ID_NAMESPACE = "1b671a64-40d5-491e-99b0-da01ff1f3341"
 
 export const UserVault = new CollectionAPI<User>("users", ID_NAMESPACE)
 ```
@@ -36,11 +36,7 @@ Then use in other parts of your application. For example, in an API:
 import type { NextApiRequest, NextApiResponse } from "next"
 import UserVault from "user-vault"
 
-export default async function handler(
-  _req: NextApiRequest,
-  res: NextApiResponse<any>
-) {
-  
+export default async function handler(_req: NextApiRequest, res: NextApiResponse<any>) {
   const users = await UserVault.list()
   res.status(200).json(users)
 }

@@ -1,9 +1,9 @@
-import { vol } from "memfs";
+import { vol } from "memfs"
 
-Error.stackTraceLimit = 1024;
+Error.stackTraceLimit = 1024
 
-jest.mock("fs", () => require("memfs").fs);
+jest.mock("fs", () => require("memfs").fs)
 
 afterEach(() => {
-  vol.reset();
-});
+  vol.reset()
+})

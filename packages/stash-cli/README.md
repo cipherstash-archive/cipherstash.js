@@ -1,4 +1,4 @@
-# 🪄  stash-cli, the CipherStash CLI
+# 🪄 stash-cli, the CipherStash CLI
 
 stash-cli is a CLI for working with CipherStash.
 
@@ -10,7 +10,7 @@ It also can be used to do CRUD on collections.
 
 Once you have the necessary system-level dependencies installed, you can get going with:
 
-``` bash
+```bash
 # Install stash-cli
 npm install -g @cipherstash/stash-cli
 
@@ -49,7 +49,7 @@ rust 1.56.1
 
 Then run:
 
-``` bash
+```bash
 # Install (dev) dependencies
 pnpm install
 
