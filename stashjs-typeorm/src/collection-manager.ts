@@ -7,7 +7,7 @@ type CollectionCache = {
 
 class CollectionManagerSingleton {
   private cache: CollectionCache
-  private stash?: Stash
+  private stash?: Promise<Stash>
 
   constructor() {
     this.cache = {}
@@ -16,19 +16,16 @@ class CollectionManagerSingleton {
   private async getStash(): Promise<Stash> {
     if (this.stash) return this.stash
     // TODO: pass options
-    return await Stash.connect().then(s => (this.stash = s))
+    this.stash = Stash.connect()
+    return this.getStash()
   }
 
   async getCollection<T>(name: string): Promise<CollectionWrapper<T>> {
-    try {
-      if (this.cache[name]) return this.cache[name]
-      const stash = await this.getStash()
-      const collection = await stash.loadCollection<T, Mappings<T>>(name)
-      this.cache[name] = collection
-      return collection
-    } catch (e) {
-      return Promise.reject(e)
-    }
+    if (this.cache[name]) return this.cache[name]
+    const stash = await this.getStash()
+    const collection = await stash.loadCollection<T, Mappings<T>>(name)
+    this.cache[name] = collection
+    return collection
   }
 
   async create(schema: CollectionSchemaWrapper): Promise<CollectionWrapper<Indexed>> {
