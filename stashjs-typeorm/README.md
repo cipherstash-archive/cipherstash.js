@@ -36,7 +36,7 @@ export class User {
 }
 ```
 
-The `@EncryptedColumn` decorator wraps `@Column` so you can pass the same options there.
+The `@EncryptedColumn` decorator wraps [TypeORM's `@Column`](https://typeorm.io/entities#column-options) so you can pass the same options there.
 
 For example:
 
