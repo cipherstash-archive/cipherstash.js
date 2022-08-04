@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+
+/*
+ * A term represents an indexed term value
+ * and a posting link that relates to the source
+ * document it indexes.
+ * 
+ * Term and bits should be a oneof, but protobuf does not
+ * support repeated fields within a oneof. Wrapping these
+ * fields within another message as a oneof and adding that as a repeated
+ * field would work, but would be a breaking change.
+ */
+message Term {
+  repeated bytes term = 1;
+  bytes link = 2;
+  repeated uint32 bits = 3;
+}

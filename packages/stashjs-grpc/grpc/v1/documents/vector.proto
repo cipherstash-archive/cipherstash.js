@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+import "documents/term.proto";
+
+/*
+ * A vector represents a set of ciphertext terms
+ * generated for the document by the Index (indexId)
+ */
+message Vector {
+  bytes indexId = 1;
+  repeated Term terms = 2;
+}
