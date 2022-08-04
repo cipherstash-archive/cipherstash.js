@@ -19,7 +19,6 @@ export function extendQueryBuilder<T extends StashLinkedEntity>(
   output.originalGetRawAndEntities = target.getRawAndEntities
 
   output.getRawAndEntities = async () => {
-    console.log(output.expressionMap.allOrderBys)
     const options = queryOptionsFromExpressionMap(output.expressionMap)
     const collection = await CollectionManager.getCollection<StashInternalRecord>(collectionName)
     const { documents } = await (output.stashBuilder
