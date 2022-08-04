@@ -1,6 +1,6 @@
 # Stash.js TypeORM
 
-This package is a [TypeORM](https://typeorm.io/).specific package for using CipherStash in your app.
+This package is a [TypeORM](https://typeorm.io/)-specific package for using CipherStash in your app.
 
 It allows you to add Queryable and Application-level Encryption (QuALE) to your TypeORM entities,
 adds extensions to perform encrypted queries and manages indexing and collecion creation.
