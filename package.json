@@ -1,0 +1,8 @@
+{
+  "name": "cipherstash.js",
+  "description": "CipherStash JS monorepo",
+  "scripts": {
+    "setup": "pnpm -r install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}

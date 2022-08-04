@@ -1,0 +1,47 @@
+{
+  "name": "@cipherstash/stashjs-adapter",
+  "version": "0.0.4",
+  "description": "Adapter helpers for Stash.js and popular ORMs like Prisma",
+  "main": "dist/index.js",
+  "typedocMain": "src/index.ts",
+  "scripts": {
+    "build": "pnpx tsc",
+    "build-then-watch": "pnpm build; pnpx tsc --watch",
+    "prepublishOnly": "pnpm build",
+    "clean": "rm -fr ./dist",
+    "test": "echo \"Error: no tests yet!\"",
+    "lint": "prettier './src/**/*.ts' --check",
+    "lint:fix": "prettier './src/**/*.ts' --write",
+    "lint:staged": "lint-staged"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@cipherstash/stashjs": "workspace:*",
+    "uuid": "^8.3.2"
+  },
+  "contributors": [
+    "Dan Draper <dan@cipherstash.com>"
+  ],
+  "devDependencies": {
+    "@babel/core": "^7.14.3",
+    "@babel/preset-env": "^7.14.2",
+    "@babel/preset-typescript": "^7.13.0",
+    "@types/node": "^17.0.23",
+    "@types/uuid": "^8.3.0",
+    "prettier": "2.6.2",
+    "lint-staged": "12.4.1",
+    "ts-node": "^10.7.0",
+    "typescript": "^4.6.3"
+  },
+  "lint-staged": {
+    "*.ts": "prettier --write"
+  },
+  "files": [
+    "scripts/*",
+    "src/**",
+    "dist/**",
+    "babel.config.js",
+    "tsconfig.json"
+  ]
+}

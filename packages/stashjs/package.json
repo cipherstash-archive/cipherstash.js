@@ -1,0 +1,122 @@
+{
+  "name": "@cipherstash/stashjs",
+  "version": "0.5.0",
+  "description": "Datastore & Search API for CipherStash",
+  "main": "dist/index.js",
+  "typedocMain": "src/index.ts",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "build": "pnpx tsc",
+    "build-then-watch": "pnpm build; pnpx tsc --watch",
+    "prepublishOnly": "pnpm build --filter ./",
+    "clean": "rm -fr ./dist",
+    "test": "pnpx jest",
+    "lint": "prettier './src/**/*.ts' --check",
+    "lint:fix": "prettier './src/**/*.ts' --write",
+    "lint:staged": "lint-staged"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipherstash/stashjs.git"
+  },
+  "keywords": [
+    "cipherstash",
+    "encryption",
+    "database",
+    "search",
+    "full text search",
+    "cryptography",
+    "ORE",
+    "order revealing encryption",
+    "security",
+    "secure",
+    "client-side encryption",
+    "stashjs",
+    "stash"
+  ],
+  "contributors": [
+    "Dan Draper <dan@cipherstash.com>",
+    "James Sadler <james@cipherstash.com>",
+    "Lindsay Holmwood <lindsay@cipherstash.com>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cipherstash/stashjs/issues"
+  },
+  "homepage": "https://github.com/cipherstash/stashjs#readme",
+  "devDependencies": {
+    "@aws-sdk/types": "^3.15.0",
+    "@babel/core": "^7.14.3",
+    "@babel/preset-env": "^7.14.2",
+    "@babel/preset-typescript": "^7.13.0",
+    "@types/bson": "^4.0.3",
+    "@types/jest": "^27.0.1",
+    "@types/jws": "^3.2.4",
+    "@types/lockfile": "^1.0.2",
+    "@types/node": "^15.12.4",
+    "@types/source-map-support": "^0.5.4",
+    "@types/uuid": "^8.3.0",
+    "babel-jest": "^28.0.2",
+    "cargo-cp-artifact": "^0.1.6",
+    "jest": "^28.0.2",
+    "lint-staged": "12.4.1",
+    "memfs": "^3.4.1",
+    "prettier": "2.6.2",
+    "ts-node": "^10.0.0",
+    "typedoc": "^0.22.13",
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "@aws-crypto/client-node": "^2.2.0",
+    "@aws-sdk/client-kms": "^3.38.0",
+    "@aws-sdk/client-sts": "^3.34.0",
+    "@cfworker/json-schema": "^1.12.1",
+    "@cipherstash/stash-rs": "workspace:*",
+    "@cipherstash/stashjs-grpc": "workspace:*",
+    "@grpc/grpc-js": "^1.5.5",
+    "@grpc/proto-loader": "^0.6.2",
+    "@types/stringify-object": "^3.3.1",
+    "aws-sdk": "^2.918.0",
+    "axios": "0.27.2",
+    "bson": "^4.4.0",
+    "fp-ts": "^2.11.8",
+    "io-ts": "^2.2.16",
+    "is-plain-object": "^5.0.0",
+    "jws": "^4.0.0",
+    "lockfile": "^1.0.4",
+    "merge-anything": "^4.0.1",
+    "open": "^8.2.1",
+    "siphash": "^1.1.0",
+    "source-map-support": "^0.5.21",
+    "stringify-object": "^3.3.0",
+    "uuid": "^8.3.2",
+    "winston": "^3.6.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "ts",
+      "node",
+      "d.ts",
+      "json"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/test-setup.ts"
+    ],
+    "testMatch": [
+      "**/*.test.ts"
+    ]
+  },
+  "lint-staged": {
+    "*.ts": "prettier --write"
+  },
+  "files": [
+    "scripts/*",
+    "src/**",
+    "dist/**",
+    "babel.config.js",
+    "tsconfig.json"
+  ]
+}

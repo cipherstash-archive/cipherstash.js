@@ -1,0 +1,63 @@
+{
+  "name": "@cipherstash/stash-cli",
+  "version": "0.3.13",
+  "description": "CipherStash CLI",
+  "types": "build/types/types.d.ts",
+  "bin": {
+    "stash": "bin/stash"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipherstash/stashjs-cli.git"
+  },
+  "scripts": {
+    "lint": "prettier './src/**/*.ts' --check && eslint './src/**/*.ts'",
+    "lint:fix": "prettier './src/**/*.ts' --write && eslint './src/**/*.ts' --fix",
+    "clean-build": "rm -rf ./build",
+    "compile": "tsc -p .",
+    "copy-templates": "if [ -e ./src/templates ]; then cp -a ./src/templates ./build/; fi",
+    "build": "pnpm run lint && pnpm run clean-build && pnpm run compile && pnpm run copy-templates",
+    "prepublishOnly": "pnpm run build",
+    "lint:staged": "lint-staged"
+  },
+  "files": [
+    "tsconfig.json",
+    "build",
+    "LICENSE",
+    "readme.md",
+    "docs",
+    "bin"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@cipherstash/stashjs": "workspace:*",
+    "axios": "^0.27.2",
+    "gluegun": "latest",
+    "open": "^8.2.1",
+    "yarn": "^1.22.11"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.18",
+    "@types/node": "^12.7.11",
+    "@typescript-eslint/eslint-plugin": "^5.21.0",
+    "@typescript-eslint/parser": "^5.21.0",
+    "eslint": "^8.14.0",
+    "eslint-config-prettier": "^8.5.0",
+    "jest": "^24.1.0",
+    "lint-staged": "12.4.1",
+    "prettier": "2.6.2",
+    "ts-jest": "^24.1.0",
+    "ts-node": "^8.4.1",
+    "typescript": "^4.3.5"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  }
+}

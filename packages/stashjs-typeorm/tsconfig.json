@@ -1,0 +1,19 @@
+{
+   "compilerOptions": {
+      "skipLibCheck": true,
+      "lib": [
+         "es5",
+         "es6",
+         "es2019"
+      ],
+      "target": "es5",
+      "module": "commonjs",
+      "declaration": true,
+      "moduleResolution": "node",
+      "outDir": "./dist",
+      "emitDecoratorMetadata": true,
+      "experimentalDecorators": true,
+      "sourceMap": true,
+      "removeComments": false
+   }
+}

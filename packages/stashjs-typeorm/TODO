@@ -1,0 +1,8 @@
+* Map query function DSL (e.g. dob.gt(..) instead of dob_range.gt(..))
+* Use stream for Reindex
+* Logging during Reindex
+* Docs
+* README
+* Tighter tsconfig
+* Tests
+* Support encrypting non-string field types
