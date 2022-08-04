@@ -1,29 +1,28 @@
-import { Entity, PrimaryGeneratedColumn, Column, ColumnOptions, BeforeUpdate, AfterUpdate } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
+import { EncryptedColumn, Queryable } from "@cipherstash/stashjs-typeorm"
 
-interface IndexOptions {
-  kind?: string
-}
+import { key } from "../config"
 
-interface CipherStashColumnOptions extends ColumnOptions {
-  index?: IndexOptions
-}
-
-const CipherStashColumn = (options?: CipherStashColumnOptions) => {
-  return Column({ index: {}, ...options })
-}
-
-@Entity()
+@Entity({ name: "node_users" })
 export class User {
-
   @PrimaryGeneratedColumn()
   id: number
 
-  @CipherStashColumn()
+  @Queryable()
+  @EncryptedColumn({ key })
   firstName: string
 
-  @Column()
+  @Queryable()
+  @EncryptedColumn({ key })
   lastName: string
 
-  @CipherStashColumn({type: "date" })
+  // Dates must be treated as timestamps in TypeORM 
+  // See this issue: https://github.com/typeorm/typeorm/issues/2176
+  @Queryable()
+  @Column({type: "timestamp"})
   dob: Date
+
+  // Could this be added with a class decorator
+  @Column({ nullable: true })
+  stashId: string
 }
