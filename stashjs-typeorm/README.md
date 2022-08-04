@@ -148,7 +148,7 @@ await builder
 
 TypeORM can (and probably should!) be configured to keep indexes
 in sync with your database.
-That's achieved using a Subscriber called `IndexingSubscriber`,
+That's achieved by using a [subscriber](https://typeorm.io/listeners-and-subscribers#what-is-a-subscriber) called `IndexingSubscriber`,
 
 Add `IndexingSubcriber` to the subscribers list in your data-source
 and every time a record is created, updated, deleted or recovered it will
