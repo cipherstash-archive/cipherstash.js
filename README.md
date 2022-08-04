@@ -4,7 +4,7 @@
 
 Change into `clients/@cipherstash` and run:
 
-``` bash
+```bash
 # Install system level dependencies
 ./build.sh setup
 

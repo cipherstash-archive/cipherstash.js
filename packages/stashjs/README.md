@@ -24,7 +24,7 @@ We aren't there yet, but please be patient with us while we tease apart the nece
 ## Future technical direction
 
 The core encryption happens in a Rust package called [ore.rs](https://ore.rs).
-More of StashJS will be converted from TypeScript to Rust code over time so that we can provide client bindings in as many languages as possible without rebuilding the world, and to ensure *correctness* and *interoperability*.
+More of StashJS will be converted from TypeScript to Rust code over time so that we can provide client bindings in as many languages as possible without rebuilding the world, and to ensure _correctness_ and _interoperability_.
 
 All of the parts of StashJS that are converted to Rust will also be publicly released under a permissive open source license and developed in the open.
 
@@ -70,34 +70,27 @@ console.log(`Collection "${movies.name}" loaded`)
 let id = await movies.put({
   title: "The Matrix",
   year: 1999,
-  runningTime: 136
+  runningTime: 136,
 })
 ```
 
 ### Basic queries
 
 ```ts
-let queryResult = await movies.query(
-  movie => movie.exactTitle.eq("Lifelines"),
-  { limit: 10 }
-)
+let queryResult = await movies.query(movie => movie.exactTitle.eq("Lifelines"), { limit: 10 })
 ```
 
 ### Free text-search
 
 ```ts
-let queryresult = await movies.query(
-  movie => movie.title.match("star wa"),
-  { limit: 10 }
-)
-
+let queryresult = await movies.query(movie => movie.title.match("star wa"), { limit: 10 })
 ```
 
 ### Range queries
 
 ```ts
-let queryResult = await movies.query(
-  movie => movie.year.lte(1940),
-  { limit: 5, order: [{byIndex: "year", direction: "DESC"}] }
-)
+let queryResult = await movies.query(movie => movie.year.lte(1940), {
+  limit: 5,
+  order: [{ byIndex: "year", direction: "DESC" }],
+})
 ```
