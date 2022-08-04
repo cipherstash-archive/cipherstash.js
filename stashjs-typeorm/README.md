@@ -204,9 +204,3 @@ And the config:
 ```typescript
 export const key = process.env["ENCRYPTION_KEY"]
 ```
-
-## TODO
-
-- Migrating data
-- Non string types
-- JS version of getting started in the docs
