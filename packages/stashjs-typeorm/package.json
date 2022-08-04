@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs-typeorm",
-  "version": "0.0.1",
+  "version": "0.0.2-dev-4",
   "description": "TypeORM Adapter for StashJS",
   "main": "dist/index.js",
   "typedocMain": "src/index.ts",
@@ -23,7 +23,7 @@
     "typescript": "4.7.4"
   },
   "dependencies": {
-    "@cipherstash/stashjs": "workspace:^0.5.0",
+    "@cipherstash/stashjs": "workspace:*",
     "lint-staged": "12.4.1",
     "typeorm": "0.3.7",
     "typeorm-encrypted": "^0.8.0"
