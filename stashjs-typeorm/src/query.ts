@@ -1,5 +1,5 @@
 import { Mappings, OrderingOptions, QueryBuilder, QueryOptions, StashRecord } from "@cipherstash/stashjs"
-import { OrderByCondition, SelectQueryBuilder } from "typeorm"
+import { OptimisticLockCanNotBeUsedError, OrderByCondition, SelectQueryBuilder } from "typeorm"
 import { QueryExpressionMap } from "typeorm/query-builder/QueryExpressionMap"
 import { CollectionManager } from "./collection-manager"
 import { StashInternalRecord, StashLinkedEntity } from "./types"
@@ -27,7 +27,12 @@ export function extendQueryBuilder<T extends StashLinkedEntity>(
     const stashIds = documents.map(result => result.id)
 
     // Transform query and load the data
-    return await tranformSelectQuery(output, stashIds, output.alias).originalGetRawAndEntities()
+    return await tranformSelectQuery(
+      output,
+      stashIds,
+      output.alias,
+      options.order && options.order.length > 0
+    ).originalGetRawAndEntities()
   }
 
   output.query = (stashBuilder?) => {
@@ -35,15 +40,19 @@ export function extendQueryBuilder<T extends StashLinkedEntity>(
     return output
   }
 
-  output.inOrderOf = (stashIds: Array<string>) => {
-    const caseLines = stashIds.reduce((str, id, count) => `${str}WHEN "stashId"='${id}' THEN ${count}\n`, "")
-
-    return output.orderBy(`
-        CASE
-          ${caseLines}END
-      `)
-  }
   return output
+}
+
+function inOrderOf<T extends StashLinkedEntity>(
+  qb: LookasideSelectQueryBuilder<T>,
+  stashIds: Array<string>
+): LookasideSelectQueryBuilder<T> {
+  const caseLines = stashIds.reduce((str, id, count) => `${str}WHEN "stashId"='${id}' THEN ${count}\n`, "")
+
+  return qb.orderBy(`
+    CASE
+      ${caseLines}END
+  `)
 }
 
 // This maps order for any properties on the TypeORM entity (columns), to ordering on any of the indexes defined
@@ -74,14 +83,10 @@ function queryOptionsFromExpressionMap<T extends StashInternalRecord, M extends 
 function tranformSelectQuery<T extends StashLinkedEntity>(
   target: LookasideSelectQueryBuilder<T>,
   ids: Array<string>,
-  alias: string
+  alias: string,
+  maintainOrdering: boolean
 ): LookasideSelectQueryBuilder<T> {
-  return target
-    .limit()
-    .offset()
-    .skip()
-    .take()
-    .orderBy()
-    .inOrderOf(ids) // TODO: This is only needed if we had an ordering option
-    .where(`${alias}.stashId in (:...ids)`, { ids }) // FIXME: SQLi vuln?? - does TypeORM have this issue anyway!?
+  const query = target.limit().offset().skip().take().orderBy().where(`${alias}.stashId in (:...ids)`, { ids })
+
+  return maintainOrdering ? inOrderOf(query, ids) : query
 }
