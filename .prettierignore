@@ -1,0 +1,12 @@
+# Ignore artifacts:
+dist/
+build/
+generated/
+coverage/
+target/
+
+# Ignore lock file
+pnpm-lock.yaml
+
+# Ignore files by extensions:
+*.html
