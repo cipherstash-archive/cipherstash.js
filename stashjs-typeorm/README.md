@@ -90,7 +90,7 @@ You will need a [CipherStash Workspace](https://docs.cipherstash.com/tutorials/g
 for this to work.
 
 ```typescript
-// The Data source for your app (see https://typeorm.io/data-source
+// The Data source for your app (see https://typeorm.io/data-source)
 import { AppDataSource } from "./data-source"
 // Your User Entity
 import { User } from "./entity/User"
