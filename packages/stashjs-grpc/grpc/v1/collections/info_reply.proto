@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Collections;
+import "indexes/index.proto";
+
+message InfoReply {
+  bytes id = 1;
+  bytes ref = 2;
+  bytes metadata = 3;
+  repeated Indexes.Index indexes = 4;
+  uint32 firstActiveSchemaVersion = 5;
+  uint32 lastActiveSchemaVersion = 6;
+  uint32 currentSchemaVersion = 7;
+}

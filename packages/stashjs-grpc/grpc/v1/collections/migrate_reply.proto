@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Collections;
+import "collections/info_reply.proto";
+
+message MigrateReply {
+  InfoReply collection = 1;
+
+  enum MigrateError {
+    NoError = 0;
+
+    ErrUnknownSchemaVersion = 1;
+    ErrObsoleteSchemaVersion = 2;
+  }
+  MigrateError error = 2048;
+}

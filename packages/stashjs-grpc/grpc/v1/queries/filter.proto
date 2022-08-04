@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Queries;
+
+message Filter {
+  repeated uint32 bits = 1;
+}
