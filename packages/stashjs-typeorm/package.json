@@ -1,0 +1,45 @@
+{
+  "name": "@cipherstash/stashjs-typeorm",
+  "version": "0.0.1",
+  "description": "TypeORM Adapter for StashJS",
+  "main": "dist/index.js",
+  "typedocMain": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts",
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "pnpx tsc",
+    "build-then-watch": "pnpm build; pnpx tsc --watch",
+    "prepublishOnly": "pnpm build",
+    "clean": "rm -fr ./dist",
+    "test": "echo \"Error: no tests yet!\"",
+    "lint": "prettier './src/**/*.ts' --check",
+    "lint:fix": "prettier './src/**/*.ts' --write",
+    "lint:staged": "lint-staged"
+  },
+  "author": "Dan Draper <dan@cipherstash.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^18.6.2",
+    "@types/uuid": "^8.3.0",
+    "prettier": "2.6.2",
+    "typescript": "4.7.4"
+  },
+  "dependencies": {
+    "@cipherstash/stashjs": "^0.5.0",
+    "lint-staged": "12.4.1",
+    "typeorm": "0.3.7",
+    "typeorm-encrypted": "^0.8.0"
+  },
+  "lint-staged": {
+    "*.ts": "prettier --write",
+    "*.md": "prettier --write"
+  },
+  "files": [
+    "dist/**",
+    "README.md"
+  ]
+}
