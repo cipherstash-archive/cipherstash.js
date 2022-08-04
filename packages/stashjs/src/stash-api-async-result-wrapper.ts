@@ -1,6 +1,6 @@
 import { V1 } from "@cipherstash/stashjs-grpc"
 import { OauthAuthenticationInfo } from "./auth/oauth-utils"
-import { ClientUnaryCall, ClientWritableStream, Metadata, ServiceError } from "@grpc/grpc-js"
+import { requestCallback, ClientUnaryCall, ClientWritableStream, Metadata } from "@grpc/grpc-js"
 import { promisify } from "util"
 import { compose } from "./fp-utils"
 import { AsyncResult, Err, fromPromise, fromPromiseFn2, Ok } from "./result"
@@ -84,13 +84,7 @@ const WrappedNativeError = compose(GRPCError, NativeError)
 
 const secureWith =
   (credsGenerator: Memo<OauthAuthenticationInfo>) =>
-  <Req, Reply>(
-    fn: (
-      req: Req,
-      metadata: Metadata,
-      callback: (error?: ServiceError, result?: Reply | undefined) => void
-    ) => ClientUnaryCall
-  ) =>
+  <Req, Reply>(fn: (req: Req, metadata: Metadata, callback: requestCallback<Reply>) => ClientUnaryCall) =>
     makeAuthenticator2(credsGenerator)(
       fromPromiseFn2(promisify<Req, Metadata, Reply | undefined>(fn), WrappedNativeError)
     )
@@ -171,7 +165,7 @@ const capturePutStreamReply = () => {
     promiseReject = reject
   })
 
-  const callback = (error?: ServiceError, result?: V1.Document.StreamingPutReply) => {
+  const callback: requestCallback<V1.Document.StreamingPutReply> = (error, result) => {
     if (error) {
       promiseReject(error)
     } else {

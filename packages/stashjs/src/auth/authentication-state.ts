@@ -1,4 +1,4 @@
-import { AWSClientConfig } from "../aws"
+import { AWSClientConfig } from "./aws-client-config"
 import { AuthenticationFailure } from "../errors"
 import { OauthAuthenticationInfo } from "./oauth-utils"
 
