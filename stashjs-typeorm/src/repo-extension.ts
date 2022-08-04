@@ -60,13 +60,13 @@ export function wrapRepo<T extends StashLinkableEntity>(repo: Repository<T>): Wr
       // FIXME: Use stream instead
       const results = await this.createQueryBuilder("user").getMany()
 
-      await results.forEach(async element => {
+      for (let element of results) {
         ensureStashID(element)
         await mapAndPutEntity(element, this.metadata.tablePath)
         // TODO: Get logger working
         //logger.info(`Stash[reindex]: ID ${stashId}`)
         console.log(`Stash[reindex]: ID ${element.stashId}`)
-      })
+      }
     },
   })
 }
