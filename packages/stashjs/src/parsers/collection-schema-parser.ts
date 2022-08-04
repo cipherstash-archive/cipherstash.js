@@ -17,6 +17,7 @@ import {
   StashRecord,
 } from "../dsl/mappings-dsl"
 import { isRight } from "fp-ts/lib/Either"
+import { FreeSemigroup } from "io-ts/lib/FreeSemigroup"
 import { DowncaseFilter, NgramTokenizer, StandardTokenizer, UpcaseFilter } from "../dsl/filters-and-tokenizers-dsl"
 import { RecordTypeDefinition, TermType } from "../record-type-definition"
 
@@ -324,9 +325,10 @@ const toTree: (e: DE.DecodeError<string>) => Tree<string> = DE.fold({
 })
 
 const toForest = (e: D.DecodeError): ReadonlyArray<Tree<string>> => {
-  const stack = []
+  const stack: FreeSemigroup<DE.DecodeError<string>>[] = []
+  const res: Tree<string>[] = []
+
   let focus = e
-  const res = []
   while (true) {
     switch (focus._tag) {
       case "Of":
