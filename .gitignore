@@ -1,4 +1,22 @@
-.pnpm-debug.log
+# file managers and editors
+.DS_Store
+.vscode
+
+# modules and build artifacts
+build
+dist
+index.node
 node_modules
+target
+
+# npm/pnpm logs
+.pnpm-debug.log
+npm-debug.log*
+
+# test coverages
+coverage
+.nyc_output
+
+# env files
 .envrc.*
 !.envrc.example

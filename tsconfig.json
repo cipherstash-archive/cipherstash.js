@@ -1,6 +1,29 @@
 {
+  "extends": "@tsconfig/node16/tsconfig.json",
+  // See: https://github.com/tsconfig/bases/blob/main/bases/node16.json
+  // Inherited config:
+  // {
+  //   "display": "Node 16",
+  //   "compilerOptions": {
+  //     "lib": ["es2021"],
+  //     "module": "commonjs",
+  //     "target": "es2021",
+  //     "strict": true,
+  //     "esModuleInterop": true,
+  //     "skipLibCheck": true,
+  //     "forceConsistentCasingInFileNames": true
+  //   }
+  // }
+
+  // "exclude": ["./**/*.spec.ts", "./**/*.test.ts"],
+
   "compilerOptions": {
-    "outDir": "./dist",
+    "composite": true,
+    // "sourceMap": true,
+    // "rootDir": "src",
+    // "baseUrl": "src",
+    // "outDir": "dist",
+
     "incremental": true,
     "allowJs": false,
     "allowUnreachableCode": false,
@@ -39,12 +62,16 @@
     "target": "ES2020",
     "useDefineForClassFields": false
   },
-  "include": [ "src/*" ],
-  "exclude": [ "dist", "node_modules" ],
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",
     "fallbackPolling": "dynamicPriority",
     "excludeDirectories": ["node_modules", "build"]
-  }
+  },
+  "references": [
+    { "path": "./packages/stash-rs" },
+    { "path": "./packages/stashjs" },
+    { "path": "./packages/stashjs-adapter" },
+    { "path": "./packages/stashjs-grpc" }
+  ]
 }
