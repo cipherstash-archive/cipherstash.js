@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package stash.GRPC.Management;
+
+message WorkspaceHashesList {
+  repeated bytes workspace_hashes = 1;
+}

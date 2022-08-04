@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Collections;
+
+message InfoRequest {
+  bytes ref = 1;
+  bytes metadata = 2;
+}
+

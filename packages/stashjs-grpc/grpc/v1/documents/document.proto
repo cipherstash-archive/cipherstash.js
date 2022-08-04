@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+
+message Document {
+  bytes id = 1;
+  bytes source = 2;
+}

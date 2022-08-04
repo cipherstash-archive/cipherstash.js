@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Indexes;
+
+message Index {
+  bytes id = 1;
+  bytes settings = 2;
+  uint32 firstSchemaVersion = 3;
+  uint32 lastSchemaVersion = 4;
+
+  enum IndexType {
+    Ore = 0;
+    Filter = 1;
+  }
+
+  IndexType type = 5;
+
+  bool unique = 16;
+}

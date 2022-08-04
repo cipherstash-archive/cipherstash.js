@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Queries;
+
+message Ordering {
+  bytes indexId = 1;
+  enum Direction {
+    ASC = 0;
+    DESC = 1;
+  }
+  Direction direction = 2;
+}

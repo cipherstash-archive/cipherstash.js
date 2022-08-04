@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+import "documents/document.proto";
+
+message GetAllReply {
+  repeated Document documents = 1;
+}
