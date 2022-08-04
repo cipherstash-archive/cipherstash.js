@@ -12,8 +12,8 @@ import {
   Result,
   Err,
   Ok,
+  parseCollectionSchemaJSON,
 } from "@cipherstash/stashjs"
-import { parseCollectionSchemaJSON } from "@cipherstash/stashjs/dist/parsers/collection-schema-parser"
 
 function formatCollectionName(name: string): string {
   if (name.includes(" ")) {
