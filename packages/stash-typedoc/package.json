@@ -1,5 +1,5 @@
 {
-  "name": "stash-typedoc",
+  "name": "@cipherstash/stash-typedoc",
   "private": true,
   "version": "1.0.0",
   "description": "A package for creating API docs, to publish at https://docs.cipherstash.com/tsdoc",

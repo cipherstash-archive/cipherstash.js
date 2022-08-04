@@ -1,11 +1,15 @@
 {
   "name": "@cipherstash/stashjs-adapter",
-  "version": "0.0.4",
+  "version": "0.0.5-dev-4",
   "description": "Adapter helpers for Stash.js and popular ORMs like Prisma",
-  "main": "dist/index.js",
+  "main": "src/index.ts",
   "typedocMain": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts"
+  },
   "scripts": {
-    "build": "pnpx tsc",
+    "build": "tsc --build",
     "build-then-watch": "pnpm build; pnpx tsc --watch",
     "prepublishOnly": "pnpm build",
     "clean": "rm -fr ./dist",
