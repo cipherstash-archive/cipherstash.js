@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "typedocMain": "src/index.ts",
   "scripts": {
-    "build": "pnpx tsc",
+    "build": "tsc --build",
     "build-then-watch": "pnpm build; pnpx tsc --watch",
     "prepublishOnly": "pnpm build",
     "clean": "rm -fr ./dist",
