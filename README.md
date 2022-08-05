@@ -10,6 +10,7 @@ Together this is called Queryable Application Level Encryption (QuALE).
 * [TypeORM](https://typeorm.io)
 * [CipherStash Docs](https://docs.cipherstash.com)
 * [stashjs-typeorm on NPM](https://www.npmjs.com/package/@cipherstash/stashjs-typeorm)
+* [Support Forum](https://discuss.cipherstash.com/)
 
 ## Prerequistites
 
