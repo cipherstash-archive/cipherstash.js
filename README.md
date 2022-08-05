@@ -37,12 +37,14 @@ asdf install
 
 To login you will need a workspace ID which you can get from the [CipherStash Console](https://console.cipherstash.com).
 
-
 ![Console Workspace](workspace.png)
 
 ```sh
 npx stash login --workspace <your-workspace-id>
 ```
+
+*Note: When logging in, you will be prompted to authenticate via the browser.
+If the browser doesn't automatically open, copy and past the authentication URL displayed.*
 
 ## Installing
 
