@@ -18,16 +18,16 @@ const {
 export type Key = Buffer
 export type CipherText = Buffer
 export type OrePlainText = Buffer
-export type OreRange = { min: OrePlainText, max: OrePlainText }
+export type OreRange = { min: OrePlainText; max: OrePlainText }
 
-export * from './record-indexer';
+export * from "./record-indexer"
 
 export type ORECipher = {
   /*
    * Encrypt the given `PlainText` outputting a "full" CipherText (i.e. a
    * `Buffer` containing both the Left and Right components).
    */
-  encrypt: (input: OrePlainText) => CipherText,
+  encrypt: (input: OrePlainText) => CipherText
 
   /*
    * Encrypt the given `PlainText` outputting only a Left CipherText (i.e. a
@@ -74,7 +74,6 @@ export interface ORE {
 
   encode: (input: number | Buffer | string) => OrePlainText
 
-
   encodeRangeLt: (value: number | Buffer) => OreRange
   encodeRangeLte: (value: number | Buffer) => OreRange
   encodeRangeGt: (value: number | Buffer) => OreRange
@@ -100,14 +99,13 @@ export interface ORE {
  * library.
  */
 export const ORE: ORE = {
-
   encodeNumber,
   encodeString,
   encodeBuffer,
   encode: input => {
-    if (typeof input === 'number') {
+    if (typeof input === "number") {
       return encodeNumber(input)
-    } else if (typeof input === 'string') {
+    } else if (typeof input === "string") {
       return encodeString(input)
     } else {
       return encodeBuffer(input)
@@ -122,13 +120,13 @@ export const ORE: ORE = {
   encodeRangeLte,
 
   init: (k1: Key, k2: Key): ORECipher => {
-    let cipher = initCipher(k1, k2);
+    let cipher = initCipher(k1, k2)
     return {
       encrypt: (input: OrePlainText): CipherText => encrypt(cipher, input),
 
-      encryptLeft: (input: OrePlainText): CipherText => encryptLeft(cipher, input)
+      encryptLeft: (input: OrePlainText): CipherText => encryptLeft(cipher, input),
     }
   },
 
-  compare: (a: CipherText, b: CipherText): Ordering => compare(a, b)
+  compare: (a: CipherText, b: CipherText): Ordering => compare(a, b),
 }
