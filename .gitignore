@@ -5,9 +5,7 @@
 # modules and build artifacts
 build
 dist
-index.node
 node_modules
-target
 
 # npm/pnpm logs
 .pnpm-debug.log
