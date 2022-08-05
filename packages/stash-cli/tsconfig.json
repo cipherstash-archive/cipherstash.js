@@ -3,9 +3,9 @@
   "compilerOptions": {
     "noPropertyAccessFromIndexSignature": false,
     "noImplicitAny": false,
-    "outDir": "build",
-    "declaration": true,
-    "declarationDir": "build/types"
+    "outDir": "./build",
+    "rootDir": "./src",
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
