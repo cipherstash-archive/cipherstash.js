@@ -1,0 +1,28 @@
+[package]
+name = "stash-rs"
+version = "0.4.6"
+description = "Node bindings for ore.rs"
+license = "ISC"
+edition = "2018"
+exclude = ["index.node"]
+
+[lib]
+crate-type = ["cdylib"]
+path = "native/lib.rs"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cipherstash-client = "0.3.0"
+ore-rs = "0.3.0"
+ore-encoding-rs = "0.23.2"
+hex-literal = "0.3.2"
+unicode-normalization = "0.1.19"
+
+[dev-dependencies]
+quickcheck = "1.0.3"
+
+[dependencies.neon]
+version = "0.9"
+default-features = false
+features = ["napi-6"]
