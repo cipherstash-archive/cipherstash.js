@@ -17,7 +17,8 @@ async function demoTeardown(): Promise<void> {
   await UserRepository
     .createQueryBuilder()
     .delete()
-    .execute
+    .from(User)
+    .execute()
 
   console.log("🧨 Dropping collection")
   await UserRepository.dropCollection()
