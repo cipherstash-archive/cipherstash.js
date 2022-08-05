@@ -1,22 +1,25 @@
 {
   "name": "@cipherstash/stash-rs",
-  "version": "0.3.0",
+  "version": "0.3.1-dev-4",
   "description": "Node bindings for the CipherStash Rust client.",
-  "main": "dist/index.js",
+  "main": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts",
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
-    "build": "rm -f index.node && npx cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics && npx tsc",
+    "clean": "rm -rf index.node dist/",
+    "build": "rm -f index.node && npx cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics && tsc --build",
     "build-release": "rm -f index.node && npx cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics --release",
-    "prepublishOnly": "npm run build-release && npx tsc",
+    "prepublishOnly": "npm run build-release && tsc --build",
     "install": "npm run build-release",
     "test": "cargo test && npx jest"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cipherstash/node-stash-rs.git"
-  },
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
   },
   "contributors": [
     "Dan Draper <dan@cipherstash.com>",
