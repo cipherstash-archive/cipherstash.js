@@ -14,10 +14,35 @@ Together this is called Queryable Application Level Encryption (QuALE).
 
 ## Prerequistites
 
-To get started, you will need a PostgreSQL database
-(although you can change it to use any TypeORM supported option by editing `src/data-source.ts`).
+* Rust (you can install via [Rustup](https://www.rust-lang.org/tools/install) or
+  [ASDF](https://github.com/asdf-community/asdf-rust))
+* A CipherStash account. [Get a free account here](https://docs.cipherstash.com/tutorials/getting-started/create-an-account.html)
+* PostgreSQL Database^
+* Node.js 15 or later.
 
-You will also need Node.js 15 or later.
+^Or another DB supported by TypeORM which you can set in `src/data-source.ts`
+
+### Via ASDF
+
+If you already use [ASDF](https://asdf-vm.com/), you can just do:
+
+```sh
+asdf plugin add rust
+asdf plugin add nodejs
+asdf plugin add postgres
+asdf install
+```
+
+## Login to CipherStash Workspace
+
+To login you will need a workspace ID which you can get from the [CipherStash Console](https://console.cipherstash.com).
+
+
+![Console Workspace](workspace.png)
+
+```sh
+npx stash login --workspace <your-workspace-id>
+```
 
 ## Installing
 
@@ -156,8 +181,6 @@ on the same field.
 
 The `@Queryable` decorator adds queryable encryption to a field via a CipherStash index.
 `stashjs-typeorm` will automatically determine what indexes to create based on the type of data.
-
-TODO: Show the index types
 
 ### Queryable or Encrypted?
 
