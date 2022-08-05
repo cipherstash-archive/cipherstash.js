@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs",
-  "version": "0.6.0-dev-4",
+  "version": "0.6.0",
   "description": "Datastore & Search API for CipherStash",
   "main": "src/index.ts",
   "typedocMain": "src/index.ts",
