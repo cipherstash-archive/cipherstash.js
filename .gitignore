@@ -6,6 +6,7 @@
 build
 dist
 node_modules
+tsconfig.tsbuildinfo
 
 # npm/pnpm logs
 .pnpm-debug.log
