@@ -5,6 +5,12 @@ This is a very simple Node.js app that uses TypeORM and the CipherStash Stash.JS
 It encrypts sensitive fields and queryable encrypted indexes to those fields.
 Together this is called Queryable Application Level Encryption (QuALE).
 
+## Helpful Links
+
+* [TypeORM](https://typeorm.io)
+* [CipherStash Docs](https://docs.cipherstash.com)
+* [stashjs-typeorm on NPM](https://www.npmjs.com/package/@cipherstash/stashjs-typeorm)
+
 ## Prerequistites
 
 To get started, you will need a PostgreSQL database
