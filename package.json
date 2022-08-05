@@ -4,7 +4,7 @@
    "description": "Awesome project developed with TypeORM.",
    "type": "commonjs",
    "devDependencies": {
-      "@cipherstash/stash-cli": "^0.3.14-dev-3",
+      "@cipherstash/stash-cli": "^0.3.13",
       "@types/node": "^15.12.4",
       "dotenv": "^16.0.1",
       "ts-node": "10.7.0",
