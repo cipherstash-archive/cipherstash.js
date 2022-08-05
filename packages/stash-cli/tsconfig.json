@@ -1,11 +1,15 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "inlineSourceMap": false,
+    "inlineSources": false,
     "noPropertyAccessFromIndexSignature": false,
     "noImplicitAny": false,
     "outDir": "./build",
     "rootDir": "./src",
-    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo"
+    "tsBuildInfoFile": "./build/tsconfig.tsbuildinfo"
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]
