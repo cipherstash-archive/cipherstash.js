@@ -9,8 +9,6 @@ const index_id = Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 
 const record_id = Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
 
 describe("RecordIndexer", () => {
-
-
   describe("init", () => {
     test("load from schema", () => {
       expect(() =>
@@ -110,7 +108,7 @@ describe("RecordIndexer", () => {
     const vectors = indexer.encryptRecord({
       id: record_id,
       title: null,
-      runningTime: undefined
+      runningTime: undefined,
     })
 
     expect(vectors).toHaveLength(0)

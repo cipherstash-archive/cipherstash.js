@@ -58,10 +58,15 @@ export class RecordIndexer {
    * Encrypt a record and return an array of terms
    */
   encryptRecord(record: RecordLike): TermVector {
-    return decode(encryptRecord(this.handle, encode({
-      ...record,
-      // Ensure that the id is the Buffer base class so it is encoded in CBOR properly
-      id: record.id instanceof Uint8Array ? Buffer.prototype.slice.call(record.id) : record.id
-    })))
+    return decode(
+      encryptRecord(
+        this.handle,
+        encode({
+          ...record,
+          // Ensure that the id is the Buffer base class so it is encoded in CBOR properly
+          id: record.id instanceof Uint8Array ? Buffer.prototype.slice.call(record.id) : record.id,
+        })
+      )
+    )
   }
 }
