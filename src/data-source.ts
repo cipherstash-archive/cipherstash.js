@@ -7,7 +7,7 @@ export const AppDataSource = new DataSource({
     type: "postgres",
     host: "localhost",
     port: 5432,
-    username: "dan",
+    username: "postgres",
     database: "stashjs_typeorm_demo",
     synchronize: true,
     logging: [], //["info", "query"],
