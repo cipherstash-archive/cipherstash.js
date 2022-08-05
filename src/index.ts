@@ -14,17 +14,10 @@ async function demoSetup(count: number): Promise<void> {
 
 async function demoTeardown(): Promise<void> {
   console.log("🗑 Deleting records...")
-  try {
-  const records = await UserRepository
+  await UserRepository
     .createQueryBuilder()
-    .getMany()
-
-    for (let record of records) {
-      await UserRepository.remove(record)
-    }
-  } catch(e) {
-    console.error("ERRR", e)
-  }
+    .delete()
+    .execute
 
   console.log("🧨 Dropping collection")
   await UserRepository.dropCollection()

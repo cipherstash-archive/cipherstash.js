@@ -8,7 +8,7 @@ export const AppDataSource = new DataSource({
     host: "localhost",
     port: 5432,
     username: "dan",
-    database: "node_playground",
+    database: "stashjs_typeorm_demo",
     synchronize: true,
     logging: [], //["info", "query"],
     entities: [User],
