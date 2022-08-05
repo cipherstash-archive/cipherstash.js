@@ -53,7 +53,7 @@
     "noUnusedParameters": true,
     "preserveConstEnums": false,
     "removeComments": false,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "strict": true,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
