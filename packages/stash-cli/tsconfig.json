@@ -3,8 +3,6 @@
   "compilerOptions": {
     "composite": false,
     "declaration": false,
-    "inlineSourceMap": false,
-    "inlineSources": false,
     "noPropertyAccessFromIndexSignature": false,
     "noImplicitAny": false,
     "outDir": "./build",
