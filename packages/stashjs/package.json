@@ -23,7 +23,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cipherstash/stashjs.git"
+    "url": "https://github.com/cipherstash/cipherstash.js.git",
+    "directory": "packages/stashjs"
   },
   "keywords": [
     "cipherstash",

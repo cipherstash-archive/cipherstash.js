@@ -17,7 +17,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cipherstash/stashjs-grpc.git"
+    "url": "https://github.com/cipherstash/cipherstash.js.git",
+    "directory": "packages/stashjs-grpc"
   },
   "contributors": [
     "Dan Draper <dan@cipherstash.com>",
