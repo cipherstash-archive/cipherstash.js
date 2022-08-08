@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Queries;
+import "queries/aggregate_result.proto";
+import "documents/document.proto";
+
+message QueryReply {
+  repeated bytes result = 1;
+  repeated AggregateResult aggregates = 2;
+  repeated Documents.Document records = 3;
+
+  enum QueryError {
+    NoError = 0;
+
+    ErrUnknownSchemaVersion = 1;
+    ErrObsoleteSchemaVersion = 2;
+  }
+  QueryError error = 2048;
+}

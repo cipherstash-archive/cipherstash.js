@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Queries;
+import "queries/constraint.proto";
+import "queries/aggregate.proto";
+import "queries/ordering.proto";
+
+/*
+  Query protobuf
+
+  `limit`: define the maximum records to be returned
+  `constraints`: constraints on the query (can be an empty list)
+  `aggregates`: aggregates for the given constraints (can be an empty list)
+  `skipResults`: if true then don't return the results (should be ignored if there are no aggregates)
+*/
+
+message Query {
+  uint32 limit = 1;
+  repeated Constraint constraints = 2;
+  repeated Aggregate aggregates = 3;
+  repeated Ordering ordering = 4;
+  bool skipResults = 5;
+  uint32 offset = 6;
+}

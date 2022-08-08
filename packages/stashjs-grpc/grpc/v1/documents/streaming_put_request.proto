@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+import "documents/document.proto";
+import "documents/vector.proto";
+
+message StreamingPutBegin {
+  bytes collectionId = 1;
+  uint32 firstSchemaVersion = 2;
+  uint32 lastSchemaVersion = 3;
+}
+
+message StreamingPutDocument {
+  Document source = 2;
+  repeated Vector vectors = 3;
+}
+
+message StreamingPutRequest {
+  oneof payload {
+    StreamingPutBegin begin = 1;
+    StreamingPutDocument document = 2;
+  }
+}

@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package stash.GRPC.V1;
+
+import "documents/put_request.proto";
+import "documents/put_reply.proto";
+import "documents/streaming_put_request.proto";
+import "documents/streaming_put_reply.proto";
+import "documents/get_request.proto";
+import "documents/get_reply.proto";
+import "documents/get_all_request.proto";
+import "documents/get_all_reply.proto";
+import "documents/delete_request.proto";
+import "documents/delete_reply.proto";
+import "documents/migrate_request.proto";
+import "documents/migrate_reply.proto";
+import "queries/query_request.proto";
+import "queries/query_reply.proto";
+import "collections/create_request.proto";
+import "collections/delete_request.proto";
+import "collections/info_request.proto";
+import "collections/info_reply.proto";
+import "collections/list_request.proto";
+import "collections/list_reply.proto";
+import "collections/migrate_request.proto";
+import "collections/migrate_reply.proto";
+
+service API {
+  rpc put (Documents.PutRequest) returns (Documents.PutReply) {}
+  rpc putStream (stream Documents.StreamingPutRequest) returns (Documents.StreamingPutReply) {}
+  rpc get (Documents.GetRequest) returns (Documents.GetReply) {}
+  rpc getAll (Documents.GetAllRequest) returns (Documents.GetAllReply) {}
+  rpc delete (Documents.DeleteRequest) returns (Documents.DeleteReply) {}
+  rpc query (Queries.QueryRequest) returns (Queries.QueryReply) {}
+  rpc migrateRecords (stream Documents.MigrateRequest) returns (stream Documents.MigrateReply) {}
+
+  rpc createCollection (Collections.CreateRequest) returns (Collections.InfoReply) {}
+  rpc migrateCollection (Collections.MigrateRequest) returns (Collections.MigrateReply) {}
+  rpc deleteCollection (Collections.DeleteRequest) returns (Collections.InfoReply) {}
+  rpc collectionInfo (Collections.InfoRequest) returns (Collections.InfoReply) {}
+  rpc collectionList (Collections.ListRequest) returns (Collections.ListReply) {}
+}

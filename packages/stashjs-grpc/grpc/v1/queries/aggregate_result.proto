@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Queries;
+
+message AggregateResult {
+  string name = 1;
+  uint64 value = 2;
+}

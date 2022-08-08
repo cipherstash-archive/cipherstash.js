@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Queries;
+
+message Aggregate {
+  enum AggregateType {
+    count = 0;
+  }
+  AggregateType type = 2;
+}

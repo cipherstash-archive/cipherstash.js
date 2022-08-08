@@ -1,13 +1,19 @@
 {
   "name": "@cipherstash/stashjs-grpc",
-  "version": "0.3.5",
+  "version": "0.3.6",
   "description": "Generated Typescript GRPC bindings for StashJS",
   "main": "dist/index.js",
   "typedocMain": "generated/api.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts"
+  },
   "scripts": {
-    "prepublishOnly": "pnpm build --filter ./",
-    "build": "./scripts/pkg-build.sh",
-    "build-then-watch": "pnpm build && pnpx tsc --watch"
+    "clean": "rm -rf dist",
+    "prepare": "./scripts/gen-protos.sh",
+    "prepublishOnly": "pnpm build",
+    "build": "tsc --build && cp -RL grpc dist/generated/stash/GRPC",
+    "build-then-watch": "pnpm build && tsc --watch"
   },
   "repository": {
     "type": "git",
@@ -25,7 +31,7 @@
   "homepage": "https://github.com/cipherstash/stashjs-grpc#readme",
   "devDependencies": {
     "@types/node": "^16.9.4",
-    "typescript": "^4.3.5"
+    "typescript": "^4.7.4"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.5.5",

@@ -19,11 +19,6 @@
 
   "compilerOptions": {
     "composite": true,
-    // "sourceMap": true,
-    // "rootDir": "src",
-    // "baseUrl": "src",
-    // "outDir": "dist",
-
     "incremental": true,
     "allowJs": false,
     "allowUnreachableCode": false,
@@ -36,8 +31,9 @@
     "esModuleInterop": true,
     "experimentalDecorators": false,
     "importHelpers": false,
-    "inlineSourceMap": true,
-    "inlineSources": true,
+    "sourceMap": true,
+    "inlineSourceMap": false,
+    "inlineSources": false,
     "module": "CommonJS",
     "moduleResolution": "Node",
     "noErrorTruncation": true,
@@ -53,7 +49,7 @@
     "noUnusedParameters": true,
     "preserveConstEnums": false,
     "removeComments": false,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "strict": true,
     "strictBindCallApply": true,
     "strictFunctionTypes": true,
