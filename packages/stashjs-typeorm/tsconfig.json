@@ -3,13 +3,15 @@
   "compilerOptions": {
     "lib": ["es5", "es6", "es2019"],
     "target": "es5",
-    "module": "commonjs",
-    "declaration": true,
-    "moduleResolution": "node",
     "outDir": "./dist",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "sourceMap": true,
-    "removeComments": false
+
+    "strict": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false,
+    "noImplicitAny": false,
+    "noImplicitReturns": false,
+    "noImplicitThis": false
   }
 }
