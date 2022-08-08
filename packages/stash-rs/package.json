@@ -41,7 +41,7 @@
     "stashjs",
     "stash"
   ],
-  "license": "GPLv3",
+  "license": "Apache-2.0",
   "dependencies": {
     "cargo-cp-artifact": "^0.1",
     "cbor": "^8.1.0"

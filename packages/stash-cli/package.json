@@ -27,7 +27,7 @@
     "docs",
     "bin"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@cipherstash/stashjs": "workspace:*",
     "axios": "^0.27.2",
