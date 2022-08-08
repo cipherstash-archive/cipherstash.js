@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs-adapter",
-  "version": "0.0.5-dev-4",
+  "version": "0.0.5",
   "description": "Adapter helpers for Stash.js and popular ORMs like Prisma",
   "main": "src/index.ts",
   "typedocMain": "src/index.ts",
