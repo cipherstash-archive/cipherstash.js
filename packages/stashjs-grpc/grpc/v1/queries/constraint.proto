@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Queries;
+import "queries/exact.proto";
+import "queries/range.proto";
+import "queries/filter.proto";
+
+message Constraint {
+  bytes indexId = 1;
+  oneof condition {
+    Exact exact = 2;
+    Range range = 3;
+    Filter filter = 4;
+  }
+}

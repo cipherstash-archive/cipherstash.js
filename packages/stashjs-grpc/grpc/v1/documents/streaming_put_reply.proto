@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+
+message StreamingPutReply {
+  uint32 numInserted = 1;
+
+  enum StreamingPutError {
+    NoError = 0;
+
+    ErrUnknownSchemaVersion = 1;
+    ErrIncompleteSchemaVersionCoverage = 3;
+  }
+  StreamingPutError error = 2048;
+}

@@ -1,11 +1,15 @@
 {
   "name": "@cipherstash/stashjs-adapter",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Adapter helpers for Stash.js and popular ORMs like Prisma",
   "main": "dist/index.js",
   "typedocMain": "src/index.ts",
+  "publishConfig": {
+    "main": "dist/index.js",
+    "typings": "dist/index.d.ts"
+  },
   "scripts": {
-    "build": "pnpx tsc",
+    "build": "tsc --build",
     "build-then-watch": "pnpm build; pnpx tsc --watch",
     "prepublishOnly": "pnpm build",
     "clean": "rm -fr ./dist",
@@ -31,8 +35,8 @@
     "@types/uuid": "^8.3.0",
     "prettier": "2.6.2",
     "lint-staged": "12.4.1",
-    "ts-node": "^10.7.0",
-    "typescript": "^4.6.3"
+    "ts-node": "^10.9.1",
+    "typescript": "^4.7.4"
   },
   "lint-staged": {
     "*.ts": "prettier --write"

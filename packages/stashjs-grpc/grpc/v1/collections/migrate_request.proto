@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Collections;
+import "indexes/index.proto";
+
+message MigrateRequest {
+  bytes ref = 1;
+  bytes metadata = 2;
+  repeated Indexes.Index indexes = 3;
+  uint32 fromSchemaVersion = 4;
+}

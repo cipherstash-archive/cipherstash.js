@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+
+import "documents/document.proto";
+
+message MigrateReply {
+  enum MigrateReplyType {
+    Invalid = 0;
+
+    Done = 1;
+    Record = 2;
+    Barrier = 3;
+
+    Error = 16;
+  }
+
+  MigrateReplyType type = 1;
+
+  // Used when type == Record
+  Document record = 2;
+
+  // Used when type == Error
+  enum MigrateError {
+    NoError = 0;
+
+    ErrUnknownSchemaVersion = 1;
+    ErrIncompleteSchemaVersionCoverage = 3;
+  }
+  MigrateError error = 2048;
+}

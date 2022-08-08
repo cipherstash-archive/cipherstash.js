@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+
+message PutReply {
+  enum PutError {
+    NoError = 0;
+
+    ErrUnknownSchemaVersion = 1;
+    ErrIncompleteSchemaVersionCoverage = 3;
+  }
+  PutError error = 2048;
+}

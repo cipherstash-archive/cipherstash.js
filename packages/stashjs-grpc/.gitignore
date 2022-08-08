@@ -1,5 +1,2 @@
-/generated/**
-/node_modules
-/dist
-/.pnpm-debug.log
-/grpc
+# grpc protos bin artifacts
+/generated

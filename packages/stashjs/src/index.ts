@@ -95,7 +95,11 @@ export * as errors from "./errors"
 
 export * from "./result"
 
-export { CollectionSchemaDefinition, generateSchemaDefinitionFromJSON } from "./parsers/collection-schema-parser"
+export {
+  CollectionSchemaDefinition,
+  generateSchemaDefinitionFromJSON,
+  parseCollectionSchemaJSON,
+} from "./parsers/collection-schema-parser"
 
 import { warnIfNoTypeScript } from "./warn-if-no-typescript"
 

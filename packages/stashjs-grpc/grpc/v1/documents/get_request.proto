@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Documents;
+
+message GetRequest {
+  bytes collectionId = 1;
+  bytes id = 2;
+}
+
+
