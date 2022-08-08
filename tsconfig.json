@@ -19,11 +19,6 @@
 
   "compilerOptions": {
     "composite": true,
-    // "sourceMap": true,
-    // "rootDir": "src",
-    // "baseUrl": "src",
-    // "outDir": "dist",
-
     "incremental": true,
     "allowJs": false,
     "allowUnreachableCode": false,
@@ -36,6 +31,7 @@
     "esModuleInterop": true,
     "experimentalDecorators": false,
     "importHelpers": false,
+    "sourceMap": true,
     "inlineSourceMap": false,
     "inlineSources": false,
     "module": "CommonJS",
