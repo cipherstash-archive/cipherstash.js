@@ -3,11 +3,13 @@
   "compilerOptions": {
     "composite": false,
     "declaration": false,
-    "noPropertyAccessFromIndexSignature": false,
-    "noImplicitAny": false,
     "outDir": "./build",
     "rootDir": "./src",
-    "tsBuildInfoFile": "./build/tsconfig.tsbuildinfo"
+    "tsBuildInfoFile": "./build/tsconfig.tsbuildinfo",
+
+    // Relaxed rules to allow package to build. FIXME: remove these and fix in code
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitAny": false
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules"]

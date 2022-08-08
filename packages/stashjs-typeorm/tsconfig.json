@@ -7,6 +7,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
 
+    // Relaxed rules to allow package to build. FIXME: remove these and fix in code
     "strict": false,
     "strictNullChecks": false,
     "strictPropertyInitialization": false,
