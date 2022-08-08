@@ -18,24 +18,30 @@ subproject_setup() {
 }
 
 subproject_build() {
-  pnpm install --frozen-lockfile --filter @cipherstash/*
-  pnpm build --filter @cipherstash/*
+  pnpm install --frozen-lockfile
+  pnpm -r build
+}
+
+subproject_lint() {
+  find "$(dirname "${0}")" -name node_modules -prune -o -name '*.sh' -exec shfmt -w -ci -i 2 -d {} +
+  find "$(dirname "${0}")" -name node_modules -prune -o -name '*.sh' -exec shellcheck {} +
+  pnpm -r lint:fix
 }
 
 subproject_test() {
-  find "$(dirname "${0}")" -name '*.sh' -exec shellcheck {} +
-  find "$(dirname "${0}")" -name '*.sh' -exec shfmt -ci -i 2 -d {} +
-  pnpm lint --filter @cipherstash/*
-  pnpm test --filter @cipherstash/*
+  find "$(dirname "${0}")" -name node_modules -prune -o -name '*.sh' -exec shfmt -ci -i 2 -d {} +
+  find "$(dirname "${0}")" -name node_modules -prune -o -name '*.sh' -exec shellcheck {} +
+  pnpm -r lint
+  pnpm -r test
 }
 
 subproject_publish() {
-  pnpm build --filter @cipherstash/*
-  pnpm publish --filter @cipherstash/*
+  pnpm -r build
+  pnpm -r publish
 }
 
 subproject_clean() {
-  pnpm run clean --filter @cipherstash/*
+  pnpm -r clean
 }
 
 subproject_rebuild() {
@@ -55,6 +61,10 @@ case $subcommand in
 
   test)
     subproject_test
+    ;;
+
+  lint)
+    subproject_lint
     ;;
 
   rebuild)

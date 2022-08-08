@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Collections;
+import "collections/info_reply.proto";
+
+message ListReply {
+  repeated InfoReply collections = 1;
+}

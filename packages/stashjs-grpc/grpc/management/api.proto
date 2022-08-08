@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package stash.GRPC.Management;
+
+import "empty.proto";
+import "workspace_hashes_list.proto";
+
+service API {
+  rpc listWorkspaceHashes (Empty) returns (WorkspaceHashesList) {}
+}
+
+

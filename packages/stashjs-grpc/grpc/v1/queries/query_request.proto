@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package stash.GRPC.V1.Queries;
+import "queries/query.proto";
+
+message QueryRequest {
+  bytes collectionId = 1;
+  Query query = 2;
+  uint32 schemaVersion = 3;
+}
