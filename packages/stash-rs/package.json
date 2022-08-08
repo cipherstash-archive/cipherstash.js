@@ -19,7 +19,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cipherstash/node-stash-rs.git"
+    "url": "https://github.com/cipherstash/cipherstash.js.git",
+    "directory": "packages/stash-rs"
   },
   "contributors": [
     "Dan Draper <dan@cipherstash.com>",
