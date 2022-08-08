@@ -47,12 +47,16 @@ function inOrderOf<T extends StashLinkedEntity>(
   qb: LookasideSelectQueryBuilder<T>,
   stashIds: Array<string>
 ): LookasideSelectQueryBuilder<T> {
-  const caseLines = stashIds.reduce((str, id, count) => `${str}WHEN "stashId"='${id}' THEN ${count}\n`, "")
+  if (stashIds.length > 0) {
+    const caseLines = stashIds.reduce((str, id, count) => `${str}WHEN "stashId"='${id}' THEN ${count}\n`, "")
 
-  return qb.orderBy(`
-    CASE
-      ${caseLines}END
-  `)
+    return qb.orderBy(`
+      CASE
+        ${caseLines}END
+    `)
+  } else {
+    return qb
+  }
 }
 
 // This maps order for any properties on the TypeORM entity (columns), to ordering on any of the indexes defined
@@ -86,7 +90,13 @@ function tranformSelectQuery<T extends StashLinkedEntity>(
   alias: string,
   maintainOrdering: boolean
 ): LookasideSelectQueryBuilder<T> {
-  const query = target.limit().offset().skip().take().orderBy().where(`${alias}.stashId in (:...ids)`, { ids })
+  let query = target.limit().offset().skip().take().orderBy()
+
+  if (ids.length == 0) {
+    query = query.where("false")
+  } else {
+    query = query.where(`${alias}.stashId in (:...ids)`, { ids })
+  }
 
   return maintainOrdering ? inOrderOf(query, ids) : query
 }
