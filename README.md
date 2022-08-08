@@ -2,7 +2,7 @@
 
 ## Developing
 
-Change into `clients/@cipherstash` and run:
+From the root directory of this repo, run:
 
 ```bash
 # Install system level dependencies
@@ -34,6 +34,6 @@ This is the dependency graph
                 -------------------------
                 |                       |
 -----------------------------   -------------------------
-| @cipherstash/stashjs-grpc |   |  @cipherstash/ore-rs  |
+| @cipherstash/stashjs-grpc |   |  @cipherstash/stash-rs  |
 -----------------------------   -------------------------
 ```
