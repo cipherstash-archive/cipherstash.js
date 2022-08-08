@@ -1,5 +1,5 @@
 import { Mappings, OrderingOptions, QueryBuilder, QueryOptions, StashRecord } from "@cipherstash/stashjs"
-import { OptimisticLockCanNotBeUsedError, OrderByCondition, SelectQueryBuilder } from "typeorm"
+import { OrderByCondition, SelectQueryBuilder } from "typeorm"
 import { QueryExpressionMap } from "typeorm/query-builder/QueryExpressionMap"
 import { CollectionManager } from "./collection-manager"
 import { StashInternalRecord, StashLinkedEntity } from "./types"
