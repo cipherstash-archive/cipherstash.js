@@ -25,21 +25,16 @@ The steps you'll go through are:
 
 ### Creating a CipherStash Account
 
-In order to access CipherStash, you must first have an account.
-This account grants you access both to the [CipherStash Console](https://console.cipherstash.com) web interface, as well as allowing you to access your [workspaces](https://docs.cipherstash.com/reference/glossary.html#workspace).
+First, you need to sign up for an account. 
+Signing up gives you access to the [CipherStash Console](https://console.cipherstash.com) web interface, and [workspaces](https://docs.cipherstash.com/reference/glossary.html#workspace) to store your data.
 
 A CipherStash account is free, secure, and easy to create.
 
 ## Step 1: Visit the Console
 
-To start creating a CipherStash account, simply point your web browser at https://console.cipherstash.com.
+To sign up, visit https://console.cipherstash.com/?signup.
 
-You will be redirected to the Console login page, which looks like this:
-
-![CipherStash console login page](./.images/console_login.png)
-
-As you're a new user, you should click the "Sign up" link towards the bottom.
-Alternately, you can use GitHub as your authentication provider by clicking the "Continue with GitHub" button and following the prompts.
+You can sign up with either an email, or with GitHub.
 
 ## Step 2: Create Your Account
 
