@@ -4,11 +4,11 @@ importers:
 
   .:
     specifiers:
-      '@tsconfig/node16': ^1.0.3
+      '@tsconfig/node16-strictest': ^1.0.3
       prettier: 2.6.2
       typescript: ^4.7.4
     devDependencies:
-      '@tsconfig/node16': 1.0.3
+      '@tsconfig/node16-strictest': 1.0.3
       prettier: 2.6.2
       typescript: 4.7.4
 
@@ -133,7 +133,7 @@ importers:
       '@aws-sdk/client-kms': 3.141.0
       '@aws-sdk/client-sts': 3.141.0
       '@cfworker/json-schema': 1.12.3
-      '@cipherstash/stash-rs': 0.3.0
+      '@cipherstash/stash-rs': link:../stash-rs
       '@cipherstash/stashjs-grpc': link:../stashjs-grpc
       '@grpc/grpc-js': 1.6.8
       '@grpc/proto-loader': 0.6.13
@@ -2197,14 +2197,6 @@ packages:
     resolution: {integrity: sha512-L27wX0PkCGKadJeNqfpiLrXSfbLoC7xTmnF9OImA3Zr6Vtd9BeZGEOa5SKEzeS+ukkFUtN98Pz77vdEfobeTFg==}
     dev: false
 
-  /@cipherstash/stash-rs/0.3.0:
-    resolution: {integrity: sha512-8p+y6FJ8cvLGjGdtCPRfgpg53r3FPz087TJR2nAWZiRTA2duwi40WU+ZijD1mf+FXXxLjQqEkQrh7FhYBiD61w==}
-    requiresBuild: true
-    dependencies:
-      cargo-cp-artifact: 0.1.6
-      cbor: 8.1.0
-    dev: false
-
   /@cnakazawa/watch/1.0.4:
     resolution: {integrity: sha512-v9kIhKwjeZThiWrLmj0y17CWoyddASLj9O2yvbZkbvw/N3rWOYy9zkV66ursAoVr0mV15bL8g0c4QZUE6cdDoQ==}
     engines: {node: '>=0.1.95'}
@@ -2837,6 +2829,10 @@ packages:
 
   /@tsconfig/node14/1.0.3:
     resolution: {integrity: sha512-ysT8mhdixWK6Hw3i1V2AeRqZ5WfXg1G43mqoYlM2nc6388Fq5jcXyr5mRsqViLx/GJYdoL0bfXD8nmF+Zn/Iow==}
+    dev: true
+
+  /@tsconfig/node16-strictest/1.0.3:
+    resolution: {integrity: sha512-sY7TxE3BzAdsCuKqGWOTtAoPe4tPD0xlPWfjinJvrBvCulyALVSwvIoo7WMcX8O/WyMFzn9rQObA43mAogQ8MQ==}
     dev: true
 
   /@tsconfig/node16/1.0.3:

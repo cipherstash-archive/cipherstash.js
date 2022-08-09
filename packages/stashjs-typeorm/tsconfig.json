@@ -1,13 +1,12 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "lib": ["es5", "es6", "es2019"],
-    "target": "es5",
     "outDir": "./dist",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
 
     // Relaxed rules to allow package to build. FIXME: remove these and fix in code
+    "exactOptionalPropertyTypes": false,
     "noImplicitAny": false,
     "noImplicitReturns": false,
     "noImplicitThis": false,
