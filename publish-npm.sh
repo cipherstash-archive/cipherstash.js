@@ -9,7 +9,9 @@
 
 set -e # exit when a command fails
 set -u # exit when script tries to use undeclared variables
-set -x # trace what gets executed (useful for debugging)
+if [[ -n "${DEBUG_PUBLISH_NPM_SH:-}" ]]; then
+  set -x # trace what gets executed (useful for debugging)
+fi
 
 dryrun="${1:-no}"
 
