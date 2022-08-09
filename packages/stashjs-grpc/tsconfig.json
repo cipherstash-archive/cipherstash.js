@@ -2,11 +2,11 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "noUnusedLocals": false,
 
     // Relaxed rules to allow package to build. FIXME: remove these and fix in code
     "exactOptionalPropertyTypes": false,
-    "importsNotUsedAsValues": "preserve"
+    "importsNotUsedAsValues": "preserve",
+    "noUnusedLocals": false
   },
 
   "include": ["generated/**/*", "index.ts"],
