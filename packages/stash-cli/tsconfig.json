@@ -8,6 +8,7 @@
     "tsBuildInfoFile": "./build/tsconfig.tsbuildinfo",
 
     // Relaxed rules to allow package to build. FIXME: remove these and fix in code
+    "exactOptionalPropertyTypes": false,
     "noImplicitAny": false,
     "noPropertyAccessFromIndexSignature": false
   },
