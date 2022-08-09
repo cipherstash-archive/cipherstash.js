@@ -1,6 +1,8 @@
 # ☕ {Java,Type}Script clients for CipherStash
 
-This project contains the JavaScript/TypeScript clients for [CipherStash](https://cipherstash.com). The clients are used for adding CipherStash’s queryable encryption into your backend node applications. Documentation is available at [docs.cipherstash.com](https://docs.cipherstash.com).
+This project contains the JavaScript/TypeScript clients for [CipherStash](https://cipherstash.com). 
+The clients are used for adding CipherStash’s queryable encryption into your backend node applications.
+Documentation is available at [docs.cipherstash.com](https://docs.cipherstash.com).
 
 ## Package list
 
