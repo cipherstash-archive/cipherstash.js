@@ -17,14 +17,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/cipherstash/stashjs-grpc.git"
+    "url": "https://github.com/cipherstash/cipherstash.js.git",
+    "directory": "packages/stashjs-grpc"
   },
   "contributors": [
     "Dan Draper <dan@cipherstash.com>",
     "James Sadler <james@cipherstash.com>",
     "Lindsay Holmwood <lindsay@cipherstash.com>"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/cipherstash/stashjs-grpc/issues"
   },
