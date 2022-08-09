@@ -18,8 +18,13 @@
     "lint:fix": "prettier './src/**/*.ts' --write",
     "lint:staged": "lint-staged"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cipherstash/cipherstash.js.git",
+    "directory": "packages/stashjs-adapter"
+  },
   "author": "",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "dependencies": {
     "@cipherstash/stashjs": "workspace:*",
     "uuid": "^8.3.2"
