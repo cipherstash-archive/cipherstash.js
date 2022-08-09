@@ -8,11 +8,11 @@
     "experimentalDecorators": true,
 
     // Relaxed rules to allow package to build. FIXME: remove these and fix in code
-    "strict": false,
-    "strictNullChecks": false,
-    "strictPropertyInitialization": false,
     "noImplicitAny": false,
     "noImplicitReturns": false,
-    "noImplicitThis": false
+    "noImplicitThis": false,
+    "strict": false,
+    "strictNullChecks": false,
+    "strictPropertyInitialization": false
   }
 }
