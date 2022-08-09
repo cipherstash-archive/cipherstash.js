@@ -52,7 +52,7 @@ As soon as you've created your account, you will be redirected to the Console ho
 
 ![Console Home Screen](./.images/console_home_screen.png)
 
-We've already created a workspace for you so there's nothing more you need to do.
+We've already created a workspace for you, so there's nothing more you need to do.
 For now, just make a note of the ID of your workspace, we'll use it later.
 
 ## Step 4: Verify Your E-mail Address
@@ -190,7 +190,7 @@ npm install -g @cipherstash/stash-cli
 
 Exciting times, we're ready to get an access token and connect to CipherStash!
 
-With the ID of the workspace that you found earlier in hand, run this command:
+With the Workspace ID you saw on the [console dashboard](https://console.cipherstash.com/dashboard), run this command:
 
 ```text
 stash login --workspace <workspaceID>
