@@ -9,7 +9,7 @@
   },
   "keywords": [],
   "author": "Bennett Hardwick",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "devDependencies": {
     "typedoc": "^0.22.13",
     "typescript": "^4.7.4"

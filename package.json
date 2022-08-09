@@ -1,6 +1,5 @@
 {
-  "name": "cipherstash.js",
-  "description": "CipherStash JS monorepo",
+  "private": true,
   "scripts": {
     "lint": "prettier . --check",
     "lint:fix": "prettier . --write"

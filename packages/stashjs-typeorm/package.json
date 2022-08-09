@@ -14,8 +14,13 @@
     "lint:fix": "prettier './src/**/*.ts' --write",
     "lint:staged": "lint-staged"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cipherstash/cipherstash.js.git",
+    "directory": "packages/stashjs-typeorm"
+  },
   "author": "Dan Draper <dan@cipherstash.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@types/node": "^18.6.2",
     "@types/uuid": "^8.3.0",
