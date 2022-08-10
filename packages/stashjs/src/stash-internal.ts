@@ -23,6 +23,7 @@ import {
   toAsync,
   gatherTuple2,
   convertAsyncErrorsTo,
+  removeErrors,
 } from "./result"
 import {
   CollectionCreationFailure,
@@ -307,8 +308,16 @@ export class StashInternal {
     return await sequence(
       _ => convertAsyncErrorsTo(DecryptionFailure, this.sourceDataCipherSuiteMemo.freshValue()),
       async cipher =>
-        Ok(await Promise.all(res.collections!.map(info => cipher.decrypt<CollectionMetadata>(info!.metadata!)))),
-      decryptions => toAsync(gather(decryptions))
+        Ok(await Promise.all(res.collections!.map(async info => {
+          const result = await cipher.decrypt<CollectionMetadata>(info!.metadata!)
+
+          if (!result.ok) {
+            logger.warn("Failed to decrypt collection. This collection will be filtered from the collection list.", { error: result.error })
+          }
+
+          return result
+        }))),
+      decryptions => toAsync(gather(removeErrors(decryptions)))
     )(Unit)
   }
 }

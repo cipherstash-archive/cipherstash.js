@@ -123,6 +123,17 @@ export function gather<V, E>(results: Array<Result<V, E>>): Result<Array<V>, E> 
   return results.reduce<Result<Array<V>, E>>(concat, Ok<Array<V>>([]))
 }
 
+/**
+ * Removes errors from an Array<Result<V, E>>.
+ *
+ * @param results the array of results to remove errors from
+ *
+ * @returns Array<Result<V, E>>
+ */
+export function removeErrors<V, E>(results: Array<Result<V, E>>): Array<Result<V, E>> {
+  return results.filter(isOk)
+}
+
 export async function gatherAsync<V, E>(asyncResults: Array<AsyncResult<V, E>>): AsyncResult<Array<V>, E> {
   const results = await Promise.all(asyncResults)
   return results.reduce<Result<Array<V>, E>>(concat, Ok<Array<V>>([]))
