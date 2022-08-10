@@ -45,14 +45,32 @@ const command: GluegunCommand = {
       })
 
       if (parameters.options.json) {
-        print.info(JSON.stringify(mappings, null, 2))
+        const json = {
+          id: collection.id,
+          name: collection.name,
+          ref: collection.ref,
+          mappings,
+        }
+        print.info(JSON.stringify(json, null, 2))
       } else {
+        print.highlight(" Identifiers:")
+        print.table(
+          [
+            ["ID", collection.id],
+            ["Name", collection.name],
+            ["Ref (hex encoded)", collection.ref],
+          ],
+          { format: "lean" }
+        )
+
         const tbl = [["Index Name", "Index Type", "Field(s)", "Query Operators"]]
 
         for (const k in mappings) {
           tbl.push([k, mappings[k].indexType, mappings[k].fields, mappings[k].operators])
         }
 
+        print.newline()
+        print.highlight(" Indexes:")
         print.table(tbl, { format: "lean" })
       }
     } catch (error) {
