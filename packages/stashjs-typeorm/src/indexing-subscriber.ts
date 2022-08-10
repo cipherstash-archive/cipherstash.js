@@ -51,7 +51,7 @@ export class IndexingSubscriber implements EntitySubscriberInterface {
 
   /* Remove from collection after DB removal */
   async afterRemove({ databaseEntity, connection, metadata }: RemoveEvent<StashLinkableEntity>): Promise<string> {
-    if (isStashed(databaseEntity)) {
+    if (databaseEntity && isStashed(databaseEntity)) {
       return await deleteEntity(databaseEntity, metadata.tableName).then(stashId =>
         logStashEvent(connection.logger, "remove", stashId)
       )
