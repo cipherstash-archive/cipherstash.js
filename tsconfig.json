@@ -28,39 +28,19 @@
   //   }
   // }
 
-  // "exclude": ["./**/*.spec.ts", "./**/*.test.ts"],
-
   "compilerOptions": {
     "composite": true,
-    "incremental": true,
-    "alwaysStrict": true,
     "declaration": true,
-    "downlevelIteration": false,
-    "emitDecoratorMetadata": false,
-    "experimentalDecorators": false,
-    "importHelpers": false,
-    "sourceMap": true,
-    "inlineSourceMap": false,
-    "inlineSources": false,
+    "incremental": true,
     "noErrorTruncation": true,
-    "noImplicitAny": true,
-    "noImplicitThis": true,
-    "noLib": false,
-    "noStrictGenericChecks": false,
-    "preserveConstEnums": false,
-    "removeComments": false,
-    "strictBindCallApply": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
-    "importsNotUsedAsValues": "preserve",
+    "sourceMap": true,
     "useDefineForClassFields": false
   },
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",
     "fallbackPolling": "dynamicPriority",
-    "excludeDirectories": ["node_modules", "build"]
+    "excludeDirectories": ["build", "dist", "node_modules"]
   },
   "references": [
     { "path": "./packages/stash-rs" },
