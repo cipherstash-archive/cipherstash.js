@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## Fixed
+
+- Filter out incompatible collections rather than returning an error when listing collections.
+  This is a short-term fix for incompatibilities in ciphertext formats between StashJS and StashRB.
+
 ## [0.5.0]
 
 ## Added
