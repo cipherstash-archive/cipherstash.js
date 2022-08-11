@@ -25,7 +25,7 @@ The steps you'll go through are:
 
 ### Creating a CipherStash Account
 
-First, you need to sign up for an account. 
+First, you need to sign up for an account.
 Signing up gives you access to the [CipherStash Console](https://console.cipherstash.com) web interface, and [workspaces](https://docs.cipherstash.com/reference/glossary.html#workspace) to store your data.
 
 A CipherStash account is free, secure, and easy to create.
@@ -62,7 +62,6 @@ Please find the verification e-mail (it sometimes ends up in "Spam" or "Promotio
 You will get this helpful, friendly message when that succeeds:
 
 ![E-mail Verified screenshot](./.images/email_verified.png)
-
 
 ### Installing the CipherStash CLI
 
