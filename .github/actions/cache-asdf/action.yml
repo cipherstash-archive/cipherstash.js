@@ -1,0 +1,49 @@
+name: "Cache asdf installation"
+description: "Build and maintain our asdf setup"
+
+runs:
+  using: "composite"
+  steps:
+  - name: Clone asdf
+    shell: bash -l {0}
+    run: |
+      [ -e ~/.asdf ] || git clone https://github.com/asdf-vm/asdf.git ~/.asdf --branch v0.8.0
+
+  - name: Cache asdf to speed things up
+    uses: actions/cache@v2
+    with:
+      path: |
+        ~/.asdf
+      key: ${{ runner.os }}-asdf-${{ hashFiles('.tool-versions') }}
+      restore-keys: |
+        ${{ runner.os }}-asdf-
+
+  - name: Add asdf to profile
+    shell: bash -l {0}
+    run: |
+      echo '. $HOME/.asdf/asdf.sh' | tee -a ~/.bash_profile
+      echo 'eval "$(asdf exec direnv hook bash)"' | tee -a ~/.bash_profile
+      echo 'direnv() { asdf exec direnv "$@"; }' | tee -a ~/.bash_profile
+
+  - name: Add asdf plugins
+    shell: bash -l {0}
+    run: |
+      asdf plugin add mdbook-linkcheck https://github.com/cipherstash/asdf-mdbook-linkcheck
+      plugins=$(cat .tool-versions | cut -d ' ' -f 1 | sort -u | grep -v mdbook-linkcheck)
+      for p in $plugins; do
+        asdf plugin add $p
+        retval=$?
+        if [ $retval != 0 ] && [ $retval != 2 ]; then
+          echo "Problem when installing asdf plugin $p"
+          exit 3
+        fi
+      done
+
+  - name: Install asdf tools
+    shell: bash -l {0}
+    run: |
+      asdf install
+      asdf reshim
+
+  - run: asdf current
+    shell: bash -l {0}
