@@ -5,7 +5,7 @@
 
     // Relaxed rules to allow package to build. FIXME: remove these and fix in code
     "exactOptionalPropertyTypes": false,
-    "importsNotUsedAsValues": "preserve",
+    "importsNotUsedAsValues": "remove",
     "noUnusedLocals": false
   },
 
