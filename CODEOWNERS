@@ -1,1 +1,2 @@
-* @cipherstash/javascript
+*     @cipherstash/javascript
+*.rs  @cipherstash/rust
