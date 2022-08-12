@@ -1,6 +1,6 @@
 [package]
 name = "stash-rs"
-version = "0.4.6"
+version = "0.5.0"
 description = "Node bindings for ore.rs"
 license = "ISC"
 edition = "2018"
@@ -23,6 +23,6 @@ unicode-normalization = "0.1.19"
 quickcheck = "1.0.3"
 
 [dependencies.neon]
-version = "0.9"
+version = "0.10.1"
 default-features = false
 features = ["napi-6"]
