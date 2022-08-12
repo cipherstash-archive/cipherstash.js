@@ -53,16 +53,15 @@ fn encrypt_record(mut cx: FunctionContext) -> JsResult<JsBuffer> {
 }
 
 fn clone_key_from_buffer(cx: &mut FunctionContext, buf: Handle<JsBuffer>) -> NeonResult<[u8; 16]> {
-    let mut k: [u8; 16] = Default::default();
     let slice = buf.as_slice(cx);
 
     if slice.len() != 16 {
         return cx.throw_error("Invalid key length");
     }
 
-    k.clone_from_slice(slice);
-
-    Ok(k)
+    Ok(slice
+        .try_into()
+        .expect("Expected slice to have length of 16"))
 }
 
 fn init_cipher(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
