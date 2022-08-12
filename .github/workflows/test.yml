@@ -11,7 +11,7 @@ defaults:
 
 jobs:
   build-pnpm:
-    name: build + test (pnpm packages)
+    name: Build + Test
     runs-on: ubuntu-latest
 
     steps:
@@ -19,7 +19,7 @@ jobs:
 
     - uses: ./.github/actions/cache-asdf
 
-    - name: "Set up Cargo cache"
+    - name: Set up Cargo cache
       uses: actions/cache@v2
       with:
         path: |
@@ -43,15 +43,15 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-pnpm-store-
 
-    - name: "Setup"
+    - name: Setup
       run: |
         ./build.sh setup
 
-    - name: "Build"
+    - name: Build
       run: |
         ./build.sh build
 
-    - name: "Test"
+    - name: Test
       run: |
         ./build.sh test
 
