@@ -1,9 +1,9 @@
 {
-  "extends": "@tsconfig/node16/tsconfig.json",
-  // See: https://github.com/tsconfig/bases/blob/main/bases/node16.json
+  "extends": "@tsconfig/node16-strictest/tsconfig.json",
+  // See: https://github.com/tsconfig/bases/blob/main/bases/node16-strictest.combined.json
   // Inherited config:
   // {
-  //   "display": "Node 16",
+  //   "display": "Node 16 + Strictest",
   //   "compilerOptions": {
   //     "lib": ["es2021"],
   //     "module": "commonjs",
@@ -11,58 +11,36 @@
   //     "strict": true,
   //     "esModuleInterop": true,
   //     "skipLibCheck": true,
-  //     "forceConsistentCasingInFileNames": true
+  //     "forceConsistentCasingInFileNames": true,
+  //     "moduleResolution": "node",
+  //     "allowUnusedLabels": false,
+  //     "allowUnreachableCode": false,
+  //     "exactOptionalPropertyTypes": true,
+  //     "noFallthroughCasesInSwitch": true,
+  //     "noImplicitOverride": true,
+  //     "noImplicitReturns": true,
+  //     "noPropertyAccessFromIndexSignature": true,
+  //     "noUncheckedIndexedAccess": true,
+  //     "noUnusedLocals": true,
+  //     "noUnusedParameters": true,
+  //     "importsNotUsedAsValues": "error",
+  //     "checkJs": true
   //   }
   // }
 
-  // "exclude": ["./**/*.spec.ts", "./**/*.test.ts"],
-
   "compilerOptions": {
     "composite": true,
-    "incremental": true,
-    "allowJs": false,
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "alwaysStrict": true,
-    "checkJs": false,
     "declaration": true,
-    "downlevelIteration": false,
-    "emitDecoratorMetadata": false,
-    "esModuleInterop": true,
-    "experimentalDecorators": false,
-    "importHelpers": false,
-    "sourceMap": true,
-    "inlineSourceMap": false,
-    "inlineSources": false,
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "incremental": true,
     "noErrorTruncation": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noLib": false,
-    "noPropertyAccessFromIndexSignature": true,
-    "noStrictGenericChecks": false,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "preserveConstEnums": false,
-    "removeComments": false,
-    "skipLibCheck": true,
-    "strict": true,
-    "strictBindCallApply": true,
-    "strictFunctionTypes": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
-    "target": "ES2020",
+    "sourceMap": true,
     "useDefineForClassFields": false
   },
   "watchOptions": {
     "watchFile": "useFsEvents",
     "watchDirectory": "useFsEvents",
     "fallbackPolling": "dynamicPriority",
-    "excludeDirectories": ["node_modules", "build"]
+    "excludeDirectories": ["build", "dist", "node_modules"]
   },
   "references": [
     { "path": "./packages/stash-rs" },
