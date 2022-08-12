@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0]
+
+- Update neon to 0.10.1
+
 ## [0.3.0]
 
 - Upgrade cipherstash-client to 0.3.0
