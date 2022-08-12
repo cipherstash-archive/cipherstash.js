@@ -5,7 +5,7 @@
   "description": "A package for creating API docs, to publish at https://docs.cipherstash.com/tsdoc",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\""
   },
   "keywords": [],
   "author": "Bennett Hardwick",
