@@ -18,10 +18,7 @@ subproject_setup() {
 }
 
 subproject_build() {
-  pnpm typedoc --entryPointStrategy packages ../stashjs ../stash-rs ../stashjs-typeorm \
-    --out tsdoc \
-    --disableSources \
-    --readme none
+  pnpm build
 }
 
 subproject_test() {

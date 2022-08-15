@@ -60,13 +60,7 @@ jobs:
         run: |
           ./build.sh setup
 
-      - name: "Build stash-rs"
-        working-directory: packages/stash-rs
-        run: |
-          pnpm build
-
-      - name: "Build stash-typedoc"
-        working-directory: packages/stash-typedoc
+      - name: "Build packages and typedocs"
         run: |
           ./build.sh build
 
