@@ -53,7 +53,10 @@ subproject_release() {
     prodRun="--prod"
   fi
 
-  pnpm vercel --token "${VERCEL_TOKEN}" $prodRun deploy tsdoc
+  # The typedoc index.html file doesn't work from a subfolder.
+  sed -i 's/<head>/<head><base href="\/tsdoc\/">/g' ./build/tsdoc/index.html
+
+  pnpm vercel --token "${VERCEL_TOKEN}" $prodRun deploy build
 }
 
 subcommand="${1:-build}"
