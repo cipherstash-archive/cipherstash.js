@@ -92,7 +92,7 @@ importers:
       '@babel/preset-env': ^7.14.2
       '@babel/preset-typescript': ^7.13.0
       '@cfworker/json-schema': ^1.12.1
-      '@cipherstash/stash-rs': workspace:*
+      '@cipherstash/stash-rs': workspace:^
       '@cipherstash/stashjs-grpc': workspace:*
       '@grpc/grpc-js': ^1.5.5
       '@grpc/proto-loader': ^0.6.2
