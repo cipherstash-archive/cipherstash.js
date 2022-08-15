@@ -5,7 +5,7 @@
   "description": "A package for creating API docs, to publish at https://docs.cipherstash.com/tsdoc",
   "main": "index.js",
   "scripts": {
-    "build": "pnpm typedoc --entryPointStrategy packages ../stashjs ../stash-rs ../stashjs-typeorm --out tsdoc --disableSources --readme none",
+    "build": "pnpm typedoc --entryPointStrategy packages ../stashjs ../stash-rs ../stashjs-typeorm --out build/tsdoc --disableSources --readme none",
     "test": "echo \"Error: no test specified\""
   },
   "keywords": [],
