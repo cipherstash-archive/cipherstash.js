@@ -7,6 +7,8 @@ on:
       - '.github/workflows/deploy_stash_typedoc.yml'
       - 'packages/stash-typedoc/**'
       - 'packages/stashjs/**'
+      - 'packages/stashjs-typeorm/**'
+      - 'packages/stash-rs/**'
   pull_request:
     branches:
       - main
@@ -14,6 +16,8 @@ on:
       - '.github/workflows/deploy_stash_typedoc.yml'
       - 'packages/stash-typedoc/**'
       - 'packages/stashjs/**'
+      - 'packages/stashjs-typeorm/**'
+      - 'packages/stash-rs/**'
   workflow_dispatch:
 
 defaults:
