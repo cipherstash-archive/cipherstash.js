@@ -13,14 +13,12 @@ fi
 
 trap "echo SOMETHING WENT WRONG - please read the logs above and see if it helps you figure out what is wrong - and also ask an engineer help" ERR
 
-subproject_build() {
-  pnpx typedoc --entryPointStrategy packages ../stashjs-grpc ../stashjs \
-    --out tsdoc \
-    --disableSources \
-    --readme none
+subproject_setup() {
+  pnpm install
+}
 
-  # The typedoc index.html file doesn't work from a subfolder.
-  sed -i 's/<head>/<head><base href="\/tsdoc\/">/g' ./tsdoc/index.html
+subproject_build() {
+  pnpm build
 }
 
 subproject_test() {
@@ -36,8 +34,37 @@ subproject_rebuild() {
   subproject_build
 }
 
+subproject_release() {
+  if [ -z "${VERCEL_TOKEN:-}" ]; then
+    echo "error: missing environment variable VERCEL_TOKEN"
+    exit 1
+  fi
+  if [ -z "${VERCEL_PROJECT_ID:-}" ]; then
+    echo "error: missing environment variable VERCEL_PROJECT_ID"
+    exit 1
+  fi
+  if [ -z "${VERCEL_ORG_ID:-}" ]; then
+    echo "error: missing environment variable VERCEL_ORG_ID"
+    exit 1
+  fi
+
+  prodRun=""
+  if [ "${GITHUB_REF:-}" == "refs/heads/main" ]; then
+    prodRun="--prod"
+  fi
+
+  # The typedoc index.html file doesn't work from a subfolder.
+  sed -i 's/<head>/<head><base href="\/tsdoc\/">/g' ./build/tsdoc/index.html
+
+  pnpm vercel --token "${VERCEL_TOKEN}" $prodRun deploy build
+}
+
 subcommand="${1:-build}"
 case $subcommand in
+  setup)
+    subproject_setup
+    ;;
+
   clean)
     subproject_clean
     ;;
@@ -52,6 +79,10 @@ case $subcommand in
 
   build)
     subproject_build
+    ;;
+
+  release)
+    subproject_release
     ;;
 
   *)

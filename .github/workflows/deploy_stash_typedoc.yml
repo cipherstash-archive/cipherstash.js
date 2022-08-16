@@ -1,0 +1,113 @@
+name: "Deploy stash-typedoc"
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy_stash_typedoc.yml'
+      - 'packages/stash-typedoc/**'
+      - 'packages/stashjs/**'
+      - 'packages/stashjs-typeorm/**'
+      - 'packages/stash-rs/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/deploy_stash_typedoc.yml'
+      - 'packages/stash-typedoc/**'
+      - 'packages/stashjs/**'
+      - 'packages/stashjs-typeorm/**'
+      - 'packages/stash-rs/**'
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash -l {0}
+
+jobs:
+  vercel:
+    runs-on: ubuntu-latest
+    name: "🌏 Deploy stash-typedoc"
+    env:
+      DEPLOY_OUTPUT: /tmp/deploy_output.txt
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ./.github/actions/cache-asdf
+
+      - name: Set up Cargo cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        run: |
+          echo "::set-output name=pnpm_cache_dir::$(pnpm store path)"
+
+      - name: Set up pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.pnpm_cache_dir }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: "Install dependencies"
+        run: |
+          ./build.sh setup
+
+      - name: "Build packages and typedocs"
+        run: |
+          ./build.sh build
+
+      - name: "Deploy to Vercel"
+        env:
+          VERCEL_TOKEN: ${{ secrets.STASH_TYPEDOC_VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.STASH_TYPEDOC_VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.STASH_TYPEDOC_VERCEL_ORG_ID }}
+        working-directory: packages/stash-typedoc
+        run: |
+          ./build.sh release | tee -a $DEPLOY_OUTPUT
+          exit ${PIPESTATUS[0]}
+
+      - name: Post Preview URL to PR
+        uses: actions/github-script@0.9.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            if (process.env.GITHUB_REF == "refs/heads/main") {
+              console.log('Skipping because we are on main')
+              process.exit(0)
+            }
+
+            const fs = require("fs").promises;
+            var deploy_output = await fs.readFile(process.env.DEPLOY_OUTPUT, "utf8");
+            var lines = deploy_output.split("\n");
+
+            // Extract preview URL
+            var previewURLline = lines.reverse().find(l => /^https:\/\/.+vercel\.app$/.test(l))
+            try {
+              var previewURL = new URL(previewURLline)
+            } catch(error) {
+              console.error(error)
+              process.exit(1)
+            }
+
+            const output = `
+            ✅ TSDoc Preview: ${previewURL.toString()}tsdoc
+            `;
+
+            github.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
