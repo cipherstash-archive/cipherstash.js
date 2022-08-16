@@ -21,9 +21,7 @@ subproject_setup() {
 
 subproject_build() {
   pnpm install --frozen-lockfile
-  pnpm --recursive --filter "!./packages/stash-typedoc" build
-  # Build stash-typedoc last because it depends on the other packages already being built
-  pnpm --filter "./packages/stash-typedoc" build
+  pnpm -r build
 }
 
 subproject_lint() {
