@@ -22,6 +22,10 @@ Utilities:
 
 - `stash-typedoc` - typedoc generation
 
+## Need help?
+
+Head over to our [support forum](https://discuss.cipherstash.com/), and we'll get back to you super quick! 
+
 ## Developing
 
 From the root of this repo, run:
