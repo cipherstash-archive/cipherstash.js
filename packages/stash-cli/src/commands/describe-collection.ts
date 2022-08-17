@@ -25,22 +25,47 @@ const command: GluegunCommand = {
       process.exit(1)
     })
 
+    function exitWithUsage(level: "info" | "error" = "info"): never {
+      print[level](
+        "Usage: stash describe-collection <collection-name> [--profile <profile>] [--include-meta] [--json] [--help]"
+      )
+      print.newline()
+      print[level]("Display details on identifiers and indexes for the given collection.")
+      print.newline()
+      print[level]("Example: stash describe-collection movies")
+      process.exit(level === "info" ? 0 : 1)
+    }
+
+    if (parameters.options.help) {
+      exitWithUsage()
+    }
+
     try {
       const stash = await Stash.connect(profile)
       const collectionName = parameters.first
       if (collectionName === undefined) {
         print.error("No collection name specified.")
-        process.exit(1)
+        print.newline()
+        exitWithUsage("error")
       }
 
       const collection = await stash.loadCollection(collectionName)
       const mappings = {}
 
       Object.entries(collection.schema.mappings).forEach(([indexName, mapping]) => {
+        const meta = parameters.options.includeMeta
+          ? {
+              $prpKey: collection.schema.meta[indexName]!.$prpKey.toString("hex"),
+              $prfKey: collection.schema.meta[indexName]!.$prfKey.toString("hex"),
+              $indexId: collection.schema.meta[indexName]!.$indexId,
+            }
+          : {}
+
         mappings[indexName] = {
           indexType: mapping.kind,
           fields: describeFields(mapping),
           operators: describeOperators(mapping),
+          ...meta,
         }
       })
 
@@ -63,10 +88,18 @@ const command: GluegunCommand = {
           { format: "lean" }
         )
 
-        const tbl = [["Index Name", "Index Type", "Field(s)", "Query Operators"]]
+        const metaHeaders = parameters.options.includeMeta
+          ? ["Index ID", "PRP Key (hex encoded)", "PRF Key (hex encoded)"]
+          : []
+
+        const tbl = [["Index Name", "Index Type", "Field(s)", "Query Operators", ...metaHeaders]]
 
         for (const k in mappings) {
-          tbl.push([k, mappings[k].indexType, mappings[k].fields, mappings[k].operators])
+          const metaFields = parameters.options.includeMeta
+            ? [mappings[k].$indexId, mappings[k].$prpKey, mappings[k].$prfKey]
+            : []
+
+          tbl.push([k, mappings[k].indexType, mappings[k].fields, mappings[k].operators, ...metaFields])
         }
 
         print.newline()
