@@ -64,7 +64,8 @@ const command: GluegunCommand = {
         indexes,
       }
 
-      print.info(JSON.stringify(json, null, 2))
+      // Console log instead of using `print.info` here so output can be redirected to a file.
+      console.log(JSON.stringify(json, null, 2))
     } catch (error) {
       print.error(`Could not export schema. Reason: "${describeError(error)}"`)
     }
