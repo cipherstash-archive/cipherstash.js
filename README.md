@@ -1,8 +1,8 @@
 # ☕ JavaScript & TypeScript clients for [CipherStash](https://cipherstash.com)
 
-![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fdiscuss.cipherstash.com%2F&style=flat-square&color=%232dd9ff)
-![Twitter Follow](https://img.shields.io/twitter/follow/cipherstash?color=%23ad3eff&style=flat-square)
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/cipherstash/cipherstash.js/Test%20PR%20%E2%80%94%20pnpm%20packages?style=flat-square)
+[![Discourse status](https://img.shields.io/discourse/status?server=https%3A%2F%2Fdiscuss.cipherstash.com%2F&style=flat-square&color=%232dd9ff)](https://discuss.cipherstash.com)
+[![Twitter Follow](https://img.shields.io/twitter/follow/cipherstash?color=%23ad3eff&style=flat-square)](https://twitter.com/cipherstash)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/cipherstash/cipherstash.js/Test%20PR%20%E2%80%94%20pnpm%20packages?style=flat-square)](https://github.com/cipherstash/cipherstash.js/actions)
 
 This project contains the JavaScript/TypeScript clients for [CipherStash](https://cipherstash.com).
 The clients are used for adding CipherStash’s Queryable Application Level Encryption (QuALE) into your backend node applications.
