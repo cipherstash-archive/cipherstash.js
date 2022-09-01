@@ -61,6 +61,7 @@ const command: GluegunCommand = {
         name: collection.name,
         id: collection.id,
         type: collection.schema.recordType,
+        ref: [...Buffer.from(collection.ref, "hex")],
         indexes,
       }
 
