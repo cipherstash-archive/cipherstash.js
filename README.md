@@ -57,22 +57,4 @@ This will get you to a state that you can start developing individual components
 
 This is the dependency graph
 
-```
-                ----------------------------
-                |  @cipherstash/stash-cli  |
-                ----------------------------
-                            |
-                        depends on
-                            |
-                 --------------------------
-                 |  @cipherstash/stashjs  |
-                 --------------------------
-                            |
-                        depends on
-                            |
-                -------------------------
-                |                       |
------------------------------   -------------------------
-| @cipherstash/stashjs-grpc |   |  @cipherstash/stash-rs  |
------------------------------   -------------------------
-```
+![alt text](.drawio/dependency_graph.drawio.png)
