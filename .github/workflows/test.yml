@@ -1,4 +1,4 @@
-name: Build and Test
+name: Test PR — pnpm packages
 on:
   pull_request:
     branches: [ main ]

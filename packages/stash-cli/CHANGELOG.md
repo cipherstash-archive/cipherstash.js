@@ -7,18 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-## [0.5.1]
-
-## Fixed
-
-- `export-schema` output including control chars
-
-## [0.5.0]
-
-## Added
-
-- Added `export-schema` command for dumping schemas as JSON
-
 ## [0.4.0]
 
 ## Added

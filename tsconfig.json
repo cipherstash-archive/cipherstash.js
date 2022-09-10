@@ -29,6 +29,7 @@
   // }
 
   "compilerOptions": {
+    "checkJs": false,
     "composite": true,
     "declaration": true,
     "incremental": true,

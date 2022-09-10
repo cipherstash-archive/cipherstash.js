@@ -4,7 +4,6 @@ import { generateSchemaDefinitionFromJSON, parseCollectionSchemaJSON, PRIVATE } 
 const { ExactIndexDecoder, MatchIndexDecoder, RangeIndexDecoder, parseIndexDefinition } = PRIVATE
 
 import { isErr, isOk } from "../result"
-import { hasUncaughtExceptionCaptureCallback } from "process"
 
 describe("Index definition: Exact", () => {
   it("parses valid index definition", () => {
@@ -171,7 +170,6 @@ describe("Typechecking", () => {
       const checked = parseCollectionSchemaJSON(schema)
       if (checked.ok) {
         fail("type checking should have failed")
-        return
       }
 
       expect(checked.error).toEqual(
@@ -206,7 +204,6 @@ describe("Typechecking", () => {
       const checked = parseCollectionSchemaJSON(schema)
       if (checked.ok) {
         fail("type checking should have failed")
-        return
       }
 
       expect(checked.error).toEqual(
