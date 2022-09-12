@@ -1,5 +1,5 @@
-import { GluegunCommand } from "gluegun"
-import { Toolbox } from "gluegun/build/types/domain/toolbox"
+import { GluegunCommand } from "@cipherstash/gluegun"
+import { Toolbox } from "@cipherstash/gluegun/build/types/domain/toolbox"
 
 import { Stash, StashInternal, describeError, Ok, errors } from "@cipherstash/stashjs"
 import { makeHttpsClient } from "../https-client"

@@ -1,7 +1,7 @@
-import { GluegunCommand } from "gluegun"
+import { GluegunCommand } from "@cipherstash/gluegun"
 import * as fs from "fs"
 import { Stash, describeError, StashRecord } from "@cipherstash/stashjs"
-import { Toolbox } from "gluegun/build/types/domain/toolbox"
+import { Toolbox } from "@cipherstash/gluegun/build/types/domain/toolbox"
 
 const command: GluegunCommand = {
   name: "import",
