@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stash-cli",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "CipherStash CLI",
   "types": "build/types/types.d.ts",
   "bin": {
@@ -30,9 +30,9 @@
   ],
   "license": "Apache-2.0",
   "dependencies": {
+    "@cipherstash/gluegun": "latest",
     "@cipherstash/stashjs": "workspace:*",
     "axios": "^0.27.2",
-    "@cipherstash/gluegun": "latest",
     "open": "^8.2.1",
     "yarn": "^1.22.11"
   },
