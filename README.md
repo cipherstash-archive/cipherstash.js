@@ -57,4 +57,4 @@ This will get you to a state that you can start developing individual components
 
 This is the dependency graph
 
-![alt text](.drawio/dependency_graph.drawio.png)
+![alt text](.images/dependency_graph.drawio.png)
