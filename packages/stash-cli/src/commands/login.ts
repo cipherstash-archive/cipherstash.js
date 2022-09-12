@@ -1,6 +1,6 @@
-import { GluegunCommand } from "gluegun"
-import { Options } from "gluegun/build/types/domain/options"
-import { Toolbox } from "gluegun/build/types/domain/toolbox"
+import { GluegunCommand } from "@cipherstash/gluegun"
+import { Options } from "@cipherstash/gluegun/build/types/domain/options"
+import { Toolbox } from "@cipherstash/gluegun/build/types/domain/toolbox"
 import { AxiosResponse } from "axios"
 import { makeHttpsClient } from "../https-client"
 
