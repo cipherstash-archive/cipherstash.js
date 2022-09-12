@@ -1,4 +1,4 @@
-import { Toolbox } from "gluegun/build/types/domain/toolbox"
+import { Toolbox } from "@cipherstash/gluegun/build/types/domain/toolbox"
 import { describeError } from "@cipherstash/stashjs"
 
 export function withDefaultErrorHandling(callback: (toolbox: Toolbox) => Promise<void>) {

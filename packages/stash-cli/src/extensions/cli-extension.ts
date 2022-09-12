@@ -1,4 +1,4 @@
-import { GluegunToolbox } from "gluegun"
+import { GluegunToolbox } from "@cipherstash/gluegun"
 
 // add your CLI-specific functionality here, which will then be accessible
 // to your commands

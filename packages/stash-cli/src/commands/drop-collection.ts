@@ -1,6 +1,6 @@
-import { GluegunCommand } from "gluegun"
+import { GluegunCommand } from "@cipherstash/gluegun"
 import { Stash, describeError } from "@cipherstash/stashjs"
-import { Toolbox } from "gluegun/build/types/domain/toolbox"
+import { Toolbox } from "@cipherstash/gluegun/build/types/domain/toolbox"
 
 const command: GluegunCommand = {
   name: "drop-collection",
