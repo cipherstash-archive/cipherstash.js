@@ -14,6 +14,7 @@ importers:
 
   packages/stash-cli:
     specifiers:
+      '@cipherstash/gluegun': latest
       '@cipherstash/stashjs': workspace:*
       '@types/jest': ^24.0.18
       '@types/node': ^12.7.11
@@ -22,7 +23,6 @@ importers:
       axios: ^0.27.2
       eslint: ^8.14.0
       eslint-config-prettier: ^8.5.0
-      gluegun: latest
       jest: ^24.1.0
       lint-staged: 12.4.1
       open: ^8.2.1
@@ -32,9 +32,9 @@ importers:
       typescript: ^4.7.4
       yarn: ^1.22.11
     dependencies:
+      '@cipherstash/gluegun': 5.1.2
       '@cipherstash/stashjs': link:../stashjs
       axios: 0.27.2
-      gluegun: 5.1.2
       open: 8.4.0
       yarn: 1.22.19
     devDependencies:
@@ -2203,6 +2203,44 @@ packages:
 
   /@cfworker/json-schema/1.12.3:
     resolution: {integrity: sha512-L27wX0PkCGKadJeNqfpiLrXSfbLoC7xTmnF9OImA3Zr6Vtd9BeZGEOa5SKEzeS+ukkFUtN98Pz77vdEfobeTFg==}
+    dev: false
+
+  /@cipherstash/gluegun/5.1.2:
+    resolution: {integrity: sha512-06RsQSxZRGpDu6JzVnjmTarRuLkgLziT8fjTJfEthWuat9vBb4aPpBNtGCJeh29/ER+35yia0iWquBsM0Izbuw==}
+    hasBin: true
+    dependencies:
+      apisauce: 2.1.5
+      app-module-path: 2.2.0
+      cli-table3: 0.6.0
+      colors: 1.4.0
+      cosmiconfig: 7.0.1
+      cross-spawn: 7.0.3
+      ejs: 3.1.8
+      enquirer: 2.3.6
+      execa: 5.1.1
+      fs-jetpack: 4.3.1
+      lodash.camelcase: 4.3.0
+      lodash.kebabcase: 4.1.1
+      lodash.lowercase: 4.3.0
+      lodash.lowerfirst: 4.3.1
+      lodash.pad: 4.5.1
+      lodash.padend: 4.6.1
+      lodash.padstart: 4.6.1
+      lodash.repeat: 4.1.0
+      lodash.snakecase: 4.1.1
+      lodash.startcase: 4.4.0
+      lodash.trim: 4.5.1
+      lodash.trimend: 4.5.1
+      lodash.trimstart: 4.5.1
+      lodash.uppercase: 4.3.0
+      lodash.upperfirst: 4.3.1
+      ora: 4.0.2
+      pluralize: 8.0.0
+      semver: 7.3.5
+      which: 2.0.2
+      yargs-parser: 21.0.1
+    transitivePeerDependencies:
+      - debug
     dev: false
 
   /@cnakazawa/watch/1.0.4:
@@ -4629,8 +4667,8 @@ packages:
       time-span: 4.0.0
     dev: true
 
-  /ejs/3.1.6:
-    resolution: {integrity: sha512-9lt9Zse4hPucPkoP7FHDF0LQAlGyF9JVpnClFLFH3aSSbxmyoqINRpp/9wePWJTUl4KOQwRL72Iw3InHPDkoGw==}
+  /ejs/3.1.8:
+    resolution: {integrity: sha512-/sXZeMlhS0ArkfX2Aw780gJzXSMPnKjtspYZv+f3NiKLlubezAHDU5+9xz6gd3/NhG3txQCo6xlglmTS+oTGEQ==}
     engines: {node: '>=0.10.0'}
     hasBin: true
     dependencies:
@@ -5607,44 +5645,6 @@ packages:
       merge2: 1.4.1
       slash: 3.0.0
     dev: true
-
-  /gluegun/5.1.2:
-    resolution: {integrity: sha512-Cwx/8S8Z4YQg07a6AFsaGnnnmd8mN17414NcPS3OoDtZRwxgsvwRNJNg69niD6fDa8oNwslCG0xH7rEpRNNE/g==}
-    hasBin: true
-    dependencies:
-      apisauce: 2.1.5
-      app-module-path: 2.2.0
-      cli-table3: 0.6.0
-      colors: 1.4.0
-      cosmiconfig: 7.0.1
-      cross-spawn: 7.0.3
-      ejs: 3.1.6
-      enquirer: 2.3.6
-      execa: 5.1.1
-      fs-jetpack: 4.3.1
-      lodash.camelcase: 4.3.0
-      lodash.kebabcase: 4.1.1
-      lodash.lowercase: 4.3.0
-      lodash.lowerfirst: 4.3.1
-      lodash.pad: 4.5.1
-      lodash.padend: 4.6.1
-      lodash.padstart: 4.6.1
-      lodash.repeat: 4.1.0
-      lodash.snakecase: 4.1.1
-      lodash.startcase: 4.4.0
-      lodash.trim: 4.5.1
-      lodash.trimend: 4.5.1
-      lodash.trimstart: 4.5.1
-      lodash.uppercase: 4.3.0
-      lodash.upperfirst: 4.3.1
-      ora: 4.0.2
-      pluralize: 8.0.0
-      semver: 7.3.5
-      which: 2.0.2
-      yargs-parser: 21.0.1
-    transitivePeerDependencies:
-      - debug
-    dev: false
 
   /got/9.6.0:
     resolution: {integrity: sha512-R7eWptXuGYxwijs0eV+v3o6+XH1IqVK8dJOEecQfTmkncw9AV4dcw/Dhxi8MdlqPthxxpZyizMzyg8RTmEsG+Q==}

@@ -1,5 +1,5 @@
-import { GluegunCommand } from "gluegun"
-import { Toolbox } from "gluegun/build/types/domain/toolbox"
+import { GluegunCommand } from "@cipherstash/gluegun"
+import { Toolbox } from "@cipherstash/gluegun/build/types/domain/toolbox"
 import * as fs from "fs"
 
 import {
