@@ -32,7 +32,7 @@
   "dependencies": {
     "@cipherstash/stashjs": "workspace:*",
     "axios": "^0.27.2",
-    "gluegun": "latest",
+    "@cipherstash/gluegun": "latest",
     "open": "^8.2.1",
     "yarn": "^1.22.11"
   },
