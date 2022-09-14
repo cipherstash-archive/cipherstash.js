@@ -1,0 +1,24 @@
+{
+   "name": "stashjs-typeorm-demo",
+   "version": "0.0.1",
+   "description": "Awesome project developed with TypeORM.",
+   "type": "commonjs",
+   "devDependencies": {
+      "@cipherstash/stash-cli": "^0.3.13",
+      "@types/node": "^15.12.4",
+      "dotenv": "^16.0.1",
+      "ts-node": "10.7.0",
+      "typescript": "4.7.4"
+   },
+   "dependencies": {
+      "@cipherstash/stashjs-typeorm": "^0.0.2",
+      "@faker-js/faker": "^7.3.0",
+      "pg": "^8.4.0",
+      "reflect-metadata": "^0.1.13",
+      "typeorm": "0.3.7"
+   },
+   "scripts": {
+      "start": "ts-node src/index.ts",
+      "typeorm": "typeorm-ts-node-commonjs"
+   }
+}
