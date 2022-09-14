@@ -4,6 +4,7 @@ import { CollectionManager } from "./collection-manager"
 import { StashLinkableEntity, WithRequiredStashId } from "./types"
 import { ensureStashID, mapAndPutEntity } from "./collection-adapter"
 import { extendQueryBuilder, LookasideSelectQueryBuilder } from "./query"
+import { toErrorMessage } from "@cipherstash/stashjs/dist/errors"
 
 /*
  * Extends a TypeORM Repository to give it special powers.
@@ -34,7 +35,7 @@ export function wrapRepo<T extends StashLinkableEntity>(repo: Repository<T>): Wr
         const schema = collectionSchema(this.metadata.target, this.metadata.tablePath)
         await CollectionManager.create(schema)
       } catch (f) {
-        return Promise.reject(f.cause.cause.cause) // FIXME: WTAF errors?
+        return Promise.reject(toErrorMessage(f))
       }
     },
 
