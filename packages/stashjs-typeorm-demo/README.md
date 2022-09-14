@@ -29,6 +29,7 @@ If you already use [ASDF](https://asdf-vm.com/), you can just do:
 ```sh
 asdf plugin add rust
 asdf plugin add nodejs
+asdf plugin add pnpm
 asdf plugin add postgres
 asdf install
 ```
@@ -40,7 +41,7 @@ To login you will need a workspace ID which you can get from the [CipherStash Co
 ![Console Workspace](workspace.png)
 
 ```sh
-npx stash login --workspace <your-workspace-id>
+pnpm exec stash login --workspace <your-workspace-id>
 ```
 
 *Note: When logging in, you will be prompted to authenticate via the browser.
@@ -48,8 +49,22 @@ If the browser doesn't automatically open, copy and past the authentication URL 
 
 ## Installing
 
+### If you're using NPM to manage dependencies
+
 ```sh
 npm install
+```
+
+### If you're using pnpm to manage dependencies
+
+```sh
+pnpm install
+```
+
+### If you're using yarn to manage dependencies
+
+```sh
+yarn install
 ```
 
 Edit the `src/data-source.ts` file and set your database credentials
@@ -79,7 +94,7 @@ The main demo code lives in `src/index.ts`.
 You can run it with:
 
 ```sh
-npm start
+pnpm run start
 ```
 
 The demo will create 100 random users, automatically save them
@@ -135,7 +150,7 @@ export class User {
   @EncryptedColumn({ key })
   lastName: string
 
-  // Dates must be treated as timestamps in TypeORM 
+  // Dates must be treated as timestamps in TypeORM
   // See this issue: https://github.com/typeorm/typeorm/issues/2176
   @Queryable()
   @Column({type: "timestamp"})
