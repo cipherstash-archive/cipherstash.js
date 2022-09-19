@@ -3,6 +3,7 @@
    "version": "0.0.1",
    "description": "Example project developed with StashJS-TypeORM",
    "type": "commonjs",
+   "private": true,
    "devDependencies": {
       "@cipherstash/stash-cli": "workspace:*",
       "@types/node": "^15.12.4",
