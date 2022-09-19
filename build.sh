@@ -13,72 +13,80 @@ fi
 
 trap "echo SOMETHING WENT WRONG - please read the logs above and see if it helps you figure out what is wrong - and also ask an engineer help" ERR
 
-subproject_setup() {
+setup() {
+  asdf plugin add postgres || true
+  asdf plugin add protoc || true
+  asdf plugin add rust || true
+  asdf plugin add nodejs || true
+  asdf plugin add pnpm || true
+  asdf plugin add shellcheck || true
+  asdf plugin add shfmt || true
+
   asdf install
   asdf reshim
   pnpm install --frozen-lockfile
 }
 
-subproject_build() {
+build() {
   pnpm install --frozen-lockfile
   pnpm -r build
 }
 
-subproject_lint() {
+lint() {
   find "$(dirname "${0}")" -name node_modules -prune -o -name '*.sh' -exec shfmt -w -ci -i 2 -d {} +
   find "$(dirname "${0}")" -name node_modules -prune -o -name '*.sh' -exec shellcheck {} +
   pnpm -r lint:fix
 }
 
-subproject_test() {
+test() {
   find "$(dirname "${0}")" -name node_modules -prune -o -name '*.sh' -exec shfmt -ci -i 2 -d {} +
   find "$(dirname "${0}")" -name node_modules -prune -o -name '*.sh' -exec shellcheck {} +
   pnpm -r lint
   pnpm -r test
 }
 
-subproject_publish() {
+publish() {
   pnpm -r build
   pnpm -r publish
 }
 
-subproject_clean() {
+clean() {
   pnpm -r clean
 }
 
-subproject_rebuild() {
-  subproject_clean
-  subproject_build
+rebuild() {
+  clean
+  build
 }
 
 subcommand="${1:-build}"
 case $subcommand in
   setup)
-    subproject_setup
+    setup
     ;;
 
   clean)
-    subproject_clean
+    clean
     ;;
 
   test)
-    subproject_test
+    test
     ;;
 
   lint)
-    subproject_lint
+    lint
     ;;
 
   rebuild)
-    subproject_rebuild
+    rebuild
     ;;
 
   build)
-    subproject_build
+    build
     ;;
 
   publish)
-    subproject_publish
+    publish
     ;;
 
   *)
