@@ -37,14 +37,18 @@ You probably won't need to use these directly but we'll list them here just in c
 
 ## Need help?
 
-Head over to our [support forum](https://discuss.cipherstash.com/), and we'll get back to you super quick! 
+Head over to our [support forum](https://discuss.cipherstash.com/), and we'll get back to you super quick!
 
 ## Developing
+
+This monorepo uses ASDF to manage required dependencies. You can see the dependencies in the `.tool-versions` file in the root of the repo.
+
+If you're comfortable with installing ASDF and using it to manage your dependencies, follow the instructions [here](https://asdf-vm.com/guide/getting-started.html)).
 
 From the root of this repo, run:
 
 ```bash
-# Install system level dependencies
+# Installs the ASDF plugins and all dependencies in .tool-versions
 ./build.sh setup
 
 # Build all the components

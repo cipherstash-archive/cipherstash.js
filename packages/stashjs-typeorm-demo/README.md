@@ -27,12 +27,26 @@ Together this is called Queryable Application Level Encryption (QuALE).
 If you already use [ASDF](https://asdf-vm.com/), you can just do:
 
 ```sh
-asdf plugin add rust
 asdf plugin add nodejs
 asdf plugin add pnpm
 asdf plugin add postgres
+asdf plugin add protoc
+asdf plugin add rust
+
+# Optional
+asdf plugin add shellcheck
+asdf plugin add shfmt
+
 asdf install
 ```
+
+If you don't use ASDF, then you'll need to ensure that the external depenendies are available, either manually or via your package manager of choice.
+
+## Building
+
+We use `pnpm` as the package manager for our JavaScript/TypeScript projects.
+
+In order to get the monorepo to build, run `pnpm -r build` in the root of the git repository.
 
 ## Login to CipherStash Workspace
 
@@ -49,22 +63,10 @@ If the browser doesn't automatically open, copy and past the authentication URL 
 
 ## Installing
 
-### If you're using NPM to manage dependencies
-
-```sh
-npm install
-```
-
-### If you're using pnpm to manage dependencies
+###
 
 ```sh
 pnpm install
-```
-
-### If you're using yarn to manage dependencies
-
-```sh
-yarn install
 ```
 
 Edit the `src/data-source.ts` file and set your database credentials
