@@ -12,6 +12,7 @@
       "typescript": "4.7.4"
    },
    "dependencies": {
+      "@cipherstash/stashjs": "workspace:*",
       "@cipherstash/stashjs-typeorm": "workspace:*",
       "@faker-js/faker": "^7.3.0",
       "pg": "^8.4.0",
@@ -20,6 +21,7 @@
    },
    "scripts": {
       "start": "ts-node src/index.ts",
+      "build": "tsc --build",
       "typeorm": "typeorm-ts-node-commonjs"
    }
 }
