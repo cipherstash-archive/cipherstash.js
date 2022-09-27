@@ -1,4 +1,5 @@
 {
+   "extends": "../../tsconfig.json",
    "compilerOptions": {
       "lib": [
          "es5",
@@ -11,6 +12,17 @@
       "outDir": "./build",
       "emitDecoratorMetadata": true,
       "experimentalDecorators": true,
-      "sourceMap": true
+      "sourceMap": true,
+
+      // Relaxed rules to allow package to build. FIXME: remove these and fix in code
+      "exactOptionalPropertyTypes": false,
+      "importsNotUsedAsValues": "remove",
+      "noImplicitAny": false,
+      "noImplicitReturns": false,
+      "noImplicitThis": false,
+      "strictFunctionTypes": false,
+      "strictNullChecks": false,
+      "strictPropertyInitialization": false,
+      "useUnknownInCatchVariables": false
    }
 }
