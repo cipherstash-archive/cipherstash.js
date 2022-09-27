@@ -46,6 +46,8 @@
     { "path": "./packages/stash-rs" },
     { "path": "./packages/stashjs" },
     { "path": "./packages/stashjs-adapter" },
-    { "path": "./packages/stashjs-grpc" }
+    { "path": "./packages/stashjs-grpc" },
+    { "path": "./packages/stashjs-typeorm" },
+    { "path": "./packages/stashjs-typeorm-demo" }
   ]
 }
