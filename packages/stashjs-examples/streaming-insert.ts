@@ -1,5 +1,5 @@
 import { Stash } from "@cipherstash/stashjs"
-import { Movie } from "./movie"
+import type { Movie } from "./movie"
 import * as uuid from "uuid"
 import * as faker from "faker"
 import { Timer } from "timer-node"

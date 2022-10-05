@@ -1,5 +1,5 @@
 import { Stash } from "@cipherstash/stashjs"
-import { Movie } from "./movie"
+import type { Movie } from "./movie"
 import { parse } from "csv-parse"
 import fs from "fs"
 
