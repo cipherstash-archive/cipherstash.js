@@ -1,0 +1,35 @@
+{
+  "type": {
+    "title": "string",
+    "runningTime": "float64",
+    "year": "float64"
+  },
+  "indexes": {
+    "exactTitle": { "kind": "exact", "field": "title" },
+    "runningTime": { "kind": "range", "field": "runningTime" },
+    "year": { "kind": "range", "field": "year" },
+    "title": {
+      "kind": "match",
+      "fields": ["title"],
+      "tokenFilters": [
+        { "kind": "downcase" },
+        { "kind": "ngram", "tokenLength": 3 }
+      ],
+      "tokenizer": { "kind": "standard" }
+    },
+    "allTextDynamicMatch": {
+      "kind": "dynamic-match",
+      "tokenFilters": [
+        { "kind": "downcase" }
+      ],
+      "tokenizer":  { "kind": "ngram", "tokenLength": 3 }
+    },
+    "allTextFieldDynamicMatch": {
+      "kind": "field-dynamic-match",
+      "tokenFilters": [
+        { "kind": "downcase" }
+      ],
+      "tokenizer":  { "kind": "ngram", "tokenLength": 3 }
+    }
+  }
+}

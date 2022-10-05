@@ -210,6 +210,31 @@ importers:
       ts-node: 10.9.1_x2utdhayajzrh747hktprshhby
       typescript: 4.7.4
 
+  packages/stashjs-examples:
+    specifiers:
+      '@cipherstash/stashjs': workspace:*
+      '@types/faker': ^5.5.7
+      '@types/node': 16.0.1
+      '@types/uuid': ^8.3.2
+      csv-parse: ^5.0.1
+      faker: ^5.5.3
+      prettier: ^2.6.2
+      timer-node: ^5.0.5
+      typescript: ^4.3.4
+      uuid: ^8.3.2
+    dependencies:
+      '@cipherstash/stashjs': link:../stashjs
+      '@types/faker': 5.5.9
+      '@types/node': 16.0.1
+      '@types/uuid': 8.3.4
+      csv-parse: 5.3.0
+      faker: 5.5.3
+      timer-node: 5.0.6
+      uuid: 8.3.2
+    devDependencies:
+      prettier: 2.6.2
+      typescript: 4.7.4
+
   packages/stashjs-grpc:
     specifiers:
       '@grpc/grpc-js': ^1.5.5
@@ -3018,6 +3043,10 @@ packages:
       '@types/node': 18.6.4
     dev: false
 
+  /@types/faker/5.5.9:
+    resolution: {integrity: sha512-uCx6mP3UY5SIO14XlspxsGjgaemrxpssJI0Ol+GfhxtcKpv9pgRZYsS4eeKeHVLje6Qtc8lGszuBI461+gVZBA==}
+    dev: false
+
   /@types/graceful-fs/4.1.5:
     resolution: {integrity: sha512-anKkLmZZ+xm4p8JWBf4hElkM4XR+EZeA2M9BAkkTldmcyDY4mbdIJnRghDJH3Ov5ooY7/UAoENtmdMSkaAd7Cw==}
     dependencies:
@@ -3095,6 +3124,10 @@ packages:
   /@types/node/15.12.4:
     resolution: {integrity: sha512-zrNj1+yqYF4WskCMOHwN+w9iuD12+dGm0rQ35HLl9/Ouuq52cEtd0CH9qMgrdNmi5ejC1/V7vKEXYubB+65DkA==}
 
+  /@types/node/16.0.1:
+    resolution: {integrity: sha512-hBOx4SUlEPKwRi6PrXuTGw1z6lz0fjsibcWCM378YxsSu/6+C30L6CR49zIBKHiwNWCYIcOLjg4OHKZaFeLAug==}
+    dev: false
+
   /@types/node/16.11.47:
     resolution: {integrity: sha512-fpP+jk2zJ4VW66+wAMFoBJlx1bxmBKx4DUFf68UHgdGCOuyUTDlLWqsaNPJh7xhNDykyJ9eIzAygilP/4WoN8g==}
     dev: true
@@ -3140,7 +3173,6 @@ packages:
 
   /@types/uuid/8.3.4:
     resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
-    dev: true
 
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -4453,6 +4485,10 @@ packages:
       cssom: 0.3.8
     dev: true
 
+  /csv-parse/5.3.0:
+    resolution: {integrity: sha512-UXJCGwvJ2fep39purtAn27OUYmxB1JQto+zhZ4QlJpzsirtSFbzLvip1aIgziqNdZp/TptvsKEV5BZSxe10/DQ==}
+    dev: false
+
   /dashdash/1.14.1:
     resolution: {integrity: sha512-jRFi8UDGo6j+odZiEpjazZaWqEal3w/basFjQHQEwVtZJGDpxbH1MeYluwCS8Xq5wmLJooDlMgvVarmWfGM44g==}
     engines: {node: '>=0.10'}
@@ -5309,6 +5345,10 @@ packages:
     resolution: {integrity: sha512-11Ndz7Nv+mvAC1j0ktTa7fAb0vLyGGX+rMHNBYQviQDGU0Hw7lhctJANqbPhu9nV9/izT/IntTgZ7Im/9LJs9g==}
     engines: {'0': node >=0.6.0}
     dev: true
+
+  /faker/5.5.3:
+    resolution: {integrity: sha512-wLTv2a28wjUyWkbnX7u/ABZBkUkIF2fCd73V6P2oFqEGEktDfzWx4UxrSqtPRw0xPRAcjeAOIiJWqZm3pP4u3g==}
+    dev: false
 
   /fast-deep-equal/3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
@@ -9539,6 +9579,10 @@ packages:
     dependencies:
       convert-hrtime: 3.0.0
     dev: true
+
+  /timer-node/5.0.6:
+    resolution: {integrity: sha512-s07CY6r6so7NH6ErSLkA5NsaQ8DoNQpwW7kqvFvnAnV8nv99qpN5DYdaUh9GTM8z83LrBVx2s6El9sJHbaQ4PA==}
+    dev: false
 
   /tmpl/1.0.5:
     resolution: {integrity: sha512-3f0uOEAQwIqGuWW2MVzYg8fV/QNnc/IpuJNG837rLuczAaLVHslWHZQj4IGiEl5Hs3kkbhwL9Ab7Hrsmuj+Smw==}
