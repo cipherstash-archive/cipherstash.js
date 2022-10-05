@@ -1,0 +1,38 @@
+{
+  "name": "@cipherstash/stashjs-examples",
+  "version": "0.0.0",
+  "description": "Example client code for the CipherStash TypeScript/JavaScript client",
+  "scripts": {
+    "build": "npx tsc && cp ./movies.schema.json ./dist/movies.schema.json",
+    "build-then-watch": "npm run build && npx tsc --watch",
+    "format": "prettier './*.ts' -w"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cipherstash/stashjs-examples.git"
+  },
+  "contributors": [
+    "Dan Draper <dan@cipherstash.com>",
+    "James Sadler <james@cipherstash.com>",
+    "Lindsay Holmwood <lindsay@cipherstash.com>"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/cipherstash/stashjs-examples/issues"
+  },
+  "homepage": "https://github.com/cipherstash/stashjs-examples#readme",
+  "dependencies": {
+    "@cipherstash/stashjs": "workspace:*",
+    "@types/faker": "^5.5.7",
+    "@types/node": "16.0.1",
+    "@types/uuid": "^8.3.2",
+    "csv-parse": "^5.0.1",
+    "faker": "^5.5.3",
+    "timer-node": "^5.0.5",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "prettier": "^2.6.2",
+    "typescript": "^4.3.4"
+  }
+}
