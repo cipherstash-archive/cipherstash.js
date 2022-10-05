@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
+
+    // Relaxed rules to allow package to build. FIXME: remove these and fix in code
+    "exactOptionalPropertyTypes": false,
+    "importsNotUsedAsValues": "remove"
+  },
+  "include": ["*.ts"],
+  "exclude": ["dist", "node_modules", "./**/*.spec.ts", "./**/*.test.ts"]
+}
