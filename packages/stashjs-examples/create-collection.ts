@@ -4,7 +4,7 @@ import {
   CollectionSchema,
   generateSchemaDefinitionFromJSON,
 } from "@cipherstash/stashjs"
-import { Movie } from "./movie"
+import type { Movie } from "./movie"
 import { readFileSync } from "fs"
 import { join } from "path"
 

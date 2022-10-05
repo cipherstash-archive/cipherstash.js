@@ -1,5 +1,5 @@
 import { Stash, describeError } from "@cipherstash/stashjs"
-import { Movie } from "./movie"
+import type { Movie } from "./movie"
 
 async function createCollection() {
   try {

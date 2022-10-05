@@ -1,5 +1,5 @@
-import { HasID, QueryResult } from "@cipherstash/stashjs"
-import { Movie } from "./movie"
+import type { HasID, QueryResult } from "@cipherstash/stashjs"
+import type { Movie } from "./movie"
 
 export function displayResults(
   result: QueryResult<Movie & HasID>,
