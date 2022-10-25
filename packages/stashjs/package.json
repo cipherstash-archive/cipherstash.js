@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "Datastore & Search API for CipherStash",
   "main": "dist/index.js",
   "typedocMain": "src/index.ts",
@@ -78,7 +78,7 @@
     "@aws-sdk/client-kms": "^3.38.0",
     "@aws-sdk/client-sts": "^3.34.0",
     "@cfworker/json-schema": "^1.12.1",
-    "@cipherstash/stash-rs": "workspace:^",
+    "@cipherstash/stash-rs": "workspace:*",
     "@cipherstash/stashjs-grpc": "workspace:*",
     "@grpc/grpc-js": "^1.5.5",
     "@grpc/proto-loader": "^0.6.2",
@@ -118,10 +118,6 @@
     "*.ts": "prettier --write"
   },
   "files": [
-    "scripts/*",
-    "src/**",
-    "dist/**",
-    "babel.config.js",
-    "tsconfig.json"
+    "dist/**"
   ]
 }
