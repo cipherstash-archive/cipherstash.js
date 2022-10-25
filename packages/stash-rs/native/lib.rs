@@ -1,8 +1,7 @@
-use cipherstash_client::indexer::RecordIndexer;
+use cipherstash_client::indexer::Indexer as RecordIndexer;
 use hex_literal::hex;
-use neon::prelude::*;
-use neon::result::Throw;
-use neon::types::buffer::TypedArray;
+use js_sys::Reflect;
+use js_sys::Uint8Array;
 use ore_encoding_rs::encode_between;
 use ore_encoding_rs::encode_eq;
 use ore_encoding_rs::encode_gt;
@@ -12,51 +11,77 @@ use ore_encoding_rs::OrePlaintext;
 use ore_encoding_rs::OreRange;
 use ore_encoding_rs::{encode_lt, encode_lte};
 use ore_rs::{scheme::bit2::OREAES128, ORECipher, OREEncrypt};
-use std::cell::RefCell;
 use std::cmp::Ordering;
 use std::convert::TryInto;
 use unicode_normalization::UnicodeNormalization;
+use wasm_bindgen::JsCast;
 
-struct Cipher(OREAES128);
-struct Indexer(RecordIndexer);
+use wasm_bindgen::prelude::*;
 
-/* Note that this will Drop the Cipher at which point Zeroize will be called
- * from within the ore.rs crate */
-impl Finalize for Cipher {}
+#[wasm_bindgen]
+pub struct Cipher(OREAES128);
 
-impl Finalize for Indexer {}
+#[wasm_bindgen]
+pub struct Indexer(RecordIndexer);
 
-type BoxedCipher = JsBox<RefCell<Cipher>>;
-type BoxedRecordIndexer = JsBox<RefCell<Indexer>>;
+type JsResult<T> = Result<T, JsError>;
 
-fn init_indexer(mut cx: FunctionContext) -> JsResult<BoxedRecordIndexer> {
-    let cbor_schema = cx.argument::<JsBuffer>(0)?;
-    let indexer = RecordIndexer::decode_from_cbor(cbor_schema.as_slice(&cx))
-        .or_else(|e| cx.throw_error(e.to_string()))?;
-    Ok(JsBox::new(&mut cx, RefCell::new(Indexer(indexer))))
+#[wasm_bindgen]
+impl Indexer {
+    #[wasm_bindgen(constructor)]
+    pub fn new(schema: &[u8]) -> JsResult<Indexer> {
+        let indexer = RecordIndexer::decode_from_cbor(schema)?;
+        Ok(Indexer(indexer))
+    }
+
+    pub fn encrypt(&mut self, record: &[u8]) -> JsResult<js_sys::Uint8Array> {
+        let vector = self.0.encrypt_cbor(record)?;
+        Ok((&vector[..]).into())
+    }
 }
 
-fn encrypt_record(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let indexer = cx.argument::<BoxedRecordIndexer>(0)?;
-    let cbor_record = cx.argument::<JsBuffer>(1)?;
+#[wasm_bindgen]
+impl Cipher {
+    #[wasm_bindgen(constructor)]
+    pub fn new(k1: Uint8Array, k2: Uint8Array) -> JsResult<Cipher> {
+        let seed = hex!("00010203 04050607");
 
-    let indexer = &mut *indexer
-        .try_borrow_mut()
-        .or_else(|_| cx.throw_error("Can't borrow indexer as it is already borrowed"))?;
+        let cipher: OREAES128 = ORECipher::init(
+            clone_key_from_buffer(k1)?,
+            clone_key_from_buffer(k2)?,
+            &seed,
+        )
+        .map_err(|_e| JsError::new("Could not init cipher"))?;
 
-    let term_vector_buf = indexer
-        .0
-        .encrypt_cbor(cbor_record.as_slice(&cx))
-        .or_else(|e| cx.throw_error(e.to_string()))?;
+        Ok(Cipher(cipher))
+    }
 
-    Ok(JsBuffer::external(&mut cx, term_vector_buf))
+    pub fn encrypt(&self, input: Uint8Array) -> JsResult<Uint8Array> {
+        let input = u64_from_buffer(&input)?;
+
+        Ok((&input
+            .encrypt(&self.0)
+            .map_err(|e| JsError::new(&format!("ORE error: {:?}", e)))?
+            .to_bytes()[..])
+            .into())
+    }
+
+    pub fn encrypt_left(&self, input: Uint8Array) -> JsResult<Uint8Array> {
+        let input = u64_from_buffer(&input)?;
+
+        Ok((&input
+            .encrypt_left(&self.0)
+            .map_err(|e| JsError::new(&format!("ORE error: {:?}", e)))?
+            .to_bytes()[..])
+            .into())
+    }
 }
 
-fn clone_key_from_buffer(cx: &mut FunctionContext, buf: Handle<JsBuffer>) -> NeonResult<[u8; 16]> {
-    let slice = buf.as_slice(cx);
+fn clone_key_from_buffer(buf: Uint8Array) -> JsResult<[u8; 16]> {
+    let slice = buf.to_vec();
 
     if slice.len() != 16 {
-        return cx.throw_error("Invalid key length");
+        return Err(JsError::new("Invalid key length"));
     }
 
     Ok(slice
@@ -64,100 +89,29 @@ fn clone_key_from_buffer(cx: &mut FunctionContext, buf: Handle<JsBuffer>) -> Neo
         .expect("Expected slice to have length of 16"))
 }
 
-fn init_cipher(mut cx: FunctionContext) -> JsResult<BoxedCipher> {
-    let arg0 = cx.argument::<JsBuffer>(0)?;
-    let arg1 = cx.argument::<JsBuffer>(1)?;
-    let seed = hex!("00010203 04050607");
-
-    let k1 = clone_key_from_buffer(&mut cx, arg0)?;
-    let k2 = clone_key_from_buffer(&mut cx, arg1)?;
-
-    let cipher: OREAES128 =
-        ORECipher::init(k1, k2, &seed).or_else(|_e| cx.throw_error("Could not init cipher"))?;
-
-    let ore = RefCell::new(Cipher(cipher));
-
-    return Ok(cx.boxed(ore));
-}
-
-fn encrypt(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let cipher = cx.argument::<BoxedCipher>(0)?;
-
-    let ore = &mut *cipher
-        .try_borrow_mut()
-        .or_else(|_| cx.throw_error("Can't borrow ORE Cipher as it is already borrowed"))?;
-
-    let arg = cx.argument::<JsBuffer>(1)?;
-
-    let input = u64_from_buffer(&mut cx, &arg)?;
-
-    let result = input
-        .encrypt(&mut ore.0)
-        .or_else(|_| cx.throw_error("ORE Error"))?
-        .to_bytes();
-
-    Ok(JsBuffer::external(&mut cx, result))
-}
-
-fn encrypt_left(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let cipher = cx.argument::<BoxedCipher>(0)?;
-
-    let ore = &mut *cipher
-        .try_borrow_mut()
-        .or_else(|_| cx.throw_error("Can't borrow ORE Cipher as it is already borrowed"))?;
-
-    let arg = cx.argument::<JsBuffer>(1)?;
-    let input = u64_from_buffer(&mut cx, &arg)?;
-
-    let result = input
-        .encrypt_left(&mut ore.0)
-        .or_else(|_| cx.throw_error("ORE Error"))?
-        .to_bytes();
-
-    Ok(JsBuffer::external(&mut cx, result))
-}
-
-fn compare(mut cx: FunctionContext) -> JsResult<JsNumber> {
-    let a = cx.argument::<JsBuffer>(0)?;
-    let b = cx.argument::<JsBuffer>(1)?;
-
-    let slice_a = a.as_slice(&cx);
-    let slice_b = b.as_slice(&cx);
+#[wasm_bindgen]
+pub fn compare(a: Uint8Array, b: Uint8Array) -> JsResult<f64> {
+    let slice_a = &a.to_vec();
+    let slice_b = &b.to_vec();
 
     let result = OREAES128::compare_raw_slices(slice_a, slice_b);
 
     match result {
-        Some(Ordering::Equal) => Ok(cx.number(0)),
-        Some(Ordering::Less) => Ok(cx.number(-1)),
-        Some(Ordering::Greater) => Ok(cx.number(1)),
-        None => cx.throw_error("Comparison failed"),
+        Some(Ordering::Equal) => Ok(0.),
+        Some(Ordering::Less) => Ok(-1.),
+        Some(Ordering::Greater) => Ok(1.),
+        None => Err(JsError::new("Comparison failed")),
     }
 }
 
-fn buffer_from_u64<'a>(cx: &mut FunctionContext<'a>, n: u64) -> NeonResult<Handle<'a, JsBuffer>> {
-    let bytes = n.to_ne_bytes();
-
-    let mut buf = cx
-        .buffer(8)
-        .or_else(|e| cx.throw_error(format!("Failed to allocate buffer: {:?}", e)))?;
-
-    let slice = buf.as_mut_slice(cx);
-
-    for i in 0..8 {
-        slice[i] = bytes[i];
-    }
-
-    Ok(buf)
-}
-
-fn u64_from_buffer(cx: &mut FunctionContext, buf: &Handle<JsBuffer>) -> NeonResult<u64> {
-    let slice = buf.as_slice(cx);
+fn u64_from_buffer(buf: &js_sys::Uint8Array) -> Result<u64, JsError> {
+    let slice = buf.to_vec();
 
     if slice.len() != 8 {
-        return cx.throw_error(format!(
+        return Err(JsError::new(&format!(
             "Invalid plaintext buffer length {} (expected 8)",
             slice.len()
-        ));
+        )));
     }
 
     let slice8: [u8; 8] = [
@@ -167,57 +121,44 @@ fn u64_from_buffer(cx: &mut FunctionContext, buf: &Handle<JsBuffer>) -> NeonResu
     Ok(u64::from_ne_bytes(slice8))
 }
 
-fn encode_num(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let input = cx.argument::<JsNumber>(0)?.value(&mut cx);
-    let output = OrePlaintext::<u64>::from(input).0;
-    buffer_from_u64(&mut cx, output)
+fn u64_to_buffer(val: u64) -> Uint8Array {
+    (&val.to_ne_bytes()[..]).into()
 }
 
-fn encode_string(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let input = cx.argument::<JsString>(0)?.value(&mut cx);
+#[wasm_bindgen]
+pub fn encode_num(input: f64) -> JsResult<Uint8Array> {
+    let output = OrePlaintext::<u64>::from(input).0;
+    Ok(u64_to_buffer(output))
+}
+
+#[wasm_bindgen]
+pub fn encode_string(input: String) -> JsResult<Uint8Array> {
     // Unicode normalization FTW (NFC)
     //                    👇👇👇
     let normalized = input.nfc().collect::<String>();
     let output = siphash(normalized.as_bytes());
-    buffer_from_u64(&mut cx, output)
+    Ok(u64_to_buffer(output))
 }
 
-fn encode_buffer(mut cx: FunctionContext) -> JsResult<JsBuffer> {
-    let input = cx.argument::<JsBuffer>(0)?;
-
-    let input_slice = input.as_slice(&cx);
+#[wasm_bindgen]
+pub fn encode_buffer(buffer: Uint8Array) -> JsResult<Uint8Array> {
+    let input_slice = buffer.to_vec();
 
     if input_slice.len() != 8 {
-        return cx.throw_error("Invalid input buffer length");
+        return Err(JsError::new("Invalid input buffer length"));
     }
 
-    let input_buf: [u8; 8] = input_slice
-        .try_into()
-        .expect("Expected input to be of length 8");
-
-    let mut output_buf = cx
-        .buffer(8)
-        .or_else(|e| cx.throw_error(format!("Failed to allocate buffer: {:?}", e)))?;
-
-    let output_slice = output_buf.as_mut_slice(&mut cx);
-
-    for i in 0..8 {
-        output_slice[i] = input_buf[i];
-    }
-
-    Ok(output_buf)
+    Ok((&input_slice[..]).into())
 }
 
-fn make_range_object(
-    mut cx: FunctionContext,
-    min: OrePlaintext<u64>,
-    max: OrePlaintext<u64>,
-) -> JsResult<JsObject> {
-    let obj = cx.empty_object();
-    let js_min = buffer_from_u64(&mut cx, min.0)?;
-    let js_max = buffer_from_u64(&mut cx, max.0)?;
-    obj.set(&mut cx, "min", js_min)?;
-    obj.set(&mut cx, "max", js_max)?;
+fn make_range_object(min: OrePlaintext<u64>, max: OrePlaintext<u64>) -> JsResult<js_sys::Object> {
+    let obj = js_sys::Object::new();
+
+    Reflect::set(&obj, &"min".into(), &u64_to_buffer(min.0))
+        .map_err(|e| JsError::new(&format!("Failed to set key min: {:?}", e)))?;
+    Reflect::set(&obj, &"max".into(), &u64_to_buffer(max.0))
+        .map_err(|e| JsError::new(&format!("Failed to set key max: {:?}", e)))?;
+
     Ok(obj)
 }
 
@@ -227,78 +168,78 @@ fn make_range_object(
 ///
 /// - Number (float64, Date)
 /// - Buffer (uint64)
-fn get_range_plaintext_from_argument(
-    cx: &mut FunctionContext,
-    arg: i32,
-) -> Result<OrePlaintext<u64>, Throw> {
-    let input = cx.argument::<JsValue>(arg)?;
-
-    if input.is_a::<JsNumber, FunctionContext>(cx) {
-        Ok(input
-            .downcast_or_throw::<JsNumber, FunctionContext>(cx)?
-            .value(cx)
-            .into())
-    } else if input.is_a::<JsBuffer, FunctionContext>(cx) {
-        let buffer = input.downcast_or_throw::<JsBuffer, FunctionContext>(cx)?;
-        Ok(u64_from_buffer(cx, &buffer)?.into())
+fn get_range_plaintext_from_value(value: JsValue) -> Result<OrePlaintext<u64>, JsError> {
+    if let Some(number) = value.dyn_ref::<js_sys::Number>() {
+        let val: f64 = number.into();
+        Ok(val.into())
+    } else if let Some(buffer) = value.dyn_ref::<js_sys::Uint8Array>() {
+        Ok(u64_from_buffer(&buffer)?.into())
     } else {
-        cx.throw_error("Expected first argument to be number or buffer")
+        Err(JsError::new(
+            "Expected first argument to be number or buffer",
+        ))
     }
 }
 
-fn encode_range_lt(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange { min, max } = encode_lt(get_range_plaintext_from_argument(&mut cx, 0)?);
-    make_range_object(cx, min, max)
+#[wasm_bindgen]
+pub fn encode_range_lt(value: JsValue) -> JsResult<js_sys::Object> {
+    let OreRange { min, max } = encode_lt(get_range_plaintext_from_value(value)?);
+    make_range_object(min, max)
 }
 
-fn encode_range_lte(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange { min, max } = encode_lte(get_range_plaintext_from_argument(&mut cx, 0)?);
-    make_range_object(cx, min, max)
+#[wasm_bindgen]
+pub fn encode_range_lte(value: JsValue) -> JsResult<js_sys::Object> {
+    let OreRange { min, max } = encode_lte(get_range_plaintext_from_value(value)?);
+    make_range_object(min, max)
 }
 
-fn encode_range_gt(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange { min, max } = encode_gt(get_range_plaintext_from_argument(&mut cx, 0)?);
-    make_range_object(cx, min, max)
+#[wasm_bindgen]
+pub fn encode_range_gt(value: JsValue) -> JsResult<js_sys::Object> {
+    let OreRange { min, max } = encode_gt(get_range_plaintext_from_value(value)?);
+    make_range_object(min, max)
 }
 
-fn encode_range_gte(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange { min, max } = encode_gte(get_range_plaintext_from_argument(&mut cx, 0)?);
-    make_range_object(cx, min, max)
+#[wasm_bindgen]
+pub fn encode_range_gte(value: JsValue) -> JsResult<js_sys::Object> {
+    let OreRange { min, max } = encode_gte(get_range_plaintext_from_value(value)?);
+    make_range_object(min, max)
 }
 
-fn encode_range_eq(mut cx: FunctionContext) -> JsResult<JsObject> {
-    let OreRange { min, max } = encode_eq(get_range_plaintext_from_argument(&mut cx, 0)?);
-    make_range_object(cx, min, max)
+#[wasm_bindgen]
+pub fn encode_range_eq(value: JsValue) -> JsResult<js_sys::Object> {
+    let OreRange { min, max } = encode_eq(get_range_plaintext_from_value(value)?);
+    make_range_object(min, max)
 }
 
-fn encode_range_between(mut cx: FunctionContext) -> JsResult<JsObject> {
+#[wasm_bindgen]
+pub fn encode_range_between(min: JsValue, max: JsValue) -> JsResult<js_sys::Object> {
     let OreRange { min, max } = encode_between(
-        get_range_plaintext_from_argument(&mut cx, 0)?,
-        get_range_plaintext_from_argument(&mut cx, 1)?,
+        get_range_plaintext_from_value(min)?,
+        get_range_plaintext_from_value(max)?,
     );
-    make_range_object(cx, min, max)
+    make_range_object(min, max)
 }
 
-#[neon::main]
-fn main(mut cx: ModuleContext) -> NeonResult<()> {
-    cx.export_function("encodeNumber", encode_num)?;
-    cx.export_function("encodeString", encode_string)?;
-    cx.export_function("encodeBuffer", encode_buffer)?;
-
-    cx.export_function("encodeRangeEq", encode_range_eq)?;
-    cx.export_function("encodeRangeGt", encode_range_gt)?;
-    cx.export_function("encodeRangeGte", encode_range_gte)?;
-    cx.export_function("encodeRangeLt", encode_range_lt)?;
-    cx.export_function("encodeRangeLte", encode_range_lte)?;
-    cx.export_function("encodeRangeBetween", encode_range_between)?;
-
-    cx.export_function("initCipher", init_cipher)?;
-    cx.export_function("encrypt", encrypt)?;
-    cx.export_function("encryptLeft", encrypt_left)?;
-
-    cx.export_function("initIndexer", init_indexer)?;
-    cx.export_function("encryptRecord", encrypt_record)?;
-
-    cx.export_function("compare", compare)?;
-    Ok(())
-}
+// #[neon::main]
+// fn main(mut cx: ModuleContext) -> NeonResult<()> {
+//     cx.export_function("encodeNumber", encode_num)?;
+//     cx.export_function("encodeString", encode_string)?;
+//     cx.export_function("encodeBuffer", encode_buffer)?;
+//
+//     cx.export_function("encodeRangeEq", encode_range_eq)?;
+//     cx.export_function("encodeRangeGt", encode_range_gt)?;
+//     cx.export_function("encodeRangeGte", encode_range_gte)?;
+//     cx.export_function("encodeRangeLt", encode_range_lt)?;
+//     cx.export_function("encodeRangeLte", encode_range_lte)?;
+//     cx.export_function("encodeRangeBetween", encode_range_between)?;
+//
+//     cx.export_function("initCipher", init_cipher)?;
+//     cx.export_function("encrypt", encrypt)?;
+//     cx.export_function("encryptLeft", encrypt_left)?;
+//
+//     cx.export_function("initIndexer", init_indexer)?;
+//     cx.export_function("encryptRecord", encrypt_record)?;
+//
+//     cx.export_function("compare", compare)?;
+//     Ok(())
+// }
