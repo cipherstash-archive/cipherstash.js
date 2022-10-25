@@ -19,7 +19,8 @@ describe("RecordIndexer", () => {
           },
           indexes: {
             exactTitle: {
-              mapping: { kind: "exact", field: "title" },
+              kind: "exact",
+              field: "title",
               index_id,
               prf_key,
               prp_key,
@@ -38,14 +39,15 @@ describe("RecordIndexer", () => {
           },
           indexes: {
             exactTitle: {
-              mapping: { kind: "exact", field: "title" },
+              kind: "exact",
+              field: "title",
               index_id,
               prf_key: Buffer.from([1, 2]),
               prp_key,
             },
           },
         })
-      ).toThrow(/invalid length 2/)
+      ).toThrow()
     })
 
     test("invalid index_id in schema", () => {
@@ -57,73 +59,77 @@ describe("RecordIndexer", () => {
           },
           indexes: {
             exactTitle: {
-              mapping: { kind: "exact", field: "title" },
+              kind: "exact",
+              field: "title",
               index_id: Buffer.from([1, 2, 3, 4]),
               prf_key,
               prp_key,
             },
           },
         })
-      ).toThrow(/invalid length 4/)
+      ).toThrow()
     })
   })
 
-  let indexer: RecordIndexer
+  describe("indexing", () => {
+    let indexer: RecordIndexer
 
-  beforeEach(() => {
-    indexer = RecordIndexer.init({
-      type: {
-        title: "string",
-        runningTime: "uint64",
-      },
-      indexes: {
-        exactTitle: {
-          mapping: { kind: "exact", field: "title" },
-          index_id,
-          prf_key,
-          prp_key,
+    beforeEach(() => {
+      indexer = RecordIndexer.init({
+        type: {
+          title: "string",
+          runningTime: "uint64",
         },
-      },
-    })
-  })
-
-  test("index record", () => {
-    const vectors = indexer.encryptRecord({
-      id: record_id,
-      title: "What a great title!",
-    })
-
-    expect(vectors).toHaveLength(1)
-  })
-
-  test("index record empty record", () => {
-    const vectors = indexer.encryptRecord({
-      id: record_id,
+        indexes: {
+          exactTitle: {
+            kind: "exact",
+            field: "title",
+            index_id,
+            prf_key,
+            prp_key,
+          },
+        },
+      })
     })
 
-    expect(vectors).toHaveLength(0)
-  })
+    test("index record", () => {
+      const vectors = indexer.encryptRecord({
+        id: record_id,
+        title: "What a great title!",
+      })
 
-  test("index record null fields", () => {
-    const vectors = indexer.encryptRecord({
-      id: record_id,
-      title: null,
-      runningTime: undefined,
+      expect(vectors).toHaveLength(1)
     })
 
-    expect(vectors).toHaveLength(0)
-  })
+    test("index record empty record", () => {
+      const vectors = indexer.encryptRecord({
+        id: record_id,
+      })
 
-  test("index record must have id", () => {
-    expect(() => indexer.encryptRecord(null as any)).toThrow()
-  })
-
-  test("index record with Uint8Array id", () => {
-    const vectors = indexer.encryptRecord({
-      id: new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
-      title: "Great title!",
+      expect(vectors).toHaveLength(0)
     })
 
-    expect(vectors).toHaveLength(1)
+    test("index record null fields", () => {
+      const vectors = indexer.encryptRecord({
+        id: record_id,
+        title: null,
+        runningTime: undefined,
+      })
+
+      expect(vectors).toHaveLength(0)
+    })
+
+    test("index record must have id", () => {
+      expect(() => indexer.encryptRecord(null as any)).toThrow()
+    })
+
+    test("index record with Uint8Array id", () => {
+      const vectors = indexer.encryptRecord({
+        id: new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]),
+        title: "Great title!",
+      })
+
+      expect(vectors).toHaveLength(1)
+    })
   })
 })
