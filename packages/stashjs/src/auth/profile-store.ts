@@ -18,6 +18,8 @@ import {
   wrap,
 } from "../errors"
 import { logger } from "../logger"
+import * as os from "os"
+import * as path from "path"
 
 export type ConfigurationTemplate = Omit<StashConfiguration, "keyManagement" | "service" | "key"> & {
   service: { host: string }
@@ -82,7 +84,7 @@ export interface ProfileStore {
   readonly loadDefaultProfile: () => AsyncResult<StashProfile, LoadProfileFailure>
 }
 
-const dir = `${process.env["HOME"]}/.cipherstash`
+const dir = path.join(os.homedir(), ".cipherstash")
 
 class Store implements ProfileStore {
   public constructor() {
@@ -97,8 +99,8 @@ class Store implements ProfileStore {
     try {
       const entries = await fs.promises.readdir(dir)
       const profileNames = entries
-        .filter(e => fs.existsSync([dir, e].join("/")))
-        .filter(e => fs.lstatSync([dir, e].join("/")).isDirectory())
+        .filter(e => fs.existsSync(path.join(dir, e)))
+        .filter(e => fs.lstatSync(path.join(dir, e)).isDirectory())
 
       return Ok(profileNames)
     } catch (error) {
@@ -245,19 +247,19 @@ class Store implements ProfileStore {
   }
 
   public configDir(profileName: string): string {
-    return [dir, sanitiseProfileName(profileName)].join("/")
+    return path.join(dir, sanitiseProfileName(profileName))
   }
 
   private configFilePath(): string {
-    return `${dir}/config.json`
+    return path.join(dir, "config.json")
   }
 
   private profileConfigFilePath(profileName: string): string {
-    return `${this.configDir(profileName)}/profile-config.json`
+    return path.join(this.configDir(profileName), "profile-config.json")
   }
 
   private accessTokenFilePath(profileName: string): string {
-    return [this.configDir(profileName), "auth-token.json"].join("/")
+    return path.join(this.configDir(profileName), "auth-token.json")
   }
 }
 
@@ -269,13 +271,13 @@ function sanitiseProfileName(profileName: string): string {
 
 /**
  * An implementation of ConfigStore that wraps all operations in an exclusive
- * lock (POSIX file lock).
+ * lock (using file locking - portable across Windows/Linux/macOS).
  *
  * This is necessary to ensure that concurrent reads and writes to the config
  * store do not cause corruption.
  */
 class StoreWithReadWriteLock implements ProfileStore {
-  private configLockFile: string = [dir, "config.lock"].join("/")
+  private configLockFile: string = path.join(dir, "config.lock")
 
   constructor(private store: Store) {}
 
