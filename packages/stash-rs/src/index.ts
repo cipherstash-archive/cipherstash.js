@@ -1,20 +1,4 @@
 /* Importing the rust compiled lib (index.node) doesn't work and so we use require here */
-// const {
-//   initCipher,
-//   encrypt,
-//   encryptLeft,
-//   compare,
-//   encodeNumber,
-//   encodeString,
-//   encodeBuffer,
-//   encodeRangeBetween,
-//   encodeRangeEq,
-//   encodeRangeGt,
-//   encodeRangeGte,
-//   encodeRangeLt,
-//   encodeRangeLte,
-// } = require("../pkg")
-
 import {
   Cipher,
   compare,
