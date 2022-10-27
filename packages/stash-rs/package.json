@@ -11,7 +11,7 @@
   },
   "scripts": {
     "clean": "rm -rf ./pkg",
-    "build": "rm -rf ./pkg && wasm-pack build . --target nodejs && tsc --build && ./fix-imports.sh",
+    "build": "rm -rf ./pkg && pnpm exec wasm-pack build . --target nodejs && tsc --build && ./fix-imports.sh",
     "prepublishOnly": "npm run build",
     "test": "cargo test && npx jest"
   },
