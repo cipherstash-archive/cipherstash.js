@@ -24,6 +24,10 @@ setup() {
 
   asdf install
   asdf reshim
+
+  # Install wasm for @cipherstash/stash-rs
+  rustup target add wasm32-unknown-unknown
+
   pnpm install --frozen-lockfile
 }
 
