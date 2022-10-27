@@ -13,16 +13,13 @@ path = "native/lib.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cipherstash-client = "0.3.0"
+cipherstash-client = { version = "0.4.0", default-features = false, features = [ "web-worker" ] }
 ore-rs = "0.3.0"
 ore-encoding-rs = "0.23.2"
 hex-literal = "0.3.2"
 unicode-normalization = "0.1.19"
+wasm-bindgen = "0.2.83"
+js-sys = "0.3.60"
 
 [dev-dependencies]
 quickcheck = "1.0.3"
-
-[dependencies.neon]
-version = "0.10.1"
-default-features = false
-features = ["napi-6"]
