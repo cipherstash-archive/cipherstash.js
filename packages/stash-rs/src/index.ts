@@ -1,19 +1,19 @@
 /* Importing the rust compiled lib (index.node) doesn't work and so we use require here */
-const {
-  initCipher,
-  encrypt,
-  encryptLeft,
+import {
+  Cipher,
   compare,
-  encodeNumber,
-  encodeString,
-  encodeBuffer,
-  encodeRangeBetween,
-  encodeRangeEq,
-  encodeRangeGt,
-  encodeRangeGte,
-  encodeRangeLt,
-  encodeRangeLte,
-} = require("../index.node")
+  encode_buffer,
+  encode_num,
+  encode_range_between,
+  encode_range_eq,
+  encode_range_gt,
+  encode_range_gte,
+  encode_range_lt,
+  encode_range_lte,
+  encode_string,
+} from "../pkg"
+
+import { asBuffer } from './utils';
 
 export type Key = Buffer
 export type CipherText = Buffer
@@ -34,6 +34,21 @@ export type ORECipher = {
    * `Buffer` containing just the Left component).
    */
   encryptLeft: (input: OrePlainText) => CipherText
+}
+
+function isRawRangeObject(value: any): value is { min: Uint8Array; max: Uint8Array } {
+  return `min` in value && `max` in value && value["min"] instanceof Uint8Array && value["max"] instanceof Uint8Array
+}
+
+function asOreRange(value: unknown): OreRange {
+  if (isRawRangeObject(value)) {
+    return {
+      min: asBuffer(value.min),
+      max: asBuffer(value.max),
+    }
+  } else {
+    throw new Error("Recieved invalid ORE range object")
+  }
 }
 
 export type Ordering = -1 | 0 | 1
@@ -99,34 +114,35 @@ export interface ORE {
  * library.
  */
 export const ORE: ORE = {
-  encodeNumber,
-  encodeString,
-  encodeBuffer,
+  encodeNumber: input => asBuffer(encode_num(input)),
+  encodeString: input => asBuffer(encode_string(input)),
+  encodeBuffer: input => asBuffer(encode_buffer(input)),
   encode: input => {
     if (typeof input === "number") {
-      return encodeNumber(input)
+      return ORE.encodeNumber(input)
     } else if (typeof input === "string") {
-      return encodeString(input)
+      return ORE.encodeString(input)
     } else {
-      return encodeBuffer(input)
+      return ORE.encodeBuffer(input)
     }
   },
 
-  encodeRangeBetween,
-  encodeRangeEq,
-  encodeRangeGt,
-  encodeRangeGte,
-  encodeRangeLt,
-  encodeRangeLte,
+  encodeRangeBetween: (min, max) => asOreRange(encode_range_between(min, max)),
+  encodeRangeEq: input => asOreRange(encode_range_eq(input)),
+  encodeRangeGt: input => asOreRange(encode_range_gt(input)),
+  encodeRangeGte: input => asOreRange(encode_range_gte(input)),
+  encodeRangeLt: input => asOreRange(encode_range_lt(input)),
+  encodeRangeLte: input => asOreRange(encode_range_lte(input)),
 
   init: (k1: Key, k2: Key): ORECipher => {
-    let cipher = initCipher(k1, k2)
-    return {
-      encrypt: (input: OrePlainText): CipherText => encrypt(cipher, input),
+    let cipher = new Cipher(k1, k2)
 
-      encryptLeft: (input: OrePlainText): CipherText => encryptLeft(cipher, input),
+    return {
+      encrypt: (input: OrePlainText): CipherText => asBuffer(cipher.encrypt(input)),
+
+      encryptLeft: (input: OrePlainText): CipherText => asBuffer(cipher.encrypt_left(input)),
     }
   },
 
-  compare: (a: CipherText, b: CipherText): Ordering => compare(a, b),
+  compare: (a: CipherText, b: CipherText): Ordering => compare(a, b) as Ordering,
 }

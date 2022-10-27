@@ -51,10 +51,10 @@ export function createRecordIndexer<R extends StashRecord, M extends Mappings<R>
       Object.entries(schema.mappings).map(([key, mapping]) => [
         key,
         {
-          mapping,
+          ...mapping,
           prp_key: schema.meta[key]!.$prpKey,
           prf_key: schema.meta[key]!.$prfKey,
-          index_id: Buffer.prototype.slice.call(normalizeId(schema.meta[key]!.$indexId)),
+          index_id: normalizeId(schema.meta[key]!.$indexId),
         },
       ])
     ),

@@ -1,13 +1,6 @@
-const { initIndexer, encryptRecord } = require("../index.node")
+import { Indexer } from "../pkg"
+import { asBuffer } from "./utils"
 const { encode, decode } = require("cbor")
-
-/**
- * A superset of the index mappings defined in the CipherStash [schema definition](https://docs.cipherstash.com/reference/schema-definition.html).
- */
-interface MappingLike {
-  kind: string
-  [key: string]: unknown
-}
 
 /**
  * The collection schema used to initialize a RecordIndexer.
@@ -20,10 +13,11 @@ export type IndexerCollectionSchema = {
   }
   indexes: {
     [key: string]: {
-      mapping: MappingLike
-      prf_key: Buffer
-      prp_key: Buffer
-      index_id: Buffer
+      kind: string
+      prf_key: Buffer | Uint8Array
+      prp_key: Buffer | Uint8Array
+      index_id: Buffer | Uint8Array
+      [key: string]: unknown
     }
   }
 }
@@ -44,29 +38,40 @@ interface RecordLike {
   [key: string]: unknown
 }
 
+export function isObject(value: unknown): value is { [key: string]: unknown } {
+  return typeof value === "object" && value !== undefined && value !== null && !Array.isArray(value)
+}
+
+function coerceBuffers(value: { [key: string]: unknown }) {
+  for (let key in value) {
+    if (Object.prototype.hasOwnProperty.call(value, key)) {
+      const member = value[key]
+
+      if (member instanceof Uint8Array) {
+        value[key] = asBuffer(member)
+      } else if (isObject(member)) {
+        coerceBuffers(member)
+      }
+    }
+  }
+}
+
 export class RecordIndexer {
-  private constructor(private handle: unknown) {}
+  private constructor(private handle: Indexer) {}
 
   /**
    * Initialize as new RecordIndexer based on a collection schema
    */
   static init(schema: IndexerCollectionSchema): RecordIndexer {
-    return new RecordIndexer(initIndexer(encode(schema)))
+    coerceBuffers(schema)
+    return new RecordIndexer(new Indexer(encode(schema)))
   }
 
   /**
    * Encrypt a record and return an array of terms
    */
   encryptRecord(record: RecordLike): TermVector {
-    return decode(
-      encryptRecord(
-        this.handle,
-        encode({
-          ...record,
-          // Ensure that the id is the Buffer base class so it is encoded in CBOR properly
-          id: record.id instanceof Uint8Array ? Buffer.prototype.slice.call(record.id) : record.id,
-        })
-      )
-    )
+    coerceBuffers(record)
+    return decode(this.handle.encrypt(encode(record)))
   }
 }
