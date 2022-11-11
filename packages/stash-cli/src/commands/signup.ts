@@ -36,7 +36,9 @@ const command: GluegunCommand = {
     print.info("2. Grab your workspace ID from the signup confirmation page")
     print.info("")
     print.info("")
-    print.info("3. Log in using this stash command with your workspace ID: stash login --workspace <your workspace id>")
+    print.info(
+      "3. Log in using this stash command with your workspace ID: stash login --region <your workspace region> --workspace <your workspace id>"
+    )
     print.info("")
     print.info("")
     print.info("")
