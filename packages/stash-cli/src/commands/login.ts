@@ -33,6 +33,16 @@ const command: GluegunCommand = {
     }
 
     if (isNewLogin(options)) {
+      if (!options.workspace) {
+        print.error("Mandatory argument --workspace not provided")
+        process.exit(1)
+      }
+
+      if (!options.region) {
+        print.error("Mandatory argument --region not provided (pick us-east-1 or ap-southeast-2)")
+        process.exit(1)
+      }
+
       const basicProfile = buildBasicStashProfile(options)
 
       // If there is an existing profile with the same name it MUST be for the same workspace.
@@ -126,7 +136,7 @@ function isNewLogin(options: Options): boolean {
 }
 
 function buildBasicStashProfile(options: Options): StashProfile {
-  const serviceHost: string = options.serviceHost || defaults.service.host
+  const serviceHost = `${options.region}.aws.stashdata.net`
   const servicePort: number = options.servicePort || 443
   const identityProviderHost: string = options.identityProviderHost || defaults.identityProvider.host
   const identityProviderClientId: string = options.identityProviderClientId || defaults.identityProvider.clientId
