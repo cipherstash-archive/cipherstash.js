@@ -38,6 +38,7 @@ const command: GluegunCommand = {
         exitWithUsage("error")
       }
 
+
       const collection = await stash.loadCollection(collectionName)
       const indexes = {}
 
@@ -63,6 +64,7 @@ const command: GluegunCommand = {
         type: collection.schema.recordType,
         ref: [...Buffer.from(collection.ref, "hex")],
         indexes,
+        service: profile.config.service
       }
 
       // Console log instead of using `print.info` here so output can be redirected to a file.
