@@ -1,5 +1,4 @@
 use cipherstash_client::indexer::Indexer as RecordIndexer;
-use hex_literal::hex;
 use js_sys::Reflect;
 use js_sys::Uint8Array;
 use ore_encoding_rs::encode_between;
@@ -44,12 +43,9 @@ impl Indexer {
 impl Cipher {
     #[wasm_bindgen(constructor)]
     pub fn new(k1: Uint8Array, k2: Uint8Array) -> JsResult<Cipher> {
-        let seed = hex!("00010203 04050607");
-
         let cipher: OREAES128 = ORECipher::init(
-            clone_key_from_buffer(k1)?,
-            clone_key_from_buffer(k2)?,
-            &seed,
+            &clone_key_from_buffer(k1)?,
+            &clone_key_from_buffer(k2)?,
         )
         .map_err(|_e| JsError::new("Could not init cipher"))?;
 
