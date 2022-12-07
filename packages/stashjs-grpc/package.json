@@ -25,7 +25,7 @@
     "James Sadler <james@cipherstash.com>",
     "Lindsay Holmwood <lindsay@cipherstash.com>"
   ],
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "bugs": {
     "url": "https://github.com/cipherstash/stashjs-grpc/issues"
   },

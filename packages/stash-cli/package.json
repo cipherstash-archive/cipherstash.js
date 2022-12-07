@@ -28,7 +28,7 @@
     "docs",
     "bin"
   ],
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@cipherstash/gluegun": "latest",
     "@cipherstash/stashjs": "workspace:*",

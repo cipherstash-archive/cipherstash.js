@@ -24,7 +24,7 @@
     "directory": "packages/stashjs-adapter"
   },
   "author": "",
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "dependencies": {
     "@cipherstash/stashjs": "workspace:*",
     "uuid": "^8.3.2"
