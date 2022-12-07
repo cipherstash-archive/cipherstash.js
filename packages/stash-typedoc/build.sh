@@ -54,7 +54,7 @@ subproject_release() {
   fi
 
   # The typedoc index.html file doesn't work from a subfolder.
-  sed -i 's/<head>/<head><base href="\/tsdoc\/">/g' ./build/tsdoc/index.html
+  sed -i '' -e 's/<head>/<head><base href="\/tsdoc\/">/g' ./build/tsdoc/index.html
 
   pnpm vercel --token "${VERCEL_TOKEN}" $prodRun deploy build
 }
