@@ -1,6 +1,6 @@
 {
   "name": "@cipherstash/stashjs-typeorm",
-  "version": "0.0.3-dev-1",
+  "version": "0.1.0",
   "description": "TypeORM Adapter for StashJS",
   "main": "dist/index.js",
   "typedocMain": "src/index.ts",
