@@ -267,9 +267,9 @@ dependencies = [
 
 [[package]]
 name = "cipherstash-client"
-version = "0.5.0"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "382142b5adf5ecba4bdb19edc7d2f4938c6fbed465f8d1f52553890abb935539"
+checksum = "e04064dac198924ca94d6ae645b8e7ad98af7049cce9346f13a47ed39842ff26"
 dependencies = [
  "async-mutex",
  "async-once-cell",
@@ -278,6 +278,7 @@ dependencies = [
  "cfg-if",
  "chrono",
  "ciborium",
+ "cipherstash-core",
  "cipherstash-grpc",
  "conv",
  "dirs",
@@ -290,7 +291,7 @@ dependencies = [
  "minicbor",
  "num-bigint",
  "ore-encoding-rs",
- "ore-rs",
+ "ore-rs 0.7.0",
  "rand_chacha",
  "regex",
  "serde",
@@ -300,6 +301,21 @@ dependencies = [
  "thiserror",
  "unicode-normalization",
  "uuid",
+]
+
+[[package]]
+name = "cipherstash-core"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1effc4e4f638a1885347477cc18e585215796950c503e4a5a927aedca646e7c1"
+dependencies = [
+ "hmac",
+ "lazy_static",
+ "num-bigint",
+ "rand",
+ "regex",
+ "sha2",
+ "thiserror",
 ]
 
 [[package]]
@@ -1019,6 +1035,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "ore-rs"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "969bed0f20e494e630c925f86a10e94de8f6ef31bef0d3ed13e6945e9cf6c566"
+dependencies = [
+ "aes 0.8.2",
+ "block-modes",
+ "byteorder",
+ "hex",
+ "hex-literal",
+ "lazy_static",
+ "num",
+ "rand",
+ "rand_chacha",
+ "subtle-ng",
+ "zeroize",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1329,13 +1364,13 @@ checksum = "eb703cfe953bccee95685111adeedb76fabe4e97549a58d16f03ea7b9367bb32"
 
 [[package]]
 name = "stash-rs"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "cipherstash-client",
  "hex-literal",
  "js-sys",
  "ore-encoding-rs",
- "ore-rs",
+ "ore-rs 0.4.0",
  "quickcheck",
  "unicode-normalization",
  "wasm-bindgen",
