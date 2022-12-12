@@ -11,6 +11,7 @@ tsconfig.tsbuildinfo
 # npm/pnpm logs
 .pnpm-debug.log
 npm-debug.log*
+.pnpm-store
 
 # test coverages
 coverage

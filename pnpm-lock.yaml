@@ -62,7 +62,6 @@ importers:
       cbor: ^8.1.0
       ts-node: ^10.9.1
       typescript: ^4.7.4
-      wasm-pack: ^0.10.3
     dependencies:
       cargo-cp-artifact: 0.1.6
       cbor: 8.1.0
@@ -74,7 +73,6 @@ importers:
       '@types/node': 17.0.45
       ts-node: 10.9.1_x2utdhayajzrh747hktprshhby
       typescript: 4.7.4
-      wasm-pack: 0.10.3
 
   packages/stash-typedoc:
     specifiers:
@@ -3759,6 +3757,7 @@ packages:
       follow-redirects: 1.15.1
     transitivePeerDependencies:
       - debug
+    dev: false
 
   /axios/0.27.2:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
@@ -3954,17 +3953,6 @@ packages:
     resolution: {integrity: sha512-qeFIXtP4MSoi6NLqO12WfqARWWuCKi2Rn/9hJLEmtB5yTNr9DqFWkJRCf2qShWzPeAMRnOgCrq0sg/KLv5ES9w==}
     dependencies:
       tweetnacl: 0.14.5
-    dev: true
-
-  /binary-install/0.1.1:
-    resolution: {integrity: sha512-DqED0D/6LrS+BHDkKn34vhRqOGjy5gTMgvYZsGK2TpNbdPuz4h+MRlNgGv5QBRd7pWq/jylM4eKNCizgAq3kNQ==}
-    engines: {node: '>=10'}
-    dependencies:
-      axios: 0.21.4
-      rimraf: 3.0.2
-      tar: 6.1.11
-    transitivePeerDependencies:
-      - debug
     dev: true
 
   /bindings/1.5.0:
@@ -5487,6 +5475,7 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+    dev: false
 
   /for-each/0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
@@ -10333,16 +10322,6 @@ packages:
     resolution: {integrity: sha512-ts/8E8l5b7kY0vlWLewOkDXMmPdLcVV4GmOQLyxuSswIJsweeFZtAsMF7k1Nszz+TYBQrlYRmzOnr398y1JemQ==}
     dependencies:
       makeerror: 1.0.12
-    dev: true
-
-  /wasm-pack/0.10.3:
-    resolution: {integrity: sha512-dg1PPyp+QwWrhfHsgG12K/y5xzwfaAoK1yuVC/DUAuQsDy5JywWDuA7Y/ionGwQz+JBZVw8jknaKBnaxaJfwTA==}
-    hasBin: true
-    requiresBuild: true
-    dependencies:
-      binary-install: 0.1.1
-    transitivePeerDependencies:
-      - debug
     dev: true
 
   /wcwidth/1.0.1:
