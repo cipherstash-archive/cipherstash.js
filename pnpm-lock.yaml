@@ -212,6 +212,27 @@ importers:
       ts-node: 10.9.1_x2utdhayajzrh747hktprshhby
       typescript: 4.7.4
 
+  packages/stashjs-benchmarks:
+    specifiers:
+      '@cipherstash/stashjs': ^0.4.6
+      '@types/faker': ^5.5.7
+      '@types/node': 16.0.1
+      '@types/uuid': ^8.3.2
+      faker: ^5.5.3
+      timer-node: ^5.0.5
+      typescript: ^4.7.4
+      uuid: ^8.3.2
+    dependencies:
+      '@cipherstash/stashjs': 0.4.6
+      '@types/faker': 5.5.9
+      '@types/node': 16.0.1
+      '@types/uuid': 8.3.4
+      faker: 5.5.3
+      timer-node: 5.0.6
+      uuid: 8.3.2
+    devDependencies:
+      typescript: 4.7.4
+
   packages/stashjs-examples:
     specifiers:
       '@cipherstash/stashjs': workspace:*
@@ -2294,6 +2315,56 @@ packages:
       which: 2.0.2
       yargs-parser: 21.0.1
     transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /@cipherstash/stash-rs/0.2.2:
+    resolution: {integrity: sha512-/fHrqJu3zCzHxs2e1Vev46y2zsQrGzXwPVcBQTTEMy8LGtpqoVvmRfHPiKN2XOWkJFaIs0qK0bp05CpMNT4mCQ==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+    requiresBuild: true
+    dependencies:
+      cargo-cp-artifact: 0.1.6
+      cbor: 8.1.0
+    dev: false
+
+  /@cipherstash/stashjs-grpc/0.3.5:
+    resolution: {integrity: sha512-96fhuSnlx5iXcaAhNfHYIX5LTLmMFVs/11376icGK/xr68QsA3KK9YmMxwyF8HjphJ806zqwR2+bRVJtdDlZwQ==}
+    dependencies:
+      '@grpc/grpc-js': 1.6.8
+      '@grpc/proto-loader': 0.6.13
+    dev: false
+
+  /@cipherstash/stashjs/0.4.6:
+    resolution: {integrity: sha512-6yNrKetQCTBAnOSArI7qTnArBjArURWdK/rPjmWwP427/pTiC3dDThw7lVZ+FZfIi3Th+q4fvupQA1nabKhO6Q==}
+    engines: {node: '>=16.0.0'}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+    dependencies:
+      '@aws-crypto/client-node': 2.4.0
+      '@aws-sdk/client-kms': 3.141.0
+      '@aws-sdk/client-sts': 3.141.0
+      '@cfworker/json-schema': 1.12.3
+      '@cipherstash/stash-rs': 0.2.2
+      '@cipherstash/stashjs-grpc': 0.3.5
+      '@grpc/grpc-js': 1.6.8
+      '@grpc/proto-loader': 0.6.13
+      '@types/stringify-object': 3.3.1
+      aws-sdk: 2.1186.0
+      axios: 0.27.2
+      bson: 4.6.5
+      fp-ts: 2.12.2
+      io-ts: 2.2.17_fp-ts@2.12.2
+      is-plain-object: 5.0.0
+      jws: 4.0.0
+      lockfile: 1.0.4
+      merge-anything: 4.0.5
+      open: 8.4.0
+      siphash: 1.1.0
+      source-map-support: 0.5.21
+      stringify-object: 3.3.0
+      uuid: 8.3.2
+      winston: 3.8.1
+    transitivePeerDependencies:
+      - aws-crt
       - debug
     dev: false
 
