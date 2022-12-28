@@ -14,21 +14,23 @@ fi
 trap "echo SOMETHING WENT WRONG - please read the logs above and see if it helps you figure out what is wrong - and also ask an engineer help" ERR
 
 setup() {
-  asdf plugin add postgres || true
-  asdf plugin add protoc || true
-  asdf plugin add rust || true
-  asdf plugin add nodejs || true
-  asdf plugin add pnpm || true
-  asdf plugin add shellcheck || true
-  asdf plugin add shfmt || true
+  if command -v asdf &> /dev/null; then
+    asdf plugin add postgres || true
+    asdf plugin add protoc || true
+    asdf plugin add rust || true
+    asdf plugin add nodejs || true
+    asdf plugin add pnpm || true
+    asdf plugin add shellcheck || true
+    asdf plugin add shfmt || true
 
-  asdf install
-  asdf reshim
+    asdf install
+    asdf reshim
+  fi
 
   # Install wasm for @cipherstash/stash-rs
+  cargo install wasm-pack
+  cargo install wasm-opt
   rustup target add wasm32-unknown-unknown
-
-  pnpm install --frozen-lockfile
 }
 
 build() {
