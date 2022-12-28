@@ -10,7 +10,7 @@
     "bench": "node dist/benchmark.js"
   },
   "author": "",
-  "license": "MIT",
+  "license": "LicenseFile-LICENSE",
   "dependencies": {
     "@cipherstash/stashjs": "^0.4.6",
     "@types/faker": "^5.5.7",
