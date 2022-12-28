@@ -1,0 +1,32 @@
+{
+  "type": {
+    "title": "string",
+    "firstName": "string",
+    "lastName": "string",
+    "email": "string",
+    "gender": "string",
+    "dob": "date",
+    "createdAt": "date"
+  },
+  "indexes": {
+    "exactTitle": { "kind": "exact", "field": "title", "type": "string" },
+    "exactGender": { "kind": "exact", "field": "gender", "type": "string" },
+
+    "exactFirstName": { "kind": "exact", "field": "firstName", "type": "string" },
+    "exactLastName": { "kind": "exact", "field": "lastName", "type": "string" },
+    "exactEmail": { "kind": "exact", "field": "email", "type": "string" },
+    "rangeDob": { "kind": "range", "field": "dob", "type": "date" },
+    "rangeCreatedAt": { "kind": "range", "field": "createdAt", "type": "date" },
+
+    "matchAll": {
+      "kind": "match",
+      "type": "string",
+      "fields": ["firstName", "lastName", "email"],
+      "tokenFilters": [
+        { "kind": "downcase" },
+        { "kind": "ngram", "tokenLength": 3 }
+      ],
+      "tokenizer": { "kind": "standard" }
+    }
+  }
+}
